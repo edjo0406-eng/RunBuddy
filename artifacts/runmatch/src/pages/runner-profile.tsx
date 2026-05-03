@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useGetRunner, getGetRunnerQueryKey, useCreateConnection } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -6,19 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Activity, Timer, Medal, Heart, Users, ExternalLink } from "lucide-react";
+import { MapPin, Activity, Timer, Medal, Heart, Users, ExternalLink, MessageSquare } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
 import { CreateConnectionBodyType } from "@workspace/api-client-react";
+import { useIdentity } from "@/hooks/use-identity";
 
 export default function RunnerProfile() {
   const params = useParams();
   const id = Number(params.id);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+  const { myRunnerId } = useIdentity();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });
   const createConnection = useCreateConnection();
+
+  const handleMessage = () => {
+    if (!myRunnerId) {
+      navigate("/inbox");
+    } else {
+      navigate(`/messages/${id}`);
+    }
+  };
 
   const handleConnect = (type: CreateConnectionBodyType) => {
     createConnection.mutate({
@@ -98,6 +109,11 @@ export default function RunnerProfile() {
                   {(runner.lookingFor === 'buddy' || runner.lookingFor === 'both') && (
                     <Button onClick={() => handleConnect('buddy')} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                       <Users className="w-4 h-4 mr-2" /> Connect for Buddy
+                    </Button>
+                  )}
+                  {myRunnerId !== id && (
+                    <Button onClick={handleMessage} variant="outline" className="rounded-full border-border">
+                      <MessageSquare className="w-4 h-4 mr-2" /> Send Message
                     </Button>
                   )}
                 </div>

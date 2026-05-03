@@ -14,6 +14,8 @@ tags:
     description: Runner profiles
   - name: connections
     description: Connection requests between runners
+  - name: messages
+    description: Direct messages between runners
   - name: stats
     description: App-wide statistics and summaries
 paths:
@@ -213,6 +215,91 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Connection"
+
+  /messages/inbox:
+    get:
+      operationId: getInbox
+      tags: [messages]
+      summary: Get all conversations for a runner
+      parameters:
+        - name: runnerId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+
+  /messages/conversation:
+    get:
+      operationId: getConversation
+      tags: [messages]
+      summary: Get all messages between two runners
+      parameters:
+        - name: meId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: otherId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+
+  /messages/unread-count:
+    get:
+      operationId: getUnreadCount
+      tags: [messages]
+      summary: Get unread message count for a runner
+      parameters:
+        - name: runnerId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /messages:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message to another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
 
   /stats/summary:
     get:
@@ -570,4 +657,67 @@ components:
           type: integer
       required:
         - country
+        - count
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        content:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fromRunnerId
+        - toRunnerId
+        - content
+        - isRead
+        - createdAt
+
+    Conversation:
+      type: object
+      properties:
+        otherId:
+          type: integer
+        otherRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        latestMessage:
+          $ref: "#/components/schemas/Message"
+        unreadCount:
+          type: integer
+      required:
+        - otherId
+        - latestMessage
+        - unreadCount
+
+    SendMessageBody:
+      type: object
+      properties:
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        content:
+          type: string
+      required:
+        - fromRunnerId
+        - toRunnerId
+        - content
+
+    UnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
         - count

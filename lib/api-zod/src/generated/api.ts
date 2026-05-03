@@ -531,6 +531,115 @@ export const UpdateConnectionResponse = zod.object({
 });
 
 /**
+ * @summary Get all conversations for a runner
+ */
+export const GetInboxQueryParams = zod.object({
+  runnerId: zod.coerce.number(),
+});
+
+export const GetInboxResponseItem = zod.object({
+  otherId: zod.number(),
+  otherRunner: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number().nullish(),
+      bio: zod.string().nullish(),
+      avatarUrl: zod.string().nullish(),
+      city: zod.string().nullish(),
+      country: zod.string().nullish(),
+      gender: zod.string().nullish(),
+      lookingFor: zod.enum(["date", "buddy", "both"]),
+      experience: zod
+        .enum(["beginner", "intermediate", "advanced", "elite"])
+        .nullish(),
+      trackingApps: zod
+        .object({
+          stravaUrl: zod.string().nullish(),
+          garminUrl: zod.string().nullish(),
+          nikeRunClubUrl: zod.string().nullish(),
+          wahooPlan: zod.string().nullish(),
+          polarUrl: zod.string().nullish(),
+          suuntoUrl: zod.string().nullish(),
+          appleHealthConnected: zod.boolean().nullish(),
+          garminConnectUrl: zod.string().nullish(),
+        })
+        .nullish(),
+      runningStats: zod
+        .object({
+          weeklyMileageKm: zod.number().nullish(),
+          totalRaces: zod.number().nullish(),
+          personalBest5k: zod
+            .string()
+            .nullish()
+            .describe("Time in mm:ss format"),
+          personalBest10k: zod.string().nullish(),
+          personalBestHalfMarathon: zod.string().nullish(),
+          personalBestMarathon: zod.string().nullish(),
+          avgPacePerKm: zod.string().nullish().describe("Pace in mm:ss format"),
+          preferredRunTypes: zod
+            .array(zod.string())
+            .nullish()
+            .describe("e.g. road, trail, track, ultra"),
+        })
+        .nullish(),
+      lat: zod.number().nullish().describe("Latitude coordinate"),
+      lng: zod.number().nullish().describe("Longitude coordinate"),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    })
+    .nullish(),
+  latestMessage: zod.object({
+    id: zod.number(),
+    fromRunnerId: zod.number(),
+    toRunnerId: zod.number(),
+    content: zod.string(),
+    isRead: zod.boolean(),
+    createdAt: zod.coerce.date(),
+  }),
+  unreadCount: zod.number(),
+});
+export const GetInboxResponse = zod.array(GetInboxResponseItem);
+
+/**
+ * @summary Get all messages between two runners
+ */
+export const GetConversationQueryParams = zod.object({
+  meId: zod.coerce.number(),
+  otherId: zod.coerce.number(),
+});
+
+export const GetConversationResponseItem = zod.object({
+  id: zod.number(),
+  fromRunnerId: zod.number(),
+  toRunnerId: zod.number(),
+  content: zod.string(),
+  isRead: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const GetConversationResponse = zod.array(GetConversationResponseItem);
+
+/**
+ * @summary Get unread message count for a runner
+ */
+export const GetUnreadCountQueryParams = zod.object({
+  runnerId: zod.coerce.number(),
+});
+
+export const GetUnreadCountResponse = zod.object({
+  count: zod.number(),
+});
+
+/**
+ * @summary Send a message to another runner
+ */
+export const SendMessageBody = zod.object({
+  fromRunnerId: zod.number(),
+  toRunnerId: zod.number(),
+  content: zod.string(),
+});
+
+/**
  * @summary Get app-wide statistics summary
  */
 export const GetStatsSummaryResponse = zod.object({

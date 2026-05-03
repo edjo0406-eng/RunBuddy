@@ -217,6 +217,32 @@ export interface CountryCount {
   count: number;
 }
 
+export interface Message {
+  id: number;
+  fromRunnerId: number;
+  toRunnerId: number;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface Conversation {
+  otherId: number;
+  otherRunner?: Runner | null;
+  latestMessage: Message;
+  unreadCount: number;
+}
+
+export interface SendMessageBody {
+  fromRunnerId: number;
+  toRunnerId: number;
+  content: string;
+}
+
+export interface UnreadCount {
+  count: number;
+}
+
 export type ListRunnersParams = {
   /**
    * Filter by section (date, buddy, or both)
@@ -282,3 +308,16 @@ export const ListConnectionsStatus = {
   accepted: "accepted",
   declined: "declined",
 } as const;
+
+export type GetInboxParams = {
+  runnerId: number;
+};
+
+export type GetConversationParams = {
+  meId: number;
+  otherId: number;
+};
+
+export type GetUnreadCountParams = {
+  runnerId: number;
+};

@@ -9,6 +9,8 @@ import RunDate from "@/pages/run-date";
 import RunBuddy from "@/pages/run-buddy";
 import RunnerProfile from "@/pages/runner-profile";
 import CreateProfile from "@/pages/create-profile";
+import Inbox from "@/pages/inbox";
+import ConversationPage from "@/pages/conversation";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ function Router() {
       <Route path="/run-buddy" component={RunBuddy} />
       <Route path="/runner/:id" component={RunnerProfile} />
       <Route path="/create-profile" component={CreateProfile} />
+      <Route path="/inbox" component={Inbox} />
+      <Route path="/messages/:otherId" component={ConversationPage} />
       <Route component={NotFound} />
     </Switch>
   );

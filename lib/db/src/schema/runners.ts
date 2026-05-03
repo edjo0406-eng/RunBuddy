@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, boolean, jsonb, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, boolean, jsonb, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -54,10 +54,25 @@ export const connectionsTable = pgTable("connections", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const messagesTable = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  fromRunnerId: integer("from_runner_id").notNull().references(() => runnersTable.id),
+  toRunnerId: integer("to_runner_id").notNull().references(() => runnersTable.id),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("msg_from_idx").on(t.fromRunnerId),
+  index("msg_to_idx").on(t.toRunnerId),
+]);
+
 export const insertRunnerSchema = createInsertSchema(runnersTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertConnectionSchema = createInsertSchema(connectionsTable).omit({ id: true, createdAt: true });
+export const insertMessageSchema = createInsertSchema(messagesTable).omit({ id: true, createdAt: true, isRead: true });
 
 export type InsertRunner = z.infer<typeof insertRunnerSchema>;
 export type Runner = typeof runnersTable.$inferSelect;
 export type InsertConnection = z.infer<typeof insertConnectionSchema>;
 export type Connection = typeof connectionsTable.$inferSelect;
+export type Message = typeof messagesTable.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
