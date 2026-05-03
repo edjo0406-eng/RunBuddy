@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "c7uo19pf10AfdLXaTcdH6"
+uri = "file://artifacts/runmatch/src/assets/images/hero-bg.png"
+type = "image"
+title = "Electric dawn runners blur"
+
+[[generated]]
+id = "2kxT9BsK6z58DZEyNUCJl"
+uri = "file://artifacts/runmatch/src/assets/images/avatar-m.png"
+type = "image"
+title = "Placeholder male runner avatar"
+
+[[generated]]
+id = "sFIN0_b8uRyHq1KqcrJOs"
+uri = "file://artifacts/runmatch/src/assets/images/avatar-f.png"
+type = "image"
+title = "Placeholder female runner avatar"

@@ -1,0 +1,61 @@
+import { pgTable, serial, text, integer, real, boolean, jsonb, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod/v4";
+
+export const lookingForEnum = pgEnum("looking_for", ["date", "buddy", "both"]);
+export const experienceEnum = pgEnum("experience", ["beginner", "intermediate", "advanced", "elite"]);
+export const connectionTypeEnum = pgEnum("connection_type", ["date", "buddy"]);
+export const connectionStatusEnum = pgEnum("connection_status", ["pending", "accepted", "declined"]);
+
+export const runnersTable = pgTable("runners", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  age: integer("age"),
+  bio: text("bio"),
+  avatarUrl: text("avatar_url"),
+  city: text("city"),
+  country: text("country"),
+  gender: text("gender"),
+  lookingFor: lookingForEnum("looking_for").notNull().default("both"),
+  experience: experienceEnum("experience"),
+  trackingApps: jsonb("tracking_apps").$type<{
+    stravaUrl?: string | null;
+    garminUrl?: string | null;
+    nikeRunClubUrl?: string | null;
+    wahooPlan?: string | null;
+    polarUrl?: string | null;
+    suuntoUrl?: string | null;
+    appleHealthConnected?: boolean | null;
+    garminConnectUrl?: string | null;
+  }>(),
+  runningStats: jsonb("running_stats").$type<{
+    weeklyMileageKm?: number | null;
+    totalRaces?: number | null;
+    personalBest5k?: string | null;
+    personalBest10k?: string | null;
+    personalBestHalfMarathon?: string | null;
+    personalBestMarathon?: string | null;
+    avgPacePerKm?: string | null;
+    preferredRunTypes?: string[] | null;
+  }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const connectionsTable = pgTable("connections", {
+  id: serial("id").primaryKey(),
+  fromRunnerId: integer("from_runner_id").notNull().references(() => runnersTable.id),
+  toRunnerId: integer("to_runner_id").notNull().references(() => runnersTable.id),
+  type: connectionTypeEnum("type").notNull(),
+  status: connectionStatusEnum("status").notNull().default("pending"),
+  message: text("message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertRunnerSchema = createInsertSchema(runnersTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertConnectionSchema = createInsertSchema(connectionsTable).omit({ id: true, createdAt: true });
+
+export type InsertRunner = z.infer<typeof insertRunnerSchema>;
+export type Runner = typeof runnersTable.$inferSelect;
+export type InsertConnection = z.infer<typeof insertConnectionSchema>;
+export type Connection = typeof connectionsTable.$inferSelect;

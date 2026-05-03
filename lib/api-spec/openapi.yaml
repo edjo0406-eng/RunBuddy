@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RunMatch API - runner dating and running partner finder
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: runners
+    description: Runner profiles
+  - name: connections
+    description: Connection requests between runners
+  - name: stats
+    description: App-wide statistics and summaries
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,234 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /runners:
+    get:
+      operationId: listRunners
+      tags: [runners]
+      summary: List runners with optional filters
+      parameters:
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [date, buddy, both]
+          description: Filter by section (date, buddy, or both)
+        - name: country
+          in: query
+          schema:
+            type: string
+          description: Filter by country
+        - name: city
+          in: query
+          schema:
+            type: string
+          description: Filter by city
+        - name: minPace
+          in: query
+          schema:
+            type: string
+          description: Minimum pace (mm:ss per km)
+        - name: maxPace
+          in: query
+          schema:
+            type: string
+          description: Maximum pace (mm:ss per km)
+        - name: experience
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced, elite]
+      responses:
+        "200":
+          description: List of runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Runner"
+
+    post:
+      operationId: createRunner
+      tags: [runners]
+      summary: Create a new runner profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerBody"
+      responses:
+        "201":
+          description: Created runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+
+  /runners/{id}:
+    get:
+      operationId: getRunner
+      tags: [runners]
+      summary: Get a runner profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Runner profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+        "404":
+          description: Not found
+
+    put:
+      operationId: updateRunner
+      tags: [runners]
+      summary: Update a runner profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRunnerBody"
+      responses:
+        "200":
+          description: Updated runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+
+  /connections:
+    get:
+      operationId: listConnections
+      tags: [connections]
+      summary: List connections for a runner
+      parameters:
+        - name: runnerId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [date, buddy]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, declined]
+      responses:
+        "200":
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Connection"
+
+    post:
+      operationId: createConnection
+      tags: [connections]
+      summary: Send a connection request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConnectionBody"
+      responses:
+        "201":
+          description: Created connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+
+  /connections/{id}:
+    put:
+      operationId: updateConnection
+      tags: [connections]
+      summary: Accept or decline a connection request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnectionBody"
+      responses:
+        "200":
+          description: Updated connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get app-wide statistics summary
+      responses:
+        "200":
+          description: App statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /stats/countries:
+    get:
+      operationId: getRunnersByCountry
+      tags: [stats]
+      summary: Get runner counts grouped by country
+      responses:
+        "200":
+          description: Country breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CountryCount"
+
+  /stats/featured:
+    get:
+      operationId: getFeaturedRunners
+      tags: [stats]
+      summary: Get featured/recently active runners for the homepage
+      responses:
+        "200":
+          description: Featured runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Runner"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +267,287 @@ components:
       required:
         - status
 
+    TrackingApps:
+      type: object
+      properties:
+        stravaUrl:
+          type: string
+          nullable: true
+        garminUrl:
+          type: string
+          nullable: true
+        nikeRunClubUrl:
+          type: string
+          nullable: true
+        wahooPlan:
+          type: string
+          nullable: true
+        polarUrl:
+          type: string
+          nullable: true
+        suuntoUrl:
+          type: string
+          nullable: true
+        appleHealthConnected:
+          type: boolean
+          nullable: true
+        garminConnectUrl:
+          type: string
+          nullable: true
+
+    RunningStats:
+      type: object
+      properties:
+        weeklyMileageKm:
+          type: number
+          nullable: true
+        totalRaces:
+          type: integer
+          nullable: true
+        personalBest5k:
+          type: string
+          nullable: true
+          description: Time in mm:ss format
+        personalBest10k:
+          type: string
+          nullable: true
+        personalBestHalfMarathon:
+          type: string
+          nullable: true
+        personalBestMarathon:
+          type: string
+          nullable: true
+        avgPacePerKm:
+          type: string
+          nullable: true
+          description: Pace in mm:ss format
+        preferredRunTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: e.g. road, trail, track, ultra
+
+    Runner:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - lookingFor
+        - createdAt
+        - updatedAt
+
+    CreateRunnerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+      required:
+        - name
+        - lookingFor
+
+    UpdateRunnerBody:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+
+    Connection:
+      type: object
+      properties:
+        id:
+          type: integer
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        type:
+          type: string
+          enum: [date, buddy]
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+        message:
+          type: string
+          nullable: true
+        fromRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        toRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fromRunnerId
+        - toRunnerId
+        - type
+        - status
+        - createdAt
+
+    CreateConnectionBody:
+      type: object
+      properties:
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        type:
+          type: string
+          enum: [date, buddy]
+        message:
+          type: string
+          nullable: true
+      required:
+        - fromRunnerId
+        - toRunnerId
+        - type
+
+    UpdateConnectionBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, declined]
+      required:
+        - status
+
+    StatsSummary:
+      type: object
+      properties:
+        totalRunners:
+          type: integer
+        dateRunners:
+          type: integer
+        buddyRunners:
+          type: integer
+        bothRunners:
+          type: integer
+        totalConnections:
+          type: integer
+        countriesRepresented:
+          type: integer
+      required:
+        - totalRunners
+        - dateRunners
+        - buddyRunners
+        - bothRunners
+        - totalConnections
+        - countriesRepresented
+
+    CountryCount:
+      type: object
+      properties:
+        country:
+          type: string
+        count:
+          type: integer
+      required:
+        - country
+        - count
