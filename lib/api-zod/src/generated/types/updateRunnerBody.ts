@@ -22,4 +22,6 @@ export interface UpdateRunnerBody {
   experience?: UpdateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  lat?: number | null;
+  lng?: number | null;
 }

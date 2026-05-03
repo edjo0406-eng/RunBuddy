@@ -23,6 +23,10 @@ export interface Runner {
   experience?: RunnerExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  /** Latitude coordinate */
+  lat?: number | null;
+  /** Longitude coordinate */
+  lng?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

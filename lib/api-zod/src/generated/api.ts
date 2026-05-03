@@ -77,6 +77,8 @@ export const ListRunnersResponseItem = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish().describe("Latitude coordinate"),
+  lng: zod.number().nullish().describe("Longitude coordinate"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -124,6 +126,8 @@ export const CreateRunnerBody = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
 });
 
 /**
@@ -173,6 +177,8 @@ export const GetRunnerResponse = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish().describe("Latitude coordinate"),
+  lng: zod.number().nullish().describe("Longitude coordinate"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -223,6 +229,8 @@ export const UpdateRunnerBody = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
 });
 
 export const UpdateRunnerResponse = zod.object({
@@ -265,6 +273,8 @@ export const UpdateRunnerResponse = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish().describe("Latitude coordinate"),
+  lng: zod.number().nullish().describe("Longitude coordinate"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -329,6 +339,8 @@ export const ListConnectionsResponseItem = zod.object({
             .describe("e.g. road, trail, track, ultra"),
         })
         .nullish(),
+      lat: zod.number().nullish().describe("Latitude coordinate"),
+      lng: zod.number().nullish().describe("Longitude coordinate"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -377,6 +389,8 @@ export const ListConnectionsResponseItem = zod.object({
             .describe("e.g. road, trail, track, ultra"),
         })
         .nullish(),
+      lat: zod.number().nullish().describe("Latitude coordinate"),
+      lng: zod.number().nullish().describe("Longitude coordinate"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -457,6 +471,8 @@ export const UpdateConnectionResponse = zod.object({
             .describe("e.g. road, trail, track, ultra"),
         })
         .nullish(),
+      lat: zod.number().nullish().describe("Latitude coordinate"),
+      lng: zod.number().nullish().describe("Longitude coordinate"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -505,6 +521,8 @@ export const UpdateConnectionResponse = zod.object({
             .describe("e.g. road, trail, track, ultra"),
         })
         .nullish(),
+      lat: zod.number().nullish().describe("Latitude coordinate"),
+      lng: zod.number().nullish().describe("Longitude coordinate"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -578,6 +596,8 @@ export const GetFeaturedRunnersResponseItem = zod.object({
         .describe("e.g. road, trail, track, ultra"),
     })
     .nullish(),
+  lat: zod.number().nullish().describe("Latitude coordinate"),
+  lng: zod.number().nullish().describe("Longitude coordinate"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

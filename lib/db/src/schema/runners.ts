@@ -38,6 +38,8 @@ export const runnersTable = pgTable("runners", {
     avgPacePerKm?: string | null;
     preferredRunTypes?: string[] | null;
   }>(),
+  lat: real("lat"),
+  lng: real("lng"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

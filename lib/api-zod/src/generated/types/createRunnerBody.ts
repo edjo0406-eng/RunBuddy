@@ -22,4 +22,6 @@ export interface CreateRunnerBody {
   experience?: CreateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  lat?: number | null;
+  lng?: number | null;
 }

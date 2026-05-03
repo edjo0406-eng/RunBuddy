@@ -67,6 +67,10 @@ export interface Runner {
   experience?: RunnerExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  /** Latitude coordinate */
+  lat?: number | null;
+  /** Longitude coordinate */
+  lng?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -103,6 +107,8 @@ export interface CreateRunnerBody {
   experience?: CreateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export type UpdateRunnerBodyLookingFor =
@@ -137,6 +143,8 @@ export interface UpdateRunnerBody {
   experience?: UpdateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export type ConnectionType =

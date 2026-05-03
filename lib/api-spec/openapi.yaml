@@ -366,6 +366,14 @@ components:
         runningStats:
           $ref: "#/components/schemas/RunningStats"
           nullable: true
+        lat:
+          type: number
+          nullable: true
+          description: Latitude coordinate
+        lng:
+          type: number
+          nullable: true
+          description: Longitude coordinate
         createdAt:
           type: string
           format: date-time
@@ -415,6 +423,12 @@ components:
         runningStats:
           $ref: "#/components/schemas/RunningStats"
           nullable: true
+        lat:
+          type: number
+          nullable: true
+        lng:
+          type: number
+          nullable: true
       required:
         - name
         - lookingFor
@@ -454,6 +468,12 @@ components:
           nullable: true
         runningStats:
           $ref: "#/components/schemas/RunningStats"
+          nullable: true
+        lat:
+          type: number
+          nullable: true
+        lng:
+          type: number
           nullable: true
 
     Connection:
