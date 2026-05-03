@@ -9,7 +9,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="font-display font-bold text-2xl tracking-tight text-primary">
-            RunMatch
+            RunDate
           </Link>
           <nav className="hidden md:flex gap-6">
             <Link 

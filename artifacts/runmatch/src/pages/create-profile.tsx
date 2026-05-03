@@ -69,7 +69,7 @@ export default function CreateProfile() {
       onSuccess: (runner) => {
         toast({
           title: "Profile Created!",
-          description: "Welcome to RunMatch. Get ready to hit the pavement.",
+          description: "Welcome to RunDate. Get ready to hit the pavement.",
         });
         setLocation(`/runner/${runner.id}`);
       },
@@ -91,7 +91,7 @@ export default function CreateProfile() {
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="mb-8">
             <h1 className="text-4xl font-display font-bold mb-2 tracking-tight">Join the Community</h1>
-            <p className="text-muted-foreground text-lg">Create your RunMatch profile to find running buddies and dates.</p>
+            <p className="text-muted-foreground text-lg">Create your RunDate profile to find running buddies and dates.</p>
           </div>
 
           <Form {...form}>
