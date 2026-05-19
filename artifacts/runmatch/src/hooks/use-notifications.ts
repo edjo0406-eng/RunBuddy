@@ -42,7 +42,7 @@ export function useNotifications(
       icon: "/favicon.svg",
       tag: "rundate-new-message",
       renotify: true,
-    });
+    } as NotificationOptions);
 
     n.onclick = () => {
       window.focus();

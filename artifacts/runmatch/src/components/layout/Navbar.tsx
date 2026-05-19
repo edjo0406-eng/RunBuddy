@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
-import { useGetUnreadCount } from "@workspace/api-client-react";
+import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/use-notifications";
 
 export function Navbar() {
@@ -11,7 +11,7 @@ export function Navbar() {
 
   const { data: unread } = useGetUnreadCount(
     { runnerId: myRunnerId! },
-    { query: { enabled: !!myRunnerId, refetchInterval: 15_000 } }
+    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey({ runnerId: myRunnerId! }) } }
   );
   const unreadCount = unread?.count ?? 0;
 

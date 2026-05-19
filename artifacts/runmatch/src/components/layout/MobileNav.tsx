@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Home, Heart, Users, MessageSquare, UserPlus } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
-import { useGetUnreadCount } from "@workspace/api-client-react";
+import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 
 export function MobileNav() {
   const [location] = useLocation();
@@ -9,7 +9,7 @@ export function MobileNav() {
 
   const { data: unread } = useGetUnreadCount(
     { runnerId: myRunnerId! },
-    { query: { enabled: !!myRunnerId, refetchInterval: 15_000 } }
+    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey({ runnerId: myRunnerId! }) } }
   );
   const unreadCount = unread?.count ?? 0;
 

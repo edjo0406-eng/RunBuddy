@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useGetInbox, useListRunners } from "@workspace/api-client-react";
+import { useGetInbox, useListRunners, getGetInboxQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ export default function Inbox() {
   const { data: allRunners, isLoading: loadingRunners } = useListRunners({});
   const { data: conversations, isLoading: loadingInbox } = useGetInbox(
     { runnerId: myRunnerId! },
-    { query: { enabled: !!myRunnerId, refetchInterval: 10_000 } }
+    { query: { enabled: !!myRunnerId, refetchInterval: 10_000, queryKey: getGetInboxQueryKey({ runnerId: myRunnerId! }) } }
   );
 
   if (!myRunnerId) {

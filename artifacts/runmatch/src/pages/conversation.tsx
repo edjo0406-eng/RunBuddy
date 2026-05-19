@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
-import { useGetConversation, useSendMessage, useGetRunner } from "@workspace/api-client-react";
+import { useGetConversation, useSendMessage, useGetRunner, getGetRunnerQueryKey, getGetConversationQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -32,11 +32,11 @@ export default function ConversationPage() {
   const queryClient = useQueryClient();
 
   const { data: allRunners, isLoading: loadingRunners } = useListRunners({});
-  const { data: otherRunner } = useGetRunner(otherId, { query: { enabled: !!otherId } });
+  const { data: otherRunner } = useGetRunner(otherId, { query: { enabled: !!otherId, queryKey: getGetRunnerQueryKey(otherId) } });
 
   const { data: messages, isLoading: loadingMessages } = useGetConversation(
     { meId: myRunnerId!, otherId },
-    { query: { enabled: !!myRunnerId && !!otherId, refetchInterval: 5_000 } }
+    { query: { enabled: !!myRunnerId && !!otherId, refetchInterval: 5_000, queryKey: getGetConversationQueryKey({ meId: myRunnerId!, otherId }) } }
   );
 
   const sendMessage = useSendMessage();
