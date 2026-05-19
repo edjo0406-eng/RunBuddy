@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount } from "@workspace/api-client-react";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -13,6 +14,8 @@ export function Navbar() {
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000 } }
   );
   const unreadCount = unread?.count ?? 0;
+
+  useNotifications(unread?.count, !!myRunnerId);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
