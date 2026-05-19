@@ -27,6 +27,14 @@ export interface Runner {
   lat?: number | null;
   /** Longitude coordinate */
   lng?: number | null;
+  /** City the runner is currently visiting */
+  travelCity?: string | null;
+  /** Country the runner is currently visiting */
+  travelCountry?: string | null;
+  /** Date until which the runner is travelling (e.g. "May 24") */
+  travelUntil?: string | null;
+  /** Short note about the trip */
+  travelNote?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

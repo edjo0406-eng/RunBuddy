@@ -71,6 +71,14 @@ export interface Runner {
   lat?: number | null;
   /** Longitude coordinate */
   lng?: number | null;
+  /** City the runner is currently visiting */
+  travelCity?: string | null;
+  /** Country the runner is currently visiting */
+  travelCountry?: string | null;
+  /** Date until which the runner is travelling (e.g. "May 24") */
+  travelUntil?: string | null;
+  /** Short note about the trip */
+  travelNote?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -109,6 +117,10 @@ export interface CreateRunnerBody {
   runningStats?: RunningStats | null;
   lat?: number | null;
   lng?: number | null;
+  travelCity?: string | null;
+  travelCountry?: string | null;
+  travelUntil?: string | null;
+  travelNote?: string | null;
 }
 
 export type UpdateRunnerBodyLookingFor =
@@ -145,6 +157,10 @@ export interface UpdateRunnerBody {
   runningStats?: RunningStats | null;
   lat?: number | null;
   lng?: number | null;
+  travelCity?: string | null;
+  travelCountry?: string | null;
+  travelUntil?: string | null;
+  travelNote?: string | null;
 }
 
 export type ConnectionType =

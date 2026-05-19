@@ -79,6 +79,19 @@ export const ListRunnersResponseItem = zod.object({
     .nullish(),
   lat: zod.number().nullish().describe("Latitude coordinate"),
   lng: zod.number().nullish().describe("Longitude coordinate"),
+  travelCity: zod
+    .string()
+    .nullish()
+    .describe("City the runner is currently visiting"),
+  travelCountry: zod
+    .string()
+    .nullish()
+    .describe("Country the runner is currently visiting"),
+  travelUntil: zod
+    .string()
+    .nullish()
+    .describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  travelNote: zod.string().nullish().describe("Short note about the trip"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -128,6 +141,10 @@ export const CreateRunnerBody = zod.object({
     .nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  travelCity: zod.string().nullish(),
+  travelCountry: zod.string().nullish(),
+  travelUntil: zod.string().nullish(),
+  travelNote: zod.string().nullish(),
 });
 
 /**
@@ -179,6 +196,19 @@ export const GetRunnerResponse = zod.object({
     .nullish(),
   lat: zod.number().nullish().describe("Latitude coordinate"),
   lng: zod.number().nullish().describe("Longitude coordinate"),
+  travelCity: zod
+    .string()
+    .nullish()
+    .describe("City the runner is currently visiting"),
+  travelCountry: zod
+    .string()
+    .nullish()
+    .describe("Country the runner is currently visiting"),
+  travelUntil: zod
+    .string()
+    .nullish()
+    .describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  travelNote: zod.string().nullish().describe("Short note about the trip"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -231,6 +261,10 @@ export const UpdateRunnerBody = zod.object({
     .nullish(),
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
+  travelCity: zod.string().nullish(),
+  travelCountry: zod.string().nullish(),
+  travelUntil: zod.string().nullish(),
+  travelNote: zod.string().nullish(),
 });
 
 export const UpdateRunnerResponse = zod.object({
@@ -275,6 +309,19 @@ export const UpdateRunnerResponse = zod.object({
     .nullish(),
   lat: zod.number().nullish().describe("Latitude coordinate"),
   lng: zod.number().nullish().describe("Longitude coordinate"),
+  travelCity: zod
+    .string()
+    .nullish()
+    .describe("City the runner is currently visiting"),
+  travelCountry: zod
+    .string()
+    .nullish()
+    .describe("Country the runner is currently visiting"),
+  travelUntil: zod
+    .string()
+    .nullish()
+    .describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  travelNote: zod.string().nullish().describe("Short note about the trip"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -341,6 +388,21 @@ export const ListConnectionsResponseItem = zod.object({
         .nullish(),
       lat: zod.number().nullish().describe("Latitude coordinate"),
       lng: zod.number().nullish().describe("Longitude coordinate"),
+      travelCity: zod
+        .string()
+        .nullish()
+        .describe("City the runner is currently visiting"),
+      travelCountry: zod
+        .string()
+        .nullish()
+        .describe("Country the runner is currently visiting"),
+      travelUntil: zod
+        .string()
+        .nullish()
+        .describe(
+          'Date until which the runner is travelling (e.g. \"May 24\")',
+        ),
+      travelNote: zod.string().nullish().describe("Short note about the trip"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -391,6 +453,21 @@ export const ListConnectionsResponseItem = zod.object({
         .nullish(),
       lat: zod.number().nullish().describe("Latitude coordinate"),
       lng: zod.number().nullish().describe("Longitude coordinate"),
+      travelCity: zod
+        .string()
+        .nullish()
+        .describe("City the runner is currently visiting"),
+      travelCountry: zod
+        .string()
+        .nullish()
+        .describe("Country the runner is currently visiting"),
+      travelUntil: zod
+        .string()
+        .nullish()
+        .describe(
+          'Date until which the runner is travelling (e.g. \"May 24\")',
+        ),
+      travelNote: zod.string().nullish().describe("Short note about the trip"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -473,6 +550,21 @@ export const UpdateConnectionResponse = zod.object({
         .nullish(),
       lat: zod.number().nullish().describe("Latitude coordinate"),
       lng: zod.number().nullish().describe("Longitude coordinate"),
+      travelCity: zod
+        .string()
+        .nullish()
+        .describe("City the runner is currently visiting"),
+      travelCountry: zod
+        .string()
+        .nullish()
+        .describe("Country the runner is currently visiting"),
+      travelUntil: zod
+        .string()
+        .nullish()
+        .describe(
+          'Date until which the runner is travelling (e.g. \"May 24\")',
+        ),
+      travelNote: zod.string().nullish().describe("Short note about the trip"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -523,6 +615,21 @@ export const UpdateConnectionResponse = zod.object({
         .nullish(),
       lat: zod.number().nullish().describe("Latitude coordinate"),
       lng: zod.number().nullish().describe("Longitude coordinate"),
+      travelCity: zod
+        .string()
+        .nullish()
+        .describe("City the runner is currently visiting"),
+      travelCountry: zod
+        .string()
+        .nullish()
+        .describe("Country the runner is currently visiting"),
+      travelUntil: zod
+        .string()
+        .nullish()
+        .describe(
+          'Date until which the runner is travelling (e.g. \"May 24\")',
+        ),
+      travelNote: zod.string().nullish().describe("Short note about the trip"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -585,6 +692,21 @@ export const GetInboxResponseItem = zod.object({
         .nullish(),
       lat: zod.number().nullish().describe("Latitude coordinate"),
       lng: zod.number().nullish().describe("Longitude coordinate"),
+      travelCity: zod
+        .string()
+        .nullish()
+        .describe("City the runner is currently visiting"),
+      travelCountry: zod
+        .string()
+        .nullish()
+        .describe("Country the runner is currently visiting"),
+      travelUntil: zod
+        .string()
+        .nullish()
+        .describe(
+          'Date until which the runner is travelling (e.g. \"May 24\")',
+        ),
+      travelNote: zod.string().nullish().describe("Short note about the trip"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     })
@@ -707,6 +829,19 @@ export const GetFeaturedRunnersResponseItem = zod.object({
     .nullish(),
   lat: zod.number().nullish().describe("Latitude coordinate"),
   lng: zod.number().nullish().describe("Longitude coordinate"),
+  travelCity: zod
+    .string()
+    .nullish()
+    .describe("City the runner is currently visiting"),
+  travelCountry: zod
+    .string()
+    .nullish()
+    .describe("Country the runner is currently visiting"),
+  travelUntil: zod
+    .string()
+    .nullish()
+    .describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  travelNote: zod.string().nullish().describe("Short note about the trip"),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });

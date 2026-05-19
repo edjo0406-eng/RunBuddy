@@ -40,6 +40,10 @@ export const runnersTable = pgTable("runners", {
   }>(),
   lat: real("lat"),
   lng: real("lng"),
+  travelCity: text("travel_city"),
+  travelCountry: text("travel_country"),
+  travelUntil: text("travel_until"),
+  travelNote: text("travel_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

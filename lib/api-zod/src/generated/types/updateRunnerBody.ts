@@ -24,4 +24,8 @@ export interface UpdateRunnerBody {
   runningStats?: RunningStats | null;
   lat?: number | null;
   lng?: number | null;
+  travelCity?: string | null;
+  travelCountry?: string | null;
+  travelUntil?: string | null;
+  travelNote?: string | null;
 }

@@ -26,12 +26,18 @@ router.get("/runners", async (req, res) => {
   }
   if (country) {
     conditions.push(
-      sql`lower(${runnersTable.country}) = lower(${country})`
+      or(
+        sql`lower(${runnersTable.country}) = lower(${country})`,
+        sql`lower(${runnersTable.travelCountry}) = lower(${country})`
+      )
     );
   }
   if (city) {
     conditions.push(
-      sql`lower(${runnersTable.city}) = lower(${city})`
+      or(
+        sql`lower(${runnersTable.city}) = lower(${city})`,
+        sql`lower(${runnersTable.travelCity}) = lower(${city})`
+      )
     );
   }
   if (experience) {

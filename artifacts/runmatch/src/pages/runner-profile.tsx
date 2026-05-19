@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Activity, Timer, Medal, Heart, Users, ExternalLink, MessageSquare } from "lucide-react";
+import { MapPin, Activity, Timer, Medal, Heart, Users, ExternalLink, MessageSquare, Plane } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
@@ -95,9 +95,20 @@ export default function RunnerProfile() {
                   {runner.age && <span className="text-3xl text-muted-foreground font-light">{runner.age}</span>}
                 </div>
                 
-                <div className="flex items-center text-muted-foreground mb-6 text-lg">
-                  <MapPin className="w-5 h-5 mr-2 text-primary" />
-                  {runner.city}, {runner.country}
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <div className="flex items-center text-muted-foreground text-lg">
+                    <MapPin className="w-5 h-5 mr-2 text-primary" />
+                    {runner.city}, {runner.country}
+                  </div>
+                  {runner.travelCity && runner.travelCountry && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium">
+                      <Plane className="w-4 h-4 text-amber-500" />
+                      <span>
+                        Currently in {runner.travelCity}, {runner.travelCountry}
+                        {runner.travelUntil ? ` · until ${runner.travelUntil}` : ""}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex flex-wrap gap-4 mb-8">

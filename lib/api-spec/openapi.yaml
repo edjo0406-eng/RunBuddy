@@ -461,6 +461,22 @@ components:
           type: number
           nullable: true
           description: Longitude coordinate
+        travelCity:
+          type: string
+          nullable: true
+          description: City the runner is currently visiting
+        travelCountry:
+          type: string
+          nullable: true
+          description: Country the runner is currently visiting
+        travelUntil:
+          type: string
+          nullable: true
+          description: Date until which the runner is travelling (e.g. "May 24")
+        travelNote:
+          type: string
+          nullable: true
+          description: Short note about the trip
         createdAt:
           type: string
           format: date-time
@@ -516,6 +532,18 @@ components:
         lng:
           type: number
           nullable: true
+        travelCity:
+          type: string
+          nullable: true
+        travelCountry:
+          type: string
+          nullable: true
+        travelUntil:
+          type: string
+          nullable: true
+        travelNote:
+          type: string
+          nullable: true
       required:
         - name
         - lookingFor
@@ -561,6 +589,18 @@ components:
           nullable: true
         lng:
           type: number
+          nullable: true
+        travelCity:
+          type: string
+          nullable: true
+        travelCountry:
+          type: string
+          nullable: true
+        travelUntil:
+          type: string
+          nullable: true
+        travelNote:
+          type: string
           nullable: true
 
     Connection:
