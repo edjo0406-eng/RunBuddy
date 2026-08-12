@@ -7,7 +7,7 @@ import { RunnerMap } from "@/components/ui/runner-map";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users, MapPin, LayoutGrid, Map } from "lucide-react";
+import { ArrowRight, Compass, Search, Users, MapPin, LayoutGrid, Map, SlidersHorizontal } from "lucide-react";
 import { ListRunnersMode, ListRunnersExperience } from "@workspace/api-client-react";
 
 export default function RunBuddy() {
@@ -16,7 +16,7 @@ export default function RunBuddy() {
   const [experience, setExperience] = useState<ListRunnersExperience | undefined>();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
-  const { data: runners, isLoading } = useListRunners(
+  const { data: runners, isLoading, isError, refetch } = useListRunners(
     { mode: ListRunnersMode.buddy, country: country || undefined, city: city || undefined, experience },
     { query: { queryKey: getListRunnersQueryKey({ mode: ListRunnersMode.buddy, country: country || undefined, city: city || undefined, experience }) } }
   );
@@ -26,21 +26,38 @@ export default function RunBuddy() {
       <Navbar />
       
       <main className="flex-grow">
-        <section className="bg-secondary/10 py-12 border-b border-border/50">
-          <div className="container mx-auto px-4 text-center">
-            <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
-            <h1 className="text-4xl font-display font-bold mb-4">RunBuddy</h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              Find a local runner anywhere in the world. Perfect for exploring new cities or crushing long runs together.
-            </p>
+        <section className="relative overflow-hidden bg-foreground text-background">
+          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border border-primary/20" />
+          <div className="absolute right-16 top-16 h-28 w-28 rounded-full border border-secondary/50" />
+          <div className="container relative mx-auto grid gap-8 px-4 py-14 md:grid-cols-[1fr_auto] md:items-end md:py-16 lg:px-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-primary">
+                <Compass className="h-4 w-4" />
+                <span className="font-mono-label text-[10px]">the community finder</span>
+              </div>
+              <h1 data-testid="heading-run-buddy" className="mt-5 font-display text-5xl font-bold leading-[.95] tracking-tight sm:text-6xl">Find your<br /><span className="text-primary">RunBuddy.</span></h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-background/65">
+                Search the club by place and pace. Meet someone for a morning loop, a travel run, or the route you keep promising yourself you will try.
+              </p>
+            </div>
+            <div className="hidden border-l border-background/20 pl-7 md:block">
+              <span className="font-mono-label text-[10px] text-background/45">live directory</span>
+              <span className="mt-2 block font-display text-3xl font-bold text-primary">{isLoading ? "—" : runners?.length ?? 0}</span>
+              <span className="text-xs text-background/55">runners open to a buddy</span>
+            </div>
           </div>
         </section>
 
-        <section className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border shadow-sm">
+        <section className="container mx-auto px-4 py-8 lg:px-6">
+          <div className="mb-7 flex items-center gap-2 text-muted-foreground">
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="font-mono-label text-[10px]">shape your search</span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 rounded-2xl border border-foreground/10 bg-card p-3 shadow-[0_12px_30px_hsl(var(--foreground)/.05)] md:grid-cols-4 md:p-4">
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
+                data-testid="input-filter-country"
                 placeholder="Country (e.g. Japan)" 
                 value={country} 
                 onChange={(e) => setCountry(e.target.value)}
@@ -50,6 +67,7 @@ export default function RunBuddy() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
+                data-testid="input-filter-city"
                 placeholder="City" 
                 value={city} 
                 onChange={(e) => setCity(e.target.value)}
@@ -57,7 +75,7 @@ export default function RunBuddy() {
               />
             </div>
             <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="select-filter-experience">
                 <SelectValue placeholder="Experience Level" />
               </SelectTrigger>
               <SelectContent>
@@ -68,19 +86,22 @@ export default function RunBuddy() {
               </SelectContent>
             </Select>
             <button 
-              className="bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+              data-testid="button-clear-filters"
+              className="rounded-md bg-primary font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))]"
               onClick={() => { setCountry(""); setCity(""); setExperience(undefined); }}
             >
-              Clear Filters
+              Reset search
             </button>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-muted-foreground">
-              {isLoading ? "Loading runners…" : `${runners?.length ?? 0} runner${runners?.length === 1 ? "" : "s"} found`}
+          <div className="mb-6 mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p data-testid="status-runner-results" className="text-sm text-muted-foreground">
+              {isLoading ? "Finding runners…" : `${runners?.length ?? 0} runner${runners?.length === 1 ? "" : "s"} found`}
             </p>
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <div className="flex items-center gap-1 self-start rounded-lg bg-muted p-1 sm:self-auto">
               <button
+                data-testid="button-view-grid"
+                aria-pressed={viewMode === "grid"}
                 onClick={() => setViewMode("grid")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === "grid"
@@ -92,6 +113,8 @@ export default function RunBuddy() {
                 Grid
               </button>
               <button
+                data-testid="button-view-map"
+                aria-pressed={viewMode === "map"}
                 onClick={() => setViewMode("map")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === "map"
@@ -105,7 +128,16 @@ export default function RunBuddy() {
             </div>
           </div>
 
-          {viewMode === "map" ? (
+          {isError ? (
+            <div className="border border-secondary/30 bg-secondary/10 px-6 py-20 text-center">
+              <Users className="mx-auto mb-4 h-10 w-10 text-secondary" />
+              <h3 className="font-display text-2xl font-bold">The directory missed a step.</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">We could not load runners right now. Your filters are still here.</p>
+              <button data-testid="button-retry-runners" onClick={() => refetch()} className="mt-6 inline-flex items-center gap-2 bg-foreground px-5 py-3 text-sm font-bold text-background transition-transform hover:-translate-y-0.5">
+                Try again <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          ) : viewMode === "map" ? (
             <div>
               {isLoading ? (
                 <div className="w-full rounded-xl overflow-hidden border" style={{ height: 580 }}>
@@ -137,13 +169,14 @@ export default function RunBuddy() {
               ) : (
                 <div className="col-span-full py-24 text-center">
                   <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <h3 className="text-xl font-display font-medium text-foreground mb-2">No buddies found</h3>
-                  <p className="text-muted-foreground mb-6">Be the first to run in this area, or adjust your search.</p>
+                   <h3 className="mb-2 font-display text-xl font-medium text-foreground">No buddies found here yet</h3>
+                   <p className="mb-6 text-muted-foreground">Try a nearby city, widen the experience filter, or be the first to run in this area.</p>
                   <button 
+                     data-testid="button-empty-clear-filters"
                     onClick={() => { setCountry(""); setCity(""); setExperience(undefined); }}
-                    className="text-secondary font-medium hover:underline"
+                     className="inline-flex items-center gap-2 font-bold text-secondary hover:underline"
                   >
-                    Clear all filters
+                     Clear all filters <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               )}

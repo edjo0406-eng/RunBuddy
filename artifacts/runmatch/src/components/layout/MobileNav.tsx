@@ -15,30 +15,31 @@ export function MobileNav() {
 
   const items = [
     { href: "/", icon: Home, label: "Home", active: location === "/" },
+    { href: "/run-buddy", icon: Users, label: "RunBuddy", active: location.startsWith("/run-buddy"), primary: true },
     { href: "/run-date", icon: Heart, label: "RunDate", active: location.startsWith("/run-date") },
-    { href: "/run-buddy", icon: Users, label: "RunBuddy", active: location.startsWith("/run-buddy") },
     { href: "/inbox", icon: MessageSquare, label: "Inbox", active: location.startsWith("/inbox") || location.startsWith("/messages"), badge: unreadCount },
     { href: "/create-profile", icon: UserPlus, label: "Join", active: location.startsWith("/create-profile") },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-t border-border/50 supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center justify-around h-16 px-2 safe-area-inset-bottom">
-        {items.map(({ href, icon: Icon, label, active, badge }) => (
-          <Link key={href} href={href}>
-            <button className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[56px] ${active ? "text-primary" : "text-muted-foreground"}`}>
-              <div className="relative">
-                <Icon className={`w-5 h-5 transition-transform ${active ? "scale-110" : ""}`} />
-                {badge != null && badge > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-                    {badge > 9 ? "9+" : badge}
-                  </span>
-                )}
-              </div>
-              <span className={`text-[10px] font-medium leading-none ${active ? "text-primary" : "text-muted-foreground"}`}>
-                {label}
-              </span>
-            </button>
+    <nav aria-label="Mobile navigation" className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/95 backdrop-blur-xl md:hidden supports-[backdrop-filter]:bg-background/80">
+      <div className="safe-area-inset-bottom flex h-[4.5rem] items-center justify-around px-1">
+        {items.map(({ href, icon: Icon, label, active, badge, primary }) => (
+          <Link
+            key={href}
+            href={href}
+            data-testid={`link-mobile-${label.toLowerCase()}`}
+            className={`relative flex min-w-[56px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 transition-all ${primary ? "min-w-[78px]" : ""} ${active ? (primary ? "bg-foreground text-primary" : "text-foreground") : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <div className="relative">
+              <Icon className={`transition-transform ${primary ? "h-[22px] w-[22px]" : "h-5 w-5"} ${active ? "scale-110" : ""}`} />
+              {badge != null && badge > 0 && (
+                <span data-testid="badge-mobile-unread-count" className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-0.5 text-[9px] font-bold text-secondary-foreground">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
+            </div>
+            <span className={`text-[10px] font-bold leading-none ${primary ? "tracking-tight" : ""}`}>{label}</span>
           </Link>
         ))}
       </div>

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -65,50 +66,50 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Light mode - Crisp cool white with electric blue and sunrise orange */
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
+  /* Light mode - sunlit club house: warm paper, ink navy, citrus track marks */
+  --background: 44 36% 96%;
+  --foreground: 218 42% 15%;
   
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card: 42 45% 99%;
+  --card-foreground: 218 42% 15%;
+  --card-border: 42 20% 87%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover: 42 45% 99%;
+  --popover-foreground: 218 42% 15%;
+  --popover-border: 42 20% 87%;
 
-  /* Electric Dawn Blue */
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
+  /* Citrus chartreuse */
+  --primary: 74 80% 49%;
+  --primary-foreground: 218 42% 15%;
 
-  /* Sunrise Orange */
-  --secondary: 17 92% 55%;
-  --secondary-foreground: 210 40% 98%;
+  /* Clay coral */
+  --secondary: 11 76% 58%;
+  --secondary-foreground: 42 45% 99%;
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 42 23% 91%;
+  --muted-foreground: 218 15% 45%;
 
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 187 42% 84%;
+  --accent-foreground: 218 42% 15%;
 
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 68% 49%;
+  --destructive-foreground: 42 45% 99%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221 83% 53%;
+  --border: 42 20% 87%;
+  --input: 42 20% 82%;
+  --ring: 74 80% 39%;
 
-  --chart-1: 221 83% 53%;
-  --chart-2: 17 92% 55%;
-  --chart-3: 43 100% 50%;
-  --chart-4: 160 84% 39%;
-  --chart-5: 280 84% 60%;
+  --chart-1: 74 80% 39%;
+  --chart-2: 11 76% 58%;
+  --chart-3: 187 42% 46%;
+  --chart-4: 218 42% 30%;
+  --chart-5: 42 82% 55%;
 
-  --app-font-sans: 'Plus Jakarta Sans', sans-serif;
-  --app-font-display: 'Clash Display', sans-serif;
+  --app-font-sans: 'Manrope', sans-serif;
+  --app-font-display: 'Space Grotesk', sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
-  --radius: 0.75rem;
+  --app-font-mono: 'DM Mono', monospace;
+  --radius: 1rem;
 }
 
 .dark {
@@ -120,44 +121,42 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Midnight Blue background */
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  /* Ink night */
+  --background: 218 42% 10%;
+  --foreground: 42 45% 96%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217.2 32.6% 17.5%;
+  --card: 218 35% 14%;
+  --card-foreground: 42 45% 96%;
+  --card-border: 218 24% 24%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217.2 32.6% 17.5%;
+  --popover: 218 35% 14%;
+  --popover-foreground: 42 45% 96%;
+  --popover-border: 218 24% 24%;
 
-  /* Electric Dawn Blue */
-  --primary: 217 91% 60%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 74 80% 55%;
+  --primary-foreground: 218 42% 10%;
 
-  /* Sunrise Orange */
-  --secondary: 17 92% 55%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 11 76% 62%;
+  --secondary-foreground: 218 42% 10%;
 
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 218 24% 20%;
+  --muted-foreground: 218 13% 68%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 187 32% 27%;
+  --accent-foreground: 42 45% 96%;
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 56% 44%;
+  --destructive-foreground: 42 45% 96%;
 
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
+  --border: 218 24% 24%;
+  --input: 218 24% 29%;
+  --ring: 74 80% 55%;
 
-  --chart-1: 217 91% 60%;
-  --chart-2: 17 92% 55%;
-  --chart-3: 43 100% 50%;
-  --chart-4: 160 84% 39%;
-  --chart-5: 280 84% 60%;
+  --chart-1: 74 80% 55%;
+  --chart-2: 11 76% 62%;
+  --chart-3: 187 42% 46%;
+  --chart-4: 42 82% 55%;
+  --chart-5: 218 24% 60%;
 }
 
 @layer base {
@@ -172,4 +171,50 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--app-font-display);
   }
+}
+
+@layer utilities {
+  .font-mono-label {
+    font-family: var(--app-font-mono);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .runmatch-noise::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    z-index: 60;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+  }
+
+  .route-dash {
+    stroke-dasharray: 8 10;
+    animation: route-dash 18s linear infinite;
+  }
+
+  .reveal-up {
+    animation: reveal-up 700ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .reveal-up-delay-1 { animation-delay: 100ms; }
+  .reveal-up-delay-2 { animation-delay: 180ms; }
+  .reveal-up-delay-3 { animation-delay: 260ms; }
+}
+
+@keyframes route-dash {
+  to { stroke-dashoffset: -180; }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -1,0 +1,1 @@
+- [RunBuddy-first product direction](runbuddy-first.md) — RunBuddy is the primary RunMatch experience; RunDate remains a secondary mode.
