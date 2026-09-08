@@ -57,6 +57,18 @@ router.post("/runners", async (req, res) => {
     return res.status(400).json({ error: parsed.error.issues });
   }
 
+  const trackingApps = parsed.data.trackingApps;
+  const hasTrackingApp = trackingApps
+    ? Object.values(trackingApps).some((value) =>
+        typeof value === "string" ? value.trim().length > 0 : value === true
+      )
+    : false;
+  if (!hasTrackingApp) {
+    return res.status(400).json({
+      error: [{ path: ["trackingApps"], message: "At least one tracking app is required" }],
+    });
+  }
+
   const [runner] = await db.insert(runnersTable).values(parsed.data).returning();
   return res.status(201).json(runner);
 });

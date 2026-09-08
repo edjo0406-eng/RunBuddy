@@ -65,7 +65,7 @@ export interface Runner {
   gender?: string | null;
   lookingFor: RunnerLookingFor;
   experience?: RunnerExperience;
-  trackingApps?: TrackingApps | null;
+  trackingApps: TrackingApps;
   runningStats?: RunningStats | null;
   /** Latitude coordinate */
   lat?: number | null;

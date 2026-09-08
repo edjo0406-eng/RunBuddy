@@ -50,18 +50,16 @@ export const ListRunnersResponseItem = zod.object({
   experience: zod
     .enum(["beginner", "intermediate", "advanced", "elite"])
     .nullish(),
-  trackingApps: zod
-    .object({
-      stravaUrl: zod.string().nullish(),
-      garminUrl: zod.string().nullish(),
-      nikeRunClubUrl: zod.string().nullish(),
-      wahooPlan: zod.string().nullish(),
-      polarUrl: zod.string().nullish(),
-      suuntoUrl: zod.string().nullish(),
-      appleHealthConnected: zod.boolean().nullish(),
-      garminConnectUrl: zod.string().nullish(),
-    })
-    .nullish(),
+  trackingApps: zod.object({
+    stravaUrl: zod.string().nullish(),
+    garminUrl: zod.string().nullish(),
+    nikeRunClubUrl: zod.string().nullish(),
+    wahooPlan: zod.string().nullish(),
+    polarUrl: zod.string().nullish(),
+    suuntoUrl: zod.string().nullish(),
+    appleHealthConnected: zod.boolean().nullish(),
+    garminConnectUrl: zod.string().nullish(),
+  }),
   runningStats: zod
     .object({
       weeklyMileageKm: zod.number().nullish(),
@@ -167,18 +165,16 @@ export const GetRunnerResponse = zod.object({
   experience: zod
     .enum(["beginner", "intermediate", "advanced", "elite"])
     .nullish(),
-  trackingApps: zod
-    .object({
-      stravaUrl: zod.string().nullish(),
-      garminUrl: zod.string().nullish(),
-      nikeRunClubUrl: zod.string().nullish(),
-      wahooPlan: zod.string().nullish(),
-      polarUrl: zod.string().nullish(),
-      suuntoUrl: zod.string().nullish(),
-      appleHealthConnected: zod.boolean().nullish(),
-      garminConnectUrl: zod.string().nullish(),
-    })
-    .nullish(),
+  trackingApps: zod.object({
+    stravaUrl: zod.string().nullish(),
+    garminUrl: zod.string().nullish(),
+    nikeRunClubUrl: zod.string().nullish(),
+    wahooPlan: zod.string().nullish(),
+    polarUrl: zod.string().nullish(),
+    suuntoUrl: zod.string().nullish(),
+    appleHealthConnected: zod.boolean().nullish(),
+    garminConnectUrl: zod.string().nullish(),
+  }),
   runningStats: zod
     .object({
       weeklyMileageKm: zod.number().nullish(),
@@ -280,18 +276,16 @@ export const UpdateRunnerResponse = zod.object({
   experience: zod
     .enum(["beginner", "intermediate", "advanced", "elite"])
     .nullish(),
-  trackingApps: zod
-    .object({
-      stravaUrl: zod.string().nullish(),
-      garminUrl: zod.string().nullish(),
-      nikeRunClubUrl: zod.string().nullish(),
-      wahooPlan: zod.string().nullish(),
-      polarUrl: zod.string().nullish(),
-      suuntoUrl: zod.string().nullish(),
-      appleHealthConnected: zod.boolean().nullish(),
-      garminConnectUrl: zod.string().nullish(),
-    })
-    .nullish(),
+  trackingApps: zod.object({
+    stravaUrl: zod.string().nullish(),
+    garminUrl: zod.string().nullish(),
+    nikeRunClubUrl: zod.string().nullish(),
+    wahooPlan: zod.string().nullish(),
+    polarUrl: zod.string().nullish(),
+    suuntoUrl: zod.string().nullish(),
+    appleHealthConnected: zod.boolean().nullish(),
+    garminConnectUrl: zod.string().nullish(),
+  }),
   runningStats: zod
     .object({
       weeklyMileageKm: zod.number().nullish(),
@@ -356,18 +350,16 @@ export const ListConnectionsResponseItem = zod.object({
       experience: zod
         .enum(["beginner", "intermediate", "advanced", "elite"])
         .nullish(),
-      trackingApps: zod
-        .object({
-          stravaUrl: zod.string().nullish(),
-          garminUrl: zod.string().nullish(),
-          nikeRunClubUrl: zod.string().nullish(),
-          wahooPlan: zod.string().nullish(),
-          polarUrl: zod.string().nullish(),
-          suuntoUrl: zod.string().nullish(),
-          appleHealthConnected: zod.boolean().nullish(),
-          garminConnectUrl: zod.string().nullish(),
-        })
-        .nullish(),
+      trackingApps: zod.object({
+        stravaUrl: zod.string().nullish(),
+        garminUrl: zod.string().nullish(),
+        nikeRunClubUrl: zod.string().nullish(),
+        wahooPlan: zod.string().nullish(),
+        polarUrl: zod.string().nullish(),
+        suuntoUrl: zod.string().nullish(),
+        appleHealthConnected: zod.boolean().nullish(),
+        garminConnectUrl: zod.string().nullish(),
+      }),
       runningStats: zod
         .object({
           weeklyMileageKm: zod.number().nullish(),
@@ -421,18 +413,16 @@ export const ListConnectionsResponseItem = zod.object({
       experience: zod
         .enum(["beginner", "intermediate", "advanced", "elite"])
         .nullish(),
-      trackingApps: zod
-        .object({
-          stravaUrl: zod.string().nullish(),
-          garminUrl: zod.string().nullish(),
-          nikeRunClubUrl: zod.string().nullish(),
-          wahooPlan: zod.string().nullish(),
-          polarUrl: zod.string().nullish(),
-          suuntoUrl: zod.string().nullish(),
-          appleHealthConnected: zod.boolean().nullish(),
-          garminConnectUrl: zod.string().nullish(),
-        })
-        .nullish(),
+      trackingApps: zod.object({
+        stravaUrl: zod.string().nullish(),
+        garminUrl: zod.string().nullish(),
+        nikeRunClubUrl: zod.string().nullish(),
+        wahooPlan: zod.string().nullish(),
+        polarUrl: zod.string().nullish(),
+        suuntoUrl: zod.string().nullish(),
+        appleHealthConnected: zod.boolean().nullish(),
+        garminConnectUrl: zod.string().nullish(),
+      }),
       runningStats: zod
         .object({
           weeklyMileageKm: zod.number().nullish(),
@@ -518,18 +508,16 @@ export const UpdateConnectionResponse = zod.object({
       experience: zod
         .enum(["beginner", "intermediate", "advanced", "elite"])
         .nullish(),
-      trackingApps: zod
-        .object({
-          stravaUrl: zod.string().nullish(),
-          garminUrl: zod.string().nullish(),
-          nikeRunClubUrl: zod.string().nullish(),
-          wahooPlan: zod.string().nullish(),
-          polarUrl: zod.string().nullish(),
-          suuntoUrl: zod.string().nullish(),
-          appleHealthConnected: zod.boolean().nullish(),
-          garminConnectUrl: zod.string().nullish(),
-        })
-        .nullish(),
+      trackingApps: zod.object({
+        stravaUrl: zod.string().nullish(),
+        garminUrl: zod.string().nullish(),
+        nikeRunClubUrl: zod.string().nullish(),
+        wahooPlan: zod.string().nullish(),
+        polarUrl: zod.string().nullish(),
+        suuntoUrl: zod.string().nullish(),
+        appleHealthConnected: zod.boolean().nullish(),
+        garminConnectUrl: zod.string().nullish(),
+      }),
       runningStats: zod
         .object({
           weeklyMileageKm: zod.number().nullish(),
@@ -583,18 +571,16 @@ export const UpdateConnectionResponse = zod.object({
       experience: zod
         .enum(["beginner", "intermediate", "advanced", "elite"])
         .nullish(),
-      trackingApps: zod
-        .object({
-          stravaUrl: zod.string().nullish(),
-          garminUrl: zod.string().nullish(),
-          nikeRunClubUrl: zod.string().nullish(),
-          wahooPlan: zod.string().nullish(),
-          polarUrl: zod.string().nullish(),
-          suuntoUrl: zod.string().nullish(),
-          appleHealthConnected: zod.boolean().nullish(),
-          garminConnectUrl: zod.string().nullish(),
-        })
-        .nullish(),
+      trackingApps: zod.object({
+        stravaUrl: zod.string().nullish(),
+        garminUrl: zod.string().nullish(),
+        nikeRunClubUrl: zod.string().nullish(),
+        wahooPlan: zod.string().nullish(),
+        polarUrl: zod.string().nullish(),
+        suuntoUrl: zod.string().nullish(),
+        appleHealthConnected: zod.boolean().nullish(),
+        garminConnectUrl: zod.string().nullish(),
+      }),
       runningStats: zod
         .object({
           weeklyMileageKm: zod.number().nullish(),
@@ -660,18 +646,16 @@ export const GetInboxResponseItem = zod.object({
       experience: zod
         .enum(["beginner", "intermediate", "advanced", "elite"])
         .nullish(),
-      trackingApps: zod
-        .object({
-          stravaUrl: zod.string().nullish(),
-          garminUrl: zod.string().nullish(),
-          nikeRunClubUrl: zod.string().nullish(),
-          wahooPlan: zod.string().nullish(),
-          polarUrl: zod.string().nullish(),
-          suuntoUrl: zod.string().nullish(),
-          appleHealthConnected: zod.boolean().nullish(),
-          garminConnectUrl: zod.string().nullish(),
-        })
-        .nullish(),
+      trackingApps: zod.object({
+        stravaUrl: zod.string().nullish(),
+        garminUrl: zod.string().nullish(),
+        nikeRunClubUrl: zod.string().nullish(),
+        wahooPlan: zod.string().nullish(),
+        polarUrl: zod.string().nullish(),
+        suuntoUrl: zod.string().nullish(),
+        appleHealthConnected: zod.boolean().nullish(),
+        garminConnectUrl: zod.string().nullish(),
+      }),
       runningStats: zod
         .object({
           weeklyMileageKm: zod.number().nullish(),
@@ -800,18 +784,16 @@ export const GetFeaturedRunnersResponseItem = zod.object({
   experience: zod
     .enum(["beginner", "intermediate", "advanced", "elite"])
     .nullish(),
-  trackingApps: zod
-    .object({
-      stravaUrl: zod.string().nullish(),
-      garminUrl: zod.string().nullish(),
-      nikeRunClubUrl: zod.string().nullish(),
-      wahooPlan: zod.string().nullish(),
-      polarUrl: zod.string().nullish(),
-      suuntoUrl: zod.string().nullish(),
-      appleHealthConnected: zod.boolean().nullish(),
-      garminConnectUrl: zod.string().nullish(),
-    })
-    .nullish(),
+  trackingApps: zod.object({
+    stravaUrl: zod.string().nullish(),
+    garminUrl: zod.string().nullish(),
+    nikeRunClubUrl: zod.string().nullish(),
+    wahooPlan: zod.string().nullish(),
+    polarUrl: zod.string().nullish(),
+    suuntoUrl: zod.string().nullish(),
+    appleHealthConnected: zod.boolean().nullish(),
+    garminConnectUrl: zod.string().nullish(),
+  }),
   runningStats: zod
     .object({
       weeklyMileageKm: zod.number().nullish(),

@@ -448,8 +448,9 @@ components:
           enum: [beginner, intermediate, advanced, elite]
           nullable: true
         trackingApps:
-          $ref: "#/components/schemas/TrackingApps"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/TrackingApps"
+          minProperties: 1
         runningStats:
           $ref: "#/components/schemas/RunningStats"
           nullable: true
@@ -487,6 +488,7 @@ components:
         - id
         - name
         - lookingFor
+        - trackingApps
         - createdAt
         - updatedAt
 

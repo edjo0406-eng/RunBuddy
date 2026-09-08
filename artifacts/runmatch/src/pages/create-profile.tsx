@@ -9,6 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateRunner, CreateRunnerBodyLookingFor, CreateRunnerBodyExperience } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,20 @@ const formSchema = z.object({
   gender: z.string().optional(),
   lookingFor: z.enum(["date", "buddy", "both"]),
   experience: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
+  trackingApps: z.object({
+    stravaUrl: z.string(),
+    garminUrl: z.string(),
+    nikeRunClubUrl: z.string(),
+    polarUrl: z.string(),
+    suuntoUrl: z.string(),
+    wahooPlan: z.string(),
+    appleHealthConnected: z.boolean(),
+  }).refine(
+    (apps) => Object.values(apps).some((value) =>
+      typeof value === "string" ? value.trim().length > 0 : value === true
+    ),
+    { message: "Select at least one tracking app." }
+  ),
   weeklyMileageKm: z.coerce.number().optional().or(z.literal("")),
   avgPacePerKm: z.string().optional()
 });
@@ -44,6 +59,15 @@ export default function CreateProfile() {
       gender: "",
       lookingFor: "buddy",
       experience: "intermediate",
+      trackingApps: {
+        stravaUrl: "",
+        garminUrl: "",
+        nikeRunClubUrl: "",
+        polarUrl: "",
+        suuntoUrl: "",
+        wahooPlan: "",
+        appleHealthConnected: false,
+      },
       weeklyMileageKm: "",
       avgPacePerKm: ""
     },
@@ -60,6 +84,7 @@ export default function CreateProfile() {
         gender: values.gender,
         lookingFor: values.lookingFor as CreateRunnerBodyLookingFor,
         experience: values.experience as CreateRunnerBodyExperience,
+        trackingApps: values.trackingApps,
         runningStats: {
           weeklyMileageKm: values.weeklyMileageKm ? Number(values.weeklyMileageKm) : null,
           avgPacePerKm: values.avgPacePerKm || null
@@ -264,6 +289,109 @@ export default function CreateProfile() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="trackingApps"
+                    render={() => (
+                      <FormItem className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <FormLabel className="font-display text-lg">Tracking Apps *</FormLabel>
+                        <FormDescription>
+                          Add at least one app so runners can find you and compare routes or pace.
+                        </FormDescription>
+                        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.stravaUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Strava</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://strava.com/athletes/..." {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.garminUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Garmin Connect</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Profile link" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.nikeRunClubUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nike Run Club</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Profile link" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.polarUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Polar</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Profile link" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.suuntoUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Suunto</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Profile link" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="trackingApps.wahooPlan"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Wahoo</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Training plan or profile link" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="trackingApps.appleHealthConnected"
+                          render={({ field }) => (
+                            <FormItem className="mt-4 flex items-center gap-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="cursor-pointer font-normal">I use Apple Health</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
