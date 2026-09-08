@@ -14,13 +14,16 @@ export function RunnerCard({ runner }: RunnerCardProps) {
   const isFemale = runner.gender?.toLowerCase() === 'female';
   const defaultAvatar = isFemale ? defaultAvatarF : defaultAvatarM;
   const isTravelling = !!(runner.travelCity && runner.travelCountry);
+  const isClub = runner.profileType !== "individual";
+  const displayName = isClub ? runner.clubName || runner.name : runner.name;
+  const profileTypeLabel = runner.profileType === "official_club" ? "Official club" : runner.profileType === "social_club" ? "Social club" : null;
 
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30 flex flex-col">
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img
           src={runner.avatarUrl || defaultAvatar}
-          alt={runner.name}
+          alt={displayName}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
@@ -36,8 +39,13 @@ export function RunnerCard({ runner }: RunnerCardProps) {
 
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="font-display font-bold text-2xl text-foreground flex items-center gap-2">
-            {runner.name} {runner.age && <span className="font-sans font-normal text-muted-foreground text-lg">{runner.age}</span>}
+            {displayName} {!isClub && runner.age && <span className="font-sans font-normal text-muted-foreground text-lg">{runner.age}</span>}
           </h3>
+          {profileTypeLabel && (
+            <Badge className="mt-1 rounded-full bg-primary/15 text-primary hover:bg-primary/15">
+              {profileTypeLabel}
+            </Badge>
+          )}
           <div className="flex items-center text-muted-foreground text-sm mt-1">
             <MapPin className="w-3 h-3 mr-1 text-primary" />
             {runner.city}, {runner.country}
@@ -53,7 +61,7 @@ export function RunnerCard({ runner }: RunnerCardProps) {
 
       <CardContent className="p-4 flex-grow">
         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-          {runner.bio || "No bio provided."}
+          {isClub ? runner.clubDescription || runner.bio || "No club description provided." : runner.bio || "No bio provided."}
         </p>
 
         <div className="flex flex-wrap gap-2">

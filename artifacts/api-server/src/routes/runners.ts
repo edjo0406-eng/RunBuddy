@@ -69,6 +69,18 @@ router.post("/runners", async (req, res) => {
     });
   }
 
+  if (parsed.data.profileType !== "individual" && !parsed.data.clubName?.trim()) {
+    return res.status(400).json({
+      error: [{ path: ["clubName"], message: "Club name is required for club profiles" }],
+    });
+  }
+
+  if (parsed.data.profileType === "official_club" && !parsed.data.clubAssociation?.trim()) {
+    return res.status(400).json({
+      error: [{ path: ["clubAssociation"], message: "Official clubs must name their registered athletics association" }],
+    });
+  }
+
   const [runner] = await db.insert(runnersTable).values(parsed.data).returning();
   return res.status(201).json(runner);
 });

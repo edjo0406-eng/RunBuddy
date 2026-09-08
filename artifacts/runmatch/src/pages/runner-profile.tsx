@@ -74,6 +74,9 @@ export default function RunnerProfile() {
 
   const isFemale = runner.gender?.toLowerCase() === 'female';
   const defaultAvatar = isFemale ? defaultAvatarF : defaultAvatarM;
+  const isClub = runner.profileType !== "individual";
+  const displayName = isClub ? runner.clubName || runner.name : runner.name;
+  const profileTypeLabel = runner.profileType === "official_club" ? "Official running club" : runner.profileType === "social_club" ? "Social running club" : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -85,15 +88,20 @@ export default function RunnerProfile() {
             <div className="flex flex-col md:flex-row gap-8 items-start">
               <img 
                 src={runner.avatarUrl || defaultAvatar} 
-                alt={runner.name}
+                alt={displayName}
                 className="w-48 h-48 object-cover rounded-2xl shadow-xl border-4 border-background"
               />
               
               <div className="flex-grow">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight">{runner.name}</h1>
-                  {runner.age && <span className="text-3xl text-muted-foreground font-light">{runner.age}</span>}
+                  <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight">{displayName}</h1>
+                  {!isClub && runner.age && <span className="text-3xl text-muted-foreground font-light">{runner.age}</span>}
                 </div>
+                {profileTypeLabel && (
+                  <Badge className="mb-3 rounded-full bg-primary/15 text-primary hover:bg-primary/15">
+                    {profileTypeLabel}
+                  </Badge>
+                )}
                 
                 <div className="flex flex-wrap items-center gap-4 mb-6">
                   <div className="flex items-center text-muted-foreground text-lg">
@@ -141,9 +149,18 @@ export default function RunnerProfile() {
               <section>
                 <h2 className="text-2xl font-display font-bold mb-4">About</h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  {runner.bio || "This runner hasn't written a bio yet."}
+                  {isClub ? runner.clubDescription || runner.bio || "This club hasn't written a description yet." : runner.bio || "This runner hasn't written a bio yet."}
                 </p>
               </section>
+
+              {isClub && runner.profileType === "official_club" && runner.clubAssociation && (
+                <section>
+                  <h2 className="text-2xl font-display font-bold mb-4">Official Registration</h2>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Registered with {runner.clubAssociation}.
+                  </p>
+                </section>
+              )}
 
               <section>
                 <h2 className="text-2xl font-display font-bold mb-4">Running Stats</h2>

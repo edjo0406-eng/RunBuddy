@@ -34,6 +34,15 @@ export interface RunningStats {
   preferredRunTypes?: string[] | null;
 }
 
+export type RunnerProfileType =
+  (typeof RunnerProfileType)[keyof typeof RunnerProfileType];
+
+export const RunnerProfileType = {
+  individual: "individual",
+  social_club: "social_club",
+  official_club: "official_club",
+} as const;
+
 export type RunnerLookingFor =
   (typeof RunnerLookingFor)[keyof typeof RunnerLookingFor];
 
@@ -63,9 +72,15 @@ export interface Runner {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType: RunnerProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor: RunnerLookingFor;
   experience?: RunnerExperience;
-  trackingApps: TrackingApps;
+  trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
   /** Latitude coordinate */
   lat?: number | null;
@@ -82,6 +97,15 @@ export interface Runner {
   createdAt: string;
   updatedAt: string;
 }
+
+export type CreateRunnerBodyProfileType =
+  (typeof CreateRunnerBodyProfileType)[keyof typeof CreateRunnerBodyProfileType];
+
+export const CreateRunnerBodyProfileType = {
+  individual: "individual",
+  social_club: "social_club",
+  official_club: "official_club",
+} as const;
 
 export type CreateRunnerBodyLookingFor =
   (typeof CreateRunnerBodyLookingFor)[keyof typeof CreateRunnerBodyLookingFor];
@@ -111,9 +135,15 @@ export interface CreateRunnerBody {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType: CreateRunnerBodyProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor: CreateRunnerBodyLookingFor;
   experience?: CreateRunnerBodyExperience;
-  trackingApps?: TrackingApps | null;
+  trackingApps: TrackingApps;
   runningStats?: RunningStats | null;
   lat?: number | null;
   lng?: number | null;
@@ -122,6 +152,15 @@ export interface CreateRunnerBody {
   travelUntil?: string | null;
   travelNote?: string | null;
 }
+
+export type UpdateRunnerBodyProfileType =
+  (typeof UpdateRunnerBodyProfileType)[keyof typeof UpdateRunnerBodyProfileType];
+
+export const UpdateRunnerBodyProfileType = {
+  individual: "individual",
+  social_club: "social_club",
+  official_club: "official_club",
+} as const;
 
 export type UpdateRunnerBodyLookingFor =
   (typeof UpdateRunnerBodyLookingFor)[keyof typeof UpdateRunnerBodyLookingFor];
@@ -151,6 +190,12 @@ export interface UpdateRunnerBody {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType?: UpdateRunnerBodyProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor?: UpdateRunnerBodyLookingFor;
   experience?: UpdateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;

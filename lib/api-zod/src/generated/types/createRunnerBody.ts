@@ -7,6 +7,7 @@
  */
 import type { CreateRunnerBodyExperience } from "./createRunnerBodyExperience";
 import type { CreateRunnerBodyLookingFor } from "./createRunnerBodyLookingFor";
+import type { CreateRunnerBodyProfileType } from "./createRunnerBodyProfileType";
 import type { RunningStats } from "./runningStats";
 import type { TrackingApps } from "./trackingApps";
 
@@ -18,9 +19,15 @@ export interface CreateRunnerBody {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType: CreateRunnerBodyProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor: CreateRunnerBodyLookingFor;
   experience?: CreateRunnerBodyExperience;
-  trackingApps?: TrackingApps | null;
+  trackingApps: TrackingApps;
   runningStats?: RunningStats | null;
   lat?: number | null;
   lng?: number | null;

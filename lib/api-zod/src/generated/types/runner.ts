@@ -7,6 +7,7 @@
  */
 import type { RunnerExperience } from "./runnerExperience";
 import type { RunnerLookingFor } from "./runnerLookingFor";
+import type { RunnerProfileType } from "./runnerProfileType";
 import type { RunningStats } from "./runningStats";
 import type { TrackingApps } from "./trackingApps";
 
@@ -19,9 +20,15 @@ export interface Runner {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType: RunnerProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor: RunnerLookingFor;
   experience?: RunnerExperience;
-  trackingApps: TrackingApps;
+  trackingApps?: TrackingApps | null;
   runningStats?: RunningStats | null;
   /** Latitude coordinate */
   lat?: number | null;

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCreateRunner, CreateRunnerBodyLookingFor, CreateRunnerBodyExperience } from "@workspace/api-client-react";
+import { useCreateRunner, CreateRunnerBodyLookingFor, CreateRunnerBodyExperience, CreateRunnerBodyProfileType } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -21,6 +21,12 @@ const formSchema = z.object({
   city: z.string().min(2),
   country: z.string().min(2),
   gender: z.string().optional(),
+  profileType: z.enum(["individual", "social_club", "official_club"]),
+  clubName: z.string().optional(),
+  clubDescription: z.string().max(500).optional(),
+  clubWebsite: z.string().url("Enter a valid website URL.").optional().or(z.literal("")),
+  clubSocialUrl: z.string().url("Enter a valid social link.").optional().or(z.literal("")),
+  clubAssociation: z.string().optional(),
   lookingFor: z.enum(["date", "buddy", "both"]),
   experience: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
   trackingApps: z.object({
@@ -39,6 +45,21 @@ const formSchema = z.object({
   ),
   weeklyMileageKm: z.coerce.number().optional().or(z.literal("")),
   avgPacePerKm: z.string().optional()
+}).superRefine((values, ctx) => {
+  if (values.profileType !== "individual" && !values.clubName?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["clubName"],
+      message: "Club name is required."
+    });
+  }
+  if (values.profileType === "official_club" && !values.clubAssociation?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["clubAssociation"],
+      message: "Registered athletics association is required for official clubs."
+    });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,6 +78,12 @@ export default function CreateProfile() {
       city: "",
       country: "",
       gender: "",
+      profileType: "individual",
+      clubName: "",
+      clubDescription: "",
+      clubWebsite: "",
+      clubSocialUrl: "",
+      clubAssociation: "",
       lookingFor: "buddy",
       experience: "intermediate",
       trackingApps: {
@@ -72,6 +99,7 @@ export default function CreateProfile() {
       avgPacePerKm: ""
     },
   });
+  const profileType = form.watch("profileType");
 
   const onSubmit = (values: FormValues) => {
     createRunner.mutate({
@@ -82,6 +110,12 @@ export default function CreateProfile() {
         city: values.city,
         country: values.country,
         gender: values.gender,
+        profileType: values.profileType as CreateRunnerBodyProfileType,
+        clubName: values.clubName || null,
+        clubDescription: values.clubDescription || null,
+        clubWebsite: values.clubWebsite || null,
+        clubSocialUrl: values.clubSocialUrl || null,
+        clubAssociation: values.clubAssociation || null,
         lookingFor: values.lookingFor as CreateRunnerBodyLookingFor,
         experience: values.experience as CreateRunnerBodyExperience,
         trackingApps: values.trackingApps,
@@ -94,7 +128,7 @@ export default function CreateProfile() {
       onSuccess: (runner) => {
         toast({
           title: "Profile Created!",
-          description: "Welcome to RunDate. Get ready to hit the pavement.",
+          description: "Welcome to the community. Get ready to hit the pavement.",
         });
         setLocation(`/runner/${runner.id}`);
       },
@@ -116,7 +150,7 @@ export default function CreateProfile() {
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="mb-8">
             <h1 className="text-4xl font-display font-bold mb-2 tracking-tight">Join the Community</h1>
-            <p className="text-muted-foreground text-lg">Create your RunDate profile to find running buddies and dates.</p>
+            <p className="text-muted-foreground text-lg">Create your runner profile for RunBuddy, RunDate, or both.</p>
           </div>
 
           <Form {...form}>
@@ -205,8 +239,120 @@ export default function CreateProfile() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="profileType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Joining as *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a profile type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="individual">Individual runner</SelectItem>
+                            <SelectItem value="social_club">Social running club</SelectItem>
+                            <SelectItem value="official_club">Official running club</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Official clubs should be registered with an athletics association.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
+
+              {profileType !== "individual" && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="font-display text-2xl">Club Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="clubName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Club Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Sunday Miles Club" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clubDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>About the Club</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Tell runners what your club is about..."
+                              className="resize-none h-28"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="clubWebsite"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Website</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://yourclub.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="clubSocialUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Social Link</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://instagram.com/yourclub" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {profileType === "official_club" && (
+                      <FormField
+                        control={form.control}
+                        name="clubAssociation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Registered Athletics Association *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="National Athletics Federation" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Official club profiles identify the athletics association they are registered with.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader>

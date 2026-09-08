@@ -9,6 +9,7 @@ import type { RunningStats } from "./runningStats";
 import type { TrackingApps } from "./trackingApps";
 import type { UpdateRunnerBodyExperience } from "./updateRunnerBodyExperience";
 import type { UpdateRunnerBodyLookingFor } from "./updateRunnerBodyLookingFor";
+import type { UpdateRunnerBodyProfileType } from "./updateRunnerBodyProfileType";
 
 export interface UpdateRunnerBody {
   name?: string;
@@ -18,6 +19,12 @@ export interface UpdateRunnerBody {
   city?: string | null;
   country?: string | null;
   gender?: string | null;
+  profileType?: UpdateRunnerBodyProfileType;
+  clubName?: string | null;
+  clubDescription?: string | null;
+  clubWebsite?: string | null;
+  clubSocialUrl?: string | null;
+  clubAssociation?: string | null;
   lookingFor?: UpdateRunnerBodyLookingFor;
   experience?: UpdateRunnerBodyExperience;
   trackingApps?: TrackingApps | null;

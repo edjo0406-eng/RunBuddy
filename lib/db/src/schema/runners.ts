@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const lookingForEnum = pgEnum("looking_for", ["date", "buddy", "both"]);
 export const experienceEnum = pgEnum("experience", ["beginner", "intermediate", "advanced", "elite"]);
+export const profileTypeEnum = pgEnum("profile_type", ["individual", "social_club", "official_club"]);
 export const connectionTypeEnum = pgEnum("connection_type", ["date", "buddy"]);
 export const connectionStatusEnum = pgEnum("connection_status", ["pending", "accepted", "declined"]);
 
@@ -16,6 +17,12 @@ export const runnersTable = pgTable("runners", {
   city: text("city"),
   country: text("country"),
   gender: text("gender"),
+  profileType: profileTypeEnum("profile_type").notNull().default("individual"),
+  clubName: text("club_name"),
+  clubDescription: text("club_description"),
+  clubWebsite: text("club_website"),
+  clubSocialUrl: text("club_social_url"),
+  clubAssociation: text("club_association"),
   lookingFor: lookingForEnum("looking_for").notNull().default("both"),
   experience: experienceEnum("experience"),
   trackingApps: jsonb("tracking_apps").$type<{

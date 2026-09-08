@@ -440,6 +440,24 @@ components:
         gender:
           type: string
           nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
+          type: string
+          nullable: true
         lookingFor:
           type: string
           enum: [date, buddy, both]
@@ -448,9 +466,8 @@ components:
           enum: [beginner, intermediate, advanced, elite]
           nullable: true
         trackingApps:
-          allOf:
-            - $ref: "#/components/schemas/TrackingApps"
-          minProperties: 1
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
         runningStats:
           $ref: "#/components/schemas/RunningStats"
           nullable: true
@@ -487,8 +504,8 @@ components:
       required:
         - id
         - name
+        - profileType
         - lookingFor
-        - trackingApps
         - createdAt
         - updatedAt
 
@@ -515,6 +532,24 @@ components:
         gender:
           type: string
           nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
+          type: string
+          nullable: true
         lookingFor:
           type: string
           enum: [date, buddy, both]
@@ -523,8 +558,9 @@ components:
           enum: [beginner, intermediate, advanced, elite]
           nullable: true
         trackingApps:
-          $ref: "#/components/schemas/TrackingApps"
-          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/TrackingApps"
+          minProperties: 1
         runningStats:
           $ref: "#/components/schemas/RunningStats"
           nullable: true
@@ -548,7 +584,9 @@ components:
           nullable: true
       required:
         - name
+        - profileType
         - lookingFor
+        - trackingApps
 
     UpdateRunnerBody:
       type: object
@@ -571,6 +609,24 @@ components:
           type: string
           nullable: true
         gender:
+          type: string
+          nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
           type: string
           nullable: true
         lookingFor:
