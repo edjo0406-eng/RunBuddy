@@ -8,6 +8,13 @@ import { authMiddleware } from "./middlewares/authMiddleware";
 
 const app: Express = express();
 
+const allowedCorsOrigins = new Set(
+  (process.env.CORS_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+
 app.use(
   pinoHttp({
     logger,
@@ -27,7 +34,17 @@ app.use(
     },
   }),
 );
-app.use(cors({ credentials: true, origin: true }));
+app.use(
+  cors({
+    credentials: true,
+    origin(origin, callback) {
+      // Requests without an Origin header (including same-origin requests)
+      // do not need CORS headers. Cross-origin access must be explicitly
+      // configured rather than reflecting arbitrary caller origins.
+      callback(null, !origin || allowedCorsOrigins.has(origin));
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

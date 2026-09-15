@@ -49,14 +49,27 @@ function setOidcCookie(res: Response, name: string, value: string) {
 }
 
 function getSafeReturnTo(value: unknown): string {
-  if (
-    typeof value !== "string" ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
+  if (typeof value !== "string") {
     return "/";
   }
-  return value;
+
+  // Browsers treat backslashes as forward slashes in special-scheme URLs.
+  // Normalize them before validating so "/\\attacker.example" cannot become
+  // the protocol-relative URL "//attacker.example" after the redirect.
+  const normalized = value.replaceAll("\\", "/");
+  if (!normalized.startsWith("/") || normalized.startsWith("//")) {
+    return "/";
+  }
+
+  try {
+    const parsed = new URL(normalized, "https://rundate.invalid/");
+    if (parsed.origin !== "https://rundate.invalid") {
+      return "/";
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
