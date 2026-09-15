@@ -101,6 +101,15 @@ function getSafeErrorMetadata(error: unknown) {
   };
 }
 
+function redirectAuthFailure(
+  req: Request,
+  res: Response,
+  reason: "missing_oidc_cookies" | "token_exchange_failed" | "missing_claims",
+) {
+  req.log.warn({ reason }, "Web authentication callback failed");
+  res.redirect(`/?authError=${encodeURIComponent(reason)}`);
+}
+
 async function upsertUser(claims: Record<string, unknown>) {
   const userData = {
     id: claims.sub as string,
@@ -144,6 +153,7 @@ function sessionDataFromTokens(
 }
 
 router.get("/auth/user", (req: Request, res: Response) => {
+  res.set("Cache-Control", "no-store");
   res.json(
     GetCurrentAuthUserResponse.parse({
       user: req.isAuthenticated() ? req.user : null,
@@ -184,7 +194,7 @@ router.get("/callback", async (req: Request, res: Response) => {
   const expectedState = req.cookies?.state;
 
   if (!codeVerifier || !expectedState) {
-    res.redirect("/api/login");
+    redirectAuthFailure(req, res, "missing_oidc_cookies");
     return;
   }
 
@@ -199,8 +209,15 @@ router.get("/callback", async (req: Request, res: Response) => {
       expectedState,
       idTokenExpected: true,
     });
-  } catch {
-    res.redirect("/api/login");
+  } catch (error) {
+    req.log.warn(
+      {
+        reason: "token_exchange_failed",
+        ...getSafeErrorMetadata(error),
+      },
+      "Web authentication token exchange failed",
+    );
+    res.redirect("/?authError=token_exchange_failed");
     return;
   }
 
@@ -212,7 +229,7 @@ router.get("/callback", async (req: Request, res: Response) => {
 
   const claims = tokens.claims();
   if (!claims) {
-    res.redirect("/api/login");
+    redirectAuthFailure(req, res, "missing_claims");
     return;
   }
 
