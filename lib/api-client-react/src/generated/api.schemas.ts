@@ -292,6 +292,7 @@ export interface Conversation {
 
 export interface SendMessageBody {
   toRunnerId: number;
+  /** @maxLength 4000 */
   content: string;
 }
 

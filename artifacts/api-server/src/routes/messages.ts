@@ -11,8 +11,13 @@ import {
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
+import { createRateLimiter } from "../middlewares/rateLimit";
 
 const router = Router();
+const sendMessageRateLimit = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+});
 
 router.get("/messages/inbox", async (req, res) => {
   if (!requireAuthentication(req, res)) return;
@@ -141,7 +146,7 @@ router.get("/messages/unread-count", async (req, res) => {
   return res.json({ count: row?.count ?? 0 });
 });
 
-router.post("/messages", async (req, res) => {
+router.post("/messages", sendMessageRateLimit, async (req, res) => {
   if (!requireAuthentication(req, res)) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;

@@ -13,8 +13,13 @@ import {
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
+import { createRateLimiter } from "../middlewares/rateLimit";
 
 const router = Router();
+const createConnectionRateLimit = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+});
 
 router.get("/connections", async (req, res) => {
   if (!requireAuthentication(req, res)) return;
@@ -63,7 +68,7 @@ router.get("/connections", async (req, res) => {
   return res.json(connections);
 });
 
-router.post("/connections", async (req, res) => {
+router.post("/connections", createConnectionRateLimit, async (req, res) => {
   if (!requireAuthentication(req, res)) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;

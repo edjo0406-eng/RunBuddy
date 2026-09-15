@@ -5,8 +5,13 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
+import { createRateLimiter } from "./middlewares/rateLimit";
 
 const app: Express = express();
+
+// Replit terminates requests at a trusted reverse proxy. Trust only that
+// nearest proxy hop so req.ip identifies the caller for public rate limits.
+app.set("trust proxy", 1);
 
 const allowedCorsOrigins = new Set(
   (process.env.CORS_ALLOWED_ORIGINS ?? "")
@@ -43,6 +48,13 @@ app.use(
       // configured rather than reflecting arbitrary caller origins.
       callback(null, !origin || allowedCorsOrigins.has(origin));
     },
+  }),
+);
+app.use(
+  "/api",
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
   }),
 );
 app.use(cookieParser());

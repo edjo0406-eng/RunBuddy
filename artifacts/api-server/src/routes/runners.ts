@@ -14,10 +14,19 @@ import {
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
+import { createRateLimiter } from "../middlewares/rateLimit";
 
 const router = Router();
+const listRunnersRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+});
+const createRunnerRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+});
 
-router.get("/runners", async (req, res) => {
+router.get("/runners", listRunnersRateLimit, async (req, res) => {
   if (!requireAuthentication(req, res)) return;
 
   const parsed = ListRunnersQueryParams.safeParse(req.query);
@@ -68,7 +77,7 @@ router.get("/runners", async (req, res) => {
   return res.json(runners);
 });
 
-router.post("/runners", async (req, res) => {
+router.post("/runners", createRunnerRateLimit, async (req, res) => {
   if (!requireAuthentication(req, res)) return;
   const existingRunner = await getAuthenticatedRunner(req);
   if (existingRunner) {

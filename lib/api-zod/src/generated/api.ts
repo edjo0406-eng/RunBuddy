@@ -824,9 +824,11 @@ export const GetUnreadCountResponse = zod.object({
 /**
  * @summary Send a message to another runner
  */
+export const sendMessageBodyContentMax = 4000;
+
 export const SendMessageBody = zod.object({
   "toRunnerId": zod.number(),
-  "content": zod.string()
+  "content": zod.string().max(sendMessageBodyContentMax)
 })
 
 export const SendMessageResponse = zod.object({
