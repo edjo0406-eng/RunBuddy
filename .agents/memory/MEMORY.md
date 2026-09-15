@@ -1,1 +1,2 @@
 - [RunBuddy-first product direction](runbuddy-first.md) — RunBuddy is the primary RunMatch experience; RunDate remains a secondary mode.
+- [Orval and Zod compatibility](orval-zod-compatibility.md) — generated clients must stay Zod 3-compatible until the workspace upgrades Zod.
