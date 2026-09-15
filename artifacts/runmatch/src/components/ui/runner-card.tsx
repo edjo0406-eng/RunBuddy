@@ -81,10 +81,11 @@ export function RunnerCard({ runner }: RunnerCardProps) {
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <Link href={`/runner/${runner.id}`} className="w-full">
-          <button className="w-full py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
-            View Profile
-          </button>
+        <Link
+          href={`/runner/${runner.id}`}
+          className="w-full rounded-lg bg-primary/10 py-2 text-center text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+        >
+          View Profile
         </Link>
       </CardFooter>
     </Card>

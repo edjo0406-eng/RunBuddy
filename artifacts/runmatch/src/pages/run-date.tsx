@@ -37,37 +37,48 @@ export default function RunDate() {
 
         <section className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-card p-4 rounded-xl border shadow-sm">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Country" 
-                value={country} 
-                onChange={(e) => setCountry(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="date-filter-country" className="text-xs font-medium text-foreground">Country</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  id="date-filter-country"
+                  placeholder="e.g. Japan"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="City" 
-                value={city} 
-                onChange={(e) => setCity(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="date-filter-city" className="text-xs font-medium text-foreground">City</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  id="date-filter-city"
+                  placeholder="e.g. Tokyo"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-            <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Experience Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
-                <SelectItem value="elite">Elite</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="date-filter-experience" className="text-xs font-medium text-foreground">Experience level</label>
+              <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
+                <SelectTrigger id="date-filter-experience">
+                  <SelectValue placeholder="Any experience" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="elite">Elite</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <button 
-              className="bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/90 transition-colors"
+              className="self-end rounded-md bg-secondary py-2 font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
               onClick={() => { setCountry(""); setCity(""); setExperience(undefined); }}
             >
               Clear Filters

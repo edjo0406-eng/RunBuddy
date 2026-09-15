@@ -54,40 +54,51 @@ export default function RunBuddy() {
             <span className="font-mono-label text-[10px]">shape your search</span>
           </div>
           <div className="grid grid-cols-1 gap-3 rounded-2xl border border-foreground/10 bg-card p-3 shadow-[0_12px_30px_hsl(var(--foreground)/.05)] md:grid-cols-4 md:p-4">
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                data-testid="input-filter-country"
-                placeholder="Country (e.g. Japan)" 
-                value={country} 
-                onChange={(e) => setCountry(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="buddy-filter-country" className="text-xs font-medium text-foreground">Country</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  id="buddy-filter-country"
+                  data-testid="input-filter-country"
+                  placeholder="e.g. Japan"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                data-testid="input-filter-city"
-                placeholder="City" 
-                value={city} 
-                onChange={(e) => setCity(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="buddy-filter-city" className="text-xs font-medium text-foreground">City</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  id="buddy-filter-city"
+                  data-testid="input-filter-city"
+                  placeholder="e.g. Tokyo"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-            <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
-              <SelectTrigger data-testid="select-filter-experience">
-                <SelectValue placeholder="Experience Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
-                <SelectItem value="elite">Elite</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="buddy-filter-experience" className="text-xs font-medium text-foreground">Experience level</label>
+              <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
+                <SelectTrigger id="buddy-filter-experience" data-testid="select-filter-experience">
+                  <SelectValue placeholder="Any experience" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="elite">Elite</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <button 
               data-testid="button-clear-filters"
-              className="rounded-md bg-primary font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))]"
+              className="self-end rounded-md bg-primary py-2 font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))]"
               onClick={() => { setCountry(""); setCity(""); setExperience(undefined); }}
             >
               Reset search
