@@ -6,19 +6,32 @@ import {
   UpdateConnectionParams,
   UpdateConnectionBody,
 } from "@workspace/api-zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, inArray } from "drizzle-orm";
+import {
+  getAuthenticatedRunner,
+  publicRunnerSelection,
+  requireAuthentication,
+  requireRunner,
+} from "../lib/authorization";
 
 const router = Router();
 
 router.get("/connections", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const parsed = ListConnectionsQueryParams.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
-  const { runnerId, type, status } = parsed.data;
+  const { type, status } = parsed.data;
 
   const conditions = [
-    eq(connectionsTable.fromRunnerId, runnerId),
+    or(
+      eq(connectionsTable.fromRunnerId, currentRunner.id),
+      eq(connectionsTable.toRunnerId, currentRunner.id),
+    ),
   ];
   if (type) conditions.push(eq(connectionsTable.type, type));
   if (status) conditions.push(eq(connectionsTable.status, status));
@@ -32,10 +45,12 @@ router.get("/connections", async (req, res) => {
     ...new Set(rawConnections.flatMap((c) => [c.fromRunnerId, c.toRunnerId])),
   ];
 
-  const runners =
-    runnerIds.length > 0
-      ? await db.select().from(runnersTable)
-      : [];
+  const runners = runnerIds.length > 0
+    ? await db
+        .select(publicRunnerSelection)
+        .from(runnersTable)
+        .where(inArray(runnersTable.id, runnerIds))
+    : [];
 
   const runnerMap = Object.fromEntries(runners.map((r) => [r.id, r]));
 
@@ -49,19 +64,45 @@ router.get("/connections", async (req, res) => {
 });
 
 router.post("/connections", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const parsed = CreateConnectionBody.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
 
+  if (Object.prototype.hasOwnProperty.call(req.body, "fromRunnerId")) {
+    return res.status(400).json({
+      error: "fromRunnerId is derived from the authenticated session",
+    });
+  }
+
+  if (parsed.data.toRunnerId === currentRunner.id) {
+    return res.status(400).json({ error: "Cannot connect to yourself" });
+  }
+
+  const [target] = await db
+    .select({ id: runnersTable.id })
+    .from(runnersTable)
+    .where(eq(runnersTable.id, parsed.data.toRunnerId));
+  if (!target) {
+    return res.status(404).json({ error: "Target runner not found" });
+  }
+
   const [connection] = await db
     .insert(connectionsTable)
-    .values(parsed.data)
+    .values({ ...parsed.data, fromRunnerId: currentRunner.id })
     .returning();
   return res.status(201).json(connection);
 });
 
 router.put("/connections/:id", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const paramsParsed = UpdateConnectionParams.safeParse(req.params);
   if (!paramsParsed.success) {
     return res.status(400).json({ error: paramsParsed.error.issues });
@@ -72,10 +113,31 @@ router.put("/connections/:id", async (req, res) => {
     return res.status(400).json({ error: bodyParsed.error.issues });
   }
 
+  const [existing] = await db
+    .select()
+    .from(connectionsTable)
+    .where(eq(connectionsTable.id, paramsParsed.data.id));
+
+  if (!existing) {
+    return res.status(404).json({ error: "Connection not found" });
+  }
+  if (existing.toRunnerId !== currentRunner.id) {
+    return res.status(403).json({ error: "Only the recipient can update a connection" });
+  }
+  if (existing.status !== "pending") {
+    return res.status(409).json({ error: "Connection is no longer pending" });
+  }
+
   const [updated] = await db
     .update(connectionsTable)
     .set(bodyParsed.data)
-    .where(eq(connectionsTable.id, paramsParsed.data.id))
+    .where(
+      and(
+        eq(connectionsTable.id, paramsParsed.data.id),
+        eq(connectionsTable.toRunnerId, currentRunner.id),
+        eq(connectionsTable.status, "pending"),
+      ),
+    )
     .returning();
 
   if (!updated) {

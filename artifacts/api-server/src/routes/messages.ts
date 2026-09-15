@@ -2,20 +2,24 @@ import { Router } from "express";
 import { db, messagesTable, runnersTable } from "@workspace/db";
 import { eq, or, and, desc, sql } from "drizzle-orm";
 import {
-  GetInboxQueryParams,
   GetConversationQueryParams,
-  GetUnreadCountQueryParams,
   SendMessageBody,
 } from "@workspace/api-zod";
+import {
+  getAuthenticatedRunner,
+  publicRunnerSelection,
+  requireAuthentication,
+  requireRunner,
+} from "../lib/authorization";
 
 const router = Router();
 
 router.get("/messages/inbox", async (req, res) => {
-  const parsed = GetInboxQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.issues });
-  }
-  const { runnerId } = parsed.data;
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
+  const runnerId = currentRunner.id;
 
   const msgs = await db
     .select()
@@ -48,7 +52,7 @@ router.get("/messages/inbox", async (req, res) => {
   if (otherIds.length === 0) return res.json([]);
 
   const others = await db
-    .select()
+    .select(publicRunnerSelection)
     .from(runnersTable)
     .where(sql`${runnersTable.id} = ANY(${otherIds})`);
 
@@ -71,11 +75,20 @@ router.get("/messages/inbox", async (req, res) => {
 });
 
 router.get("/messages/conversation", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const parsed = GetConversationQueryParams.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
-  const { meId, otherId } = parsed.data;
+  const { otherId } = parsed.data;
+  const meId = currentRunner.id;
+
+  if (meId === otherId) {
+    return res.status(400).json({ error: "Cannot open a conversation with yourself" });
+  }
 
   const msgs = await db
     .select()
@@ -109,11 +122,11 @@ router.get("/messages/conversation", async (req, res) => {
 });
 
 router.get("/messages/unread-count", async (req, res) => {
-  const parsed = GetUnreadCountQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.issues });
-  }
-  const { runnerId } = parsed.data;
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
+  const runnerId = currentRunner.id;
 
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -129,14 +142,33 @@ router.get("/messages/unread-count", async (req, res) => {
 });
 
 router.post("/messages", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const parsed = SendMessageBody.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
-  const { fromRunnerId, toRunnerId, content } = parsed.data;
+  const { toRunnerId, content } = parsed.data;
+  const fromRunnerId = currentRunner.id;
 
   if (fromRunnerId === toRunnerId) {
     return res.status(400).json({ error: "Cannot message yourself" });
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body, "fromRunnerId")) {
+    return res.status(400).json({
+      error: "fromRunnerId is derived from the authenticated session",
+    });
+  }
+
+  const [target] = await db
+    .select({ id: runnersTable.id })
+    .from(runnersTable)
+    .where(eq(runnersTable.id, toRunnerId));
+  if (!target) {
+    return res.status(404).json({ error: "Target runner not found" });
   }
 
   const [msg] = await db

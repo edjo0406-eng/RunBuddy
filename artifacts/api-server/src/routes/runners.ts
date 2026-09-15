@@ -8,10 +8,18 @@ import {
   UpdateRunnerParams,
 } from "@workspace/api-zod";
 import { eq, and, or, sql, desc } from "drizzle-orm";
+import {
+  getAuthenticatedRunner,
+  publicRunnerSelection,
+  requireAuthentication,
+  requireRunner,
+} from "../lib/authorization";
 
 const router = Router();
 
 router.get("/runners", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+
   const parsed = ListRunnersQueryParams.safeParse(req.query);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
@@ -45,13 +53,28 @@ router.get("/runners", async (req, res) => {
   }
 
   const runners = conditions.length > 0
-    ? await db.select().from(runnersTable).where(and(...conditions)).orderBy(desc(runnersTable.createdAt))
-    : await db.select().from(runnersTable).orderBy(desc(runnersTable.createdAt));
+    ? await db
+        .select(publicRunnerSelection)
+        .from(runnersTable)
+        .where(and(...conditions))
+        .orderBy(desc(runnersTable.createdAt))
+        .limit(100)
+    : await db
+        .select(publicRunnerSelection)
+        .from(runnersTable)
+        .orderBy(desc(runnersTable.createdAt))
+        .limit(100);
 
   return res.json(runners);
 });
 
 router.post("/runners", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const existingRunner = await getAuthenticatedRunner(req);
+  if (existingRunner) {
+    return res.status(409).json({ error: "A runner profile already exists for this account" });
+  }
+
   const parsed = CreateRunnerBody.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
@@ -81,17 +104,25 @@ router.post("/runners", async (req, res) => {
     });
   }
 
-  const [runner] = await db.insert(runnersTable).values(parsed.data).returning();
+  const [runner] = await db
+    .insert(runnersTable)
+    .values({ ...parsed.data, authUserId: req.user.id })
+    .returning();
   return res.status(201).json(runner);
 });
 
 router.get("/runners/:id", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+
   const parsed = GetRunnerParams.safeParse(req.params);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
 
-  const [runner] = await db.select().from(runnersTable).where(eq(runnersTable.id, parsed.data.id));
+  const [runner] = await db
+    .select(publicRunnerSelection)
+    .from(runnersTable)
+    .where(eq(runnersTable.id, parsed.data.id));
   if (!runner) {
     return res.status(404).json({ error: "Runner not found" });
   }
@@ -99,6 +130,10 @@ router.get("/runners/:id", async (req, res) => {
 });
 
 router.put("/runners/:id", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
   const paramsParsed = UpdateRunnerParams.safeParse(req.params);
   if (!paramsParsed.success) {
     return res.status(400).json({ error: paramsParsed.error.issues });
@@ -109,10 +144,19 @@ router.put("/runners/:id", async (req, res) => {
     return res.status(400).json({ error: bodyParsed.error.issues });
   }
 
+  if (currentRunner.id !== paramsParsed.data.id) {
+    return res.status(403).json({ error: "You can only update your own runner profile" });
+  }
+
   const [updated] = await db
     .update(runnersTable)
     .set({ ...bodyParsed.data, updatedAt: new Date() })
-    .where(eq(runnersTable.id, paramsParsed.data.id))
+    .where(
+      and(
+        eq(runnersTable.id, paramsParsed.data.id),
+        eq(runnersTable.authUserId, req.user.id),
+      ),
+    )
     .returning();
 
   if (!updated) {

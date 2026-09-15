@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, runnersTable, connectionsTable } from "@workspace/db";
 import { sql, desc } from "drizzle-orm";
+import { publicRunnerSelection, requireAuthentication } from "../lib/authorization";
 
 const router = Router();
 
@@ -47,8 +48,10 @@ router.get("/stats/countries", async (req, res) => {
 });
 
 router.get("/stats/featured", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+
   const runners = await db
-    .select()
+    .select(publicRunnerSelection)
     .from(runnersTable)
     .orderBy(desc(runnersTable.createdAt))
     .limit(12);

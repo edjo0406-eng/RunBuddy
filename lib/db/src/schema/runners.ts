@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, real, boolean, jsonb, timestamp, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, real, boolean, jsonb, timestamp, pgEnum, index, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -10,6 +10,7 @@ export const connectionStatusEnum = pgEnum("connection_status", ["pending", "acc
 
 export const runnersTable = pgTable("runners", {
   id: serial("id").primaryKey(),
+  authUserId: varchar("auth_user_id").unique(),
   name: text("name").notNull(),
   age: integer("age"),
   bio: text("bio"),

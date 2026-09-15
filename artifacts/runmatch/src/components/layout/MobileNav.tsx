@@ -8,8 +8,7 @@ export function MobileNav() {
   const { myRunnerId } = useIdentity();
 
   const { data: unread } = useGetUnreadCount(
-    { runnerId: myRunnerId! },
-    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey({ runnerId: myRunnerId! }) } }
+    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
   );
   const unreadCount = unread?.count ?? 0;
 

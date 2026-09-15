@@ -34,7 +34,6 @@ export default function RunnerProfile() {
   const handleConnect = (type: CreateConnectionBodyType) => {
     createConnection.mutate({
       data: {
-        fromRunnerId: 1, // Mock current user
         toRunnerId: id,
         type: type,
         message: "Hey! I'd love to connect."

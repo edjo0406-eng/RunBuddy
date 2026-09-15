@@ -35,8 +35,8 @@ export default function ConversationPage() {
   const { data: otherRunner } = useGetRunner(otherId, { query: { enabled: !!otherId, queryKey: getGetRunnerQueryKey(otherId) } });
 
   const { data: messages, isLoading: loadingMessages } = useGetConversation(
-    { meId: myRunnerId!, otherId },
-    { query: { enabled: !!myRunnerId && !!otherId, refetchInterval: 5_000, queryKey: getGetConversationQueryKey({ meId: myRunnerId!, otherId }) } }
+    { otherId },
+    { query: { enabled: !!myRunnerId && !!otherId, refetchInterval: 5_000, queryKey: getGetConversationQueryKey({ otherId }) } }
   );
 
   const sendMessage = useSendMessage();
@@ -53,7 +53,7 @@ export default function ConversationPage() {
     if (!content || !myRunnerId) return;
     setDraft("");
     sendMessage.mutate(
-      { data: { fromRunnerId: myRunnerId, toRunnerId: otherId, content } },
+      { data: { toRunnerId: otherId, content } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["getConversation"] });

@@ -26,8 +26,7 @@ export default function Inbox() {
 
   const { data: allRunners, isLoading: loadingRunners } = useListRunners({});
   const { data: conversations, isLoading: loadingInbox } = useGetInbox(
-    { runnerId: myRunnerId! },
-    { query: { enabled: !!myRunnerId, refetchInterval: 10_000, queryKey: getGetInboxQueryKey({ runnerId: myRunnerId! }) } }
+    { query: { enabled: !!myRunnerId, refetchInterval: 10_000, queryKey: getGetInboxQueryKey() } }
   );
 
   if (!myRunnerId) {
