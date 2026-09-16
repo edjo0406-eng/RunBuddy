@@ -153,12 +153,11 @@ function sessionDataFromTokens(
 }
 
 router.get("/auth/user", (req: Request, res: Response) => {
-  res.set("Cache-Control", "no-store");
-  res.json(
-    GetCurrentAuthUserResponse.parse({
-      user: req.isAuthenticated() ? req.user : null,
-    }),
-  );
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  const payload = GetCurrentAuthUserResponse.parse({
+    user: req.isAuthenticated() ? req.user : null,
+  });
+  res.type("application/json").end(JSON.stringify(payload));
 });
 
 router.get("/login", async (req: Request, res: Response) => {
