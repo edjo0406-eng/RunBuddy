@@ -8,6 +8,19 @@ import { authMiddleware } from "./middlewares/authMiddleware";
 import { createRateLimiter } from "./middlewares/rateLimit";
 
 const app: Express = express();
+const canonicalSiteUrl = "https://RunBuddy.replit.app";
+const publicSitemapRoutes = ["/", "/run-buddy", "/run-date"] as const;
+
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${publicSitemapRoutes
+  .map(
+    (route) => `  <url>
+    <loc>${canonicalSiteUrl}${route}</loc>
+  </url>`,
+  )
+  .join("\n")}
+</urlset>`;
 
 // Replit terminates requests at a trusted reverse proxy. Trust only that
 // nearest proxy hop so req.ip identifies the caller for public rate limits.
@@ -50,6 +63,17 @@ app.use(
     },
   }),
 );
+
+app.get("/robots.txt", (_req, res) => {
+  res
+    .type("text/plain")
+    .send(`User-agent: *\nAllow: /\n\nSitemap: ${canonicalSiteUrl}/sitemap.xml\n`);
+});
+
+app.get("/sitemap.xml", (_req, res) => {
+  res.type("application/xml").send(sitemapXml);
+});
+
 app.use(
   "/api",
   createRateLimiter({
