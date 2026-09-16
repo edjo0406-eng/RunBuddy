@@ -1,5 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +45,22 @@ function AuthGate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function LoginRedirect() {
+  useEffect(() => {
+    window.location.replace("/api/login?returnTo=%2F");
+  }, []);
+
+  return <div className="min-h-screen bg-background" />;
+}
+
+function CallbackRedirect() {
+  useEffect(() => {
+    window.location.replace(`/api/callback${window.location.search}`);
+  }, []);
+
+  return <div className="min-h-screen bg-background" />;
+}
+
 const queryClient = new QueryClient();
 
 function Router() {
@@ -54,6 +70,8 @@ function Router() {
       <Route path="/run-date" component={RunDate} />
       <Route path="/run-buddy" component={RunBuddy} />
       <Route path="/runner/:id" component={RunnerProfile} />
+      <Route path="/login" component={LoginRedirect} />
+      <Route path="/callback" component={CallbackRedirect} />
       <Route path="/create-profile">
         <AuthGate>
           <CreateProfile />
