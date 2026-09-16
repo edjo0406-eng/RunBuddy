@@ -34,13 +34,13 @@ export function useNotifications(
     if (Notification.permission !== "granted") return;
 
     const newCount = unreadCount - prev;
-    const n = new Notification("RunDate — New message", {
+    const n = new Notification("RunBuddy — New message", {
       body:
         newCount === 1
           ? "You have a new message waiting."
           : `You have ${newCount} new messages waiting.`,
       icon: "/favicon.svg",
-      tag: "rundate-new-message",
+      tag: "runbuddy-new-message",
       renotify: true,
     } as NotificationOptions);
 

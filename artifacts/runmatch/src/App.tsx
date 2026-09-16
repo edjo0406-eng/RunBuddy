@@ -7,7 +7,6 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/home";
-import RunDate from "@/pages/run-date";
 import RunBuddy from "@/pages/run-buddy";
 import RunnerProfile from "@/pages/runner-profile";
 import CreateProfile from "@/pages/create-profile";
@@ -71,7 +70,6 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/run-date" component={RunDate} />
       <Route path="/run-buddy" component={RunBuddy} />
       <Route path="/runner/:id" component={RunnerProfile} />
       <Route path="/login" component={LoginRedirect} />

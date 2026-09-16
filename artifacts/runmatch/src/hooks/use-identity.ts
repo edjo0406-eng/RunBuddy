@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const STORAGE_KEY = "rundate_my_runner_id";
+const STORAGE_KEY = "runbuddy_my_runner_id";
 
 export function useIdentity() {
   const [myRunnerId, setMyRunnerIdState] = useState<number | null>(() => {

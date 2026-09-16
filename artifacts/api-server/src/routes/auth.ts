@@ -62,8 +62,8 @@ function getSafeReturnTo(value: unknown): string {
   }
 
   try {
-    const parsed = new URL(normalized, "https://rundate.invalid/");
-    if (parsed.origin !== "https://rundate.invalid") {
+    const parsed = new URL(normalized, "https://runbuddy.invalid/");
+    if (parsed.origin !== "https://runbuddy.invalid") {
       return "/";
     }
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;

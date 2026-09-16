@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-RunDate/RunMatch is a running community web app (dating + running-partner finder).
+RunBuddy is a running community web app for finding running partners.
 Monorepo (pnpm workspaces):
 - **Frontend**: React + Vite (`artifacts/runmatch`) served at `/`
 - **API**: Express 5 (`artifacts/api-server`) served at `/api`
@@ -23,7 +23,7 @@ messages.
 - **User/auth records** — `users` (OIDC identity) and `sessions` (server-side
   session store holding access/refresh tokens).
 - **Profile integrity** — a runner's public-facing profile content.
-- **Connection state** — pending/accepted/declined date/buddy requests.
+- **Connection state** — pending/accepted/declined requests.
 - **Application secrets** — `DATABASE_URL`, `REPL_ID`, OIDC config (server-only env).
 
 ## Trust Boundaries

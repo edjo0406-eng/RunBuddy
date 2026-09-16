@@ -28,7 +28,7 @@ const formSchema = z.object({
   clubWebsite: z.string().url("Enter a valid website URL.").optional().or(z.literal("")),
   clubSocialUrl: z.string().url("Enter a valid social link.").optional().or(z.literal("")),
   clubAssociation: z.string().optional(),
-  lookingFor: z.enum(["date", "buddy", "both"]),
+  lookingFor: z.literal("buddy"),
   experience: z.enum(["beginner", "intermediate", "advanced", "elite"]).optional(),
   trackingApps: z.object({
     stravaUrl: z.string(),
@@ -152,7 +152,7 @@ export default function CreateProfile() {
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="mb-8">
             <h1 className="text-4xl font-display font-bold mb-2 tracking-tight">Join the Community</h1>
-            <p className="text-muted-foreground text-lg">Create your runner profile for RunBuddy, RunDate, or both.</p>
+            <p className="text-muted-foreground text-lg">Create your runner profile and find your next running companion.</p>
           </div>
 
           <Form {...form}>
@@ -375,9 +375,7 @@ export default function CreateProfile() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="date">Dates (RunDate)</SelectItem>
-                              <SelectItem value="buddy">Partners (RunBuddy)</SelectItem>
-                              <SelectItem value="both">Both</SelectItem>
+                              <SelectItem value="buddy">Running partners</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

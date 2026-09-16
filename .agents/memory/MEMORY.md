@@ -1,3 +1,3 @@
-- [RunBuddy-first product direction](runbuddy-first.md) — RunBuddy is the primary RunMatch experience; RunDate remains a secondary mode.
+- [RunBuddy product direction](runbuddy-first.md) — RunBuddy is the sole product experience and public entry point.
 - [Orval and Zod compatibility](orval-zod-compatibility.md) — generated clients must stay Zod 3-compatible until the workspace upgrades Zod.
 - [PWA API navigation exclusions](pwa-api-navigation.md) — service-worker navigation fallback must exclude API paths or OAuth redirects render the SPA instead.

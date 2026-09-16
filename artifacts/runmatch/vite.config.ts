@@ -40,9 +40,9 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
-        name: "RunDate",
-        short_name: "RunDate",
-        description: "Find your pace. Find your person. The running community for dates and training buddies.",
+        name: "RunBuddy",
+        short_name: "RunBuddy",
+        description: "Find your pace and your running community with RunBuddy.",
         theme_color: "#FF3C00",
         background_color: "#ffffff",
         display: "standalone",

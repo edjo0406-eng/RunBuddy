@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Activity, Timer, Medal, Heart, Users, ExternalLink, MessageSquare, Plane } from "lucide-react";
+import { MapPin, Activity, Timer, Medal, Users, ExternalLink, MessageSquare, Plane } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
@@ -121,11 +121,6 @@ export default function RunnerProfile() {
                 </div>
                 
                 <div className="flex flex-wrap gap-4 mb-8">
-                  {(runner.lookingFor === 'date' || runner.lookingFor === 'both') && (
-                    <Button onClick={() => handleConnect('date')} className="rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/90">
-                      <Heart className="w-4 h-4 mr-2" /> Connect for Date
-                    </Button>
-                  )}
                   {(runner.lookingFor === 'buddy' || runner.lookingFor === 'both') && (
                     <Button onClick={() => handleConnect('buddy')} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                       <Users className="w-4 h-4 mr-2" /> Connect for Buddy

@@ -1,10 +1,8 @@
-# RunDate
+# RunBuddy
 
 ## Overview
 
-A running community web app with two sections:
-- **RunDate** — runners looking to date other runners
-- **RunBuddy** — finding running partners while traveling or at home (not romantic)
+A running community web app for finding running partners while traveling or at home.
 
 ## Stack
 
@@ -21,10 +19,10 @@ A running community web app with two sections:
 
 ## Features
 
-- Runner profiles with city/country, bio, age, experience level, gender, lookingFor (date/buddy/both)
+- Runner profiles with city/country, bio, age, experience level, gender, and running preferences
 - Running stats: weekly mileage, personal bests (5k/10k/half/marathon), avg pace, preferred run types
 - Tracking app links: Strava, Garmin Connect, Nike Run Club, Polar, Suunto, Wahoo
-- Connection requests between runners (date or buddy type)
+- Connection requests between runners
 - App-wide stats: total runners, countries represented
 - Featured runners on homepage
 - Filter runners by country, city, experience
@@ -38,7 +36,7 @@ A running community web app with two sections:
 
 ## API Routes
 
-- `GET /api/runners` — list runners with optional filters (mode, country, city, experience)
+- `GET /api/runners` — list runners with optional filters (country, city, experience)
 - `POST /api/runners` — create runner profile
 - `GET /api/runners/:id` — get single runner
 - `PUT /api/runners/:id` — update runner
@@ -52,7 +50,7 @@ A running community web app with two sections:
 ## DB Schema
 
 - `runners` — runner profiles with JSON columns for `tracking_apps` and `running_stats`
-- `connections` — connection requests with type (date/buddy) and status (pending/accepted/declined)
+- `connections` — connection requests with status (pending/accepted/declined)
 
 ## Codegen Fix
 

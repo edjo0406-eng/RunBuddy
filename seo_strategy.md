@@ -1,17 +1,16 @@
 # SEO Strategy
 
 ## In scope
-- Public RunDate and RunBuddy discovery and marketing pages
+- Public RunBuddy discovery and marketing pages
 
 ## Out of scope
 - API endpoints and authenticated/private user workflows
 - Internal design canvas
 
 ## Target audience
-- Runners seeking dating connections or running partners
+- Runners seeking running partners
 
 ## Primary keywords
-- Runner dating
 - Find running partners
 - Running buddy
 

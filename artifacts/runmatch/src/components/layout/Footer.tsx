@@ -16,7 +16,6 @@ export function Footer() {
         <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-background/65">
           <Link href="/" data-testid="link-footer-home" className="transition-colors hover:text-primary">Home</Link>
           <Link href="/run-buddy" data-testid="link-footer-run-buddy" className="font-bold text-background transition-colors hover:text-primary">RunBuddy</Link>
-          <Link href="/run-date" data-testid="link-footer-run-date" className="transition-colors hover:text-secondary">RunDate</Link>
           <Link href="/create-profile" data-testid="link-footer-join" className="transition-colors hover:text-primary">Join the club</Link>
         </nav>
       </div>

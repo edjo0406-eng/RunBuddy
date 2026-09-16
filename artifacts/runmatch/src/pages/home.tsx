@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { trackEvent } from "@/lib/analytics";
-import { Activity, ArrowRight, Globe2, Heart, MapPin, Route, Users } from "lucide-react";
+import { Activity, ArrowRight, Globe2, MapPin, Route, Users } from "lucide-react";
 import {
   getGetFeaturedRunnersQueryKey,
   getGetStatsSummaryQueryKey,
@@ -149,7 +149,7 @@ export default function Home() {
               </div>
               <Link href="/run-buddy" data-testid="link-stats-buddy" className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-secondary">See the live community <ArrowRight className="h-4 w-4" /></Link>
             </div>
-            <div className="grid grid-cols-2 gap-px overflow-hidden border border-foreground/10 bg-foreground/10 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-px overflow-hidden border border-foreground/10 bg-foreground/10 md:grid-cols-3">
               {statsLoading ? (
                 Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className="bg-background p-6"><Skeleton className="h-10 w-20" /><Skeleton className="mt-3 h-4 w-28" /></div>
@@ -159,7 +159,6 @@ export default function Home() {
                   <div data-testid="text-stat-total-runners" className="bg-background p-6 sm:p-8"><Activity className="h-5 w-5 text-secondary" /><span className="mt-5 block font-display text-4xl font-bold">{stats?.totalRunners || 0}</span><span className="mt-1 block text-xs font-bold text-muted-foreground">runners in the club</span></div>
                   <div data-testid="text-stat-countries" className="bg-background p-6 sm:p-8"><Globe2 className="h-5 w-5 text-primary" /><span className="mt-5 block font-display text-4xl font-bold">{stats?.countriesRepresented || 0}</span><span className="mt-1 block text-xs font-bold text-muted-foreground">countries represented</span></div>
                   <div data-testid="text-stat-buddy-runners" className="bg-background p-6 sm:p-8"><Users className="h-5 w-5 text-primary" /><span className="mt-5 block font-display text-4xl font-bold">{stats?.buddyRunners || 0}</span><span className="mt-1 block text-xs font-bold text-muted-foreground">open to a RunBuddy</span></div>
-                  <div data-testid="text-stat-date-runners" className="bg-background p-6 sm:p-8"><Heart className="h-5 w-5 text-secondary" /><span className="mt-5 block font-display text-4xl font-bold">{stats?.dateRunners || 0}</span><span className="mt-1 block text-xs font-bold text-muted-foreground">also exploring RunDate</span></div>
                 </>
               )}
             </div>

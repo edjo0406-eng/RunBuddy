@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Heart, Users, MessageSquare, UserPlus } from "lucide-react";
+import { Home, Users, MessageSquare, UserPlus } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 
@@ -15,7 +15,6 @@ export function MobileNav() {
   const items = [
     { href: "/", icon: Home, label: "Home", active: location === "/" },
     { href: "/run-buddy", icon: Users, label: "RunBuddy", active: location.startsWith("/run-buddy"), primary: true },
-    { href: "/run-date", icon: Heart, label: "RunDate", active: location.startsWith("/run-date") },
     { href: "/inbox", icon: MessageSquare, label: "Inbox", active: location.startsWith("/inbox") || location.startsWith("/messages"), badge: unreadCount },
     { href: "/create-profile", icon: UserPlus, label: "Join", active: location.startsWith("/create-profile") },
   ];

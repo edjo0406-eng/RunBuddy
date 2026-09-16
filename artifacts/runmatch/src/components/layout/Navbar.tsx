@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowUpRight, Heart, MessageSquare, Users } from "lucide-react";
+import { ArrowUpRight, MessageSquare, Users } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -36,14 +36,6 @@ export function Navbar() {
             >
               <Users className="h-4 w-4 transition-transform group-hover:scale-110" />
               RunBuddy
-            </Link>
-            <Link
-              href="/run-date"
-              data-testid="link-nav-run-date"
-              className={`group flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary/10 hover:text-secondary ${location.startsWith('/run-date') ? 'text-secondary' : 'text-muted-foreground'}`}
-            >
-              <Heart className="h-4 w-4 transition-transform group-hover:scale-110" />
-              RunDate
             </Link>
           </nav>
         </div>
