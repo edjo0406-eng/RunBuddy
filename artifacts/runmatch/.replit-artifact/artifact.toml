@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "RunMatch"
+title = "Run Buddy"
 version = "1.0.0"
 id = "artifacts/runmatch"
 router = "path"
