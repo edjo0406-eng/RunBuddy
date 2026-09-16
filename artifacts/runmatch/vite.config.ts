@@ -4,6 +4,15 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { VitePWA } from "vite-plugin-pwa";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import {
+  getCanonicalUrl,
+  getPublicPageMetadata,
+  PUBLIC_PAGE_METADATA,
+  SITE_NAME,
+  SOCIAL_IMAGE_URL,
+  type PageMetadata,
+} from "./src/lib/seo";
 
 const rawPort = process.env.PORT;
 
@@ -27,10 +36,62 @@ if (!basePath) {
   );
 }
 
+const outputDirectory = path.resolve(import.meta.dirname, "dist/public");
+
+function replaceAttributeContent(
+  html: string,
+  selectorPattern: string,
+  attribute: "content" | "href",
+  value: string,
+) {
+  const tagPattern = new RegExp(
+    `(<(?:meta|link)\\s+[^>]*${selectorPattern}[^>]*${attribute}=")[^"]*(")`,
+  );
+  return html.replace(tagPattern, `$1${value}$2`);
+}
+
+function applyMetadata(html: string, metadata: PageMetadata) {
+  const canonicalUrl = getCanonicalUrl(metadata);
+  let output = html.replace(/<title>[^<]*<\/title>/, `<title>${metadata.title}</title>`);
+
+  output = replaceAttributeContent(output, 'name="description"', "content", metadata.description);
+  output = replaceAttributeContent(output, 'rel="canonical"', "href", canonicalUrl);
+  output = replaceAttributeContent(output, 'property="og:title"', "content", metadata.title);
+  output = replaceAttributeContent(output, 'property="og:description"', "content", metadata.description);
+  output = replaceAttributeContent(output, 'property="og:url"', "content", canonicalUrl);
+  output = replaceAttributeContent(output, 'property="og:type"', "content", "website");
+  output = replaceAttributeContent(output, 'property="og:site_name"', "content", SITE_NAME);
+  output = replaceAttributeContent(output, 'property="og:image"', "content", SOCIAL_IMAGE_URL);
+  output = replaceAttributeContent(output, 'name="twitter:card"', "content", "summary_large_image");
+  output = replaceAttributeContent(output, 'name="twitter:title"', "content", metadata.title);
+  output = replaceAttributeContent(output, 'name="twitter:description"', "content", metadata.description);
+  output = replaceAttributeContent(output, 'name="twitter:image"', "content", SOCIAL_IMAGE_URL);
+
+  return output;
+}
+
+const routeMetadataPlugin = {
+  name: "runbuddy-route-metadata",
+  transformIndexHtml(html: string, context?: { path?: string }) {
+    const metadata = getPublicPageMetadata(context?.path?.split(/[?#]/)[0] ?? "/");
+    return metadata ? applyMetadata(html, metadata) : html;
+  },
+  async closeBundle() {
+    const homeHtml = await readFile(path.join(outputDirectory, "index.html"), "utf8");
+    const runBuddyDirectory = path.join(outputDirectory, "run-buddy");
+    await mkdir(runBuddyDirectory, { recursive: true });
+    await writeFile(
+      path.join(runBuddyDirectory, "index.html"),
+      applyMetadata(homeHtml, PUBLIC_PAGE_METADATA.runBuddy),
+    );
+  },
+};
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
+    routeMetadataPlugin,
     tailwindcss(),
     runtimeErrorOverlay(),
     VitePWA({
@@ -91,7 +152,7 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: outputDirectory,
     emptyOutDir: true,
   },
   server: {

@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { useEffect, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,6 +14,48 @@ import Inbox from "@/pages/inbox";
 import ConversationPage from "@/pages/conversation";
 import { useAuth } from "@workspace/replit-auth-web";
 import { trackEvent } from "@/lib/analytics";
+import {
+  getCanonicalUrl,
+  getPublicPageMetadata,
+  SITE_NAME,
+  SOCIAL_IMAGE_URL,
+} from "@/lib/seo";
+
+function setMetaContent(selector: string, content: string) {
+  const element = document.head.querySelector<HTMLMetaElement>(selector);
+  element?.setAttribute("content", content);
+}
+
+function PublicRouteMetadata() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const metadata = getPublicPageMetadata(location);
+
+    if (!metadata) {
+      return;
+    }
+
+    const canonicalUrl = getCanonicalUrl(metadata);
+    document.title = metadata.title;
+    document.head
+      .querySelector<HTMLLinkElement>('link[rel="canonical"]')
+      ?.setAttribute("href", canonicalUrl);
+    setMetaContent('meta[name="description"]', metadata.description);
+    setMetaContent('meta[property="og:title"]', metadata.title);
+    setMetaContent('meta[property="og:description"]', metadata.description);
+    setMetaContent('meta[property="og:url"]', canonicalUrl);
+    setMetaContent('meta[property="og:type"]', "website");
+    setMetaContent('meta[property="og:site_name"]', SITE_NAME);
+    setMetaContent('meta[property="og:image"]', SOCIAL_IMAGE_URL);
+    setMetaContent('meta[name="twitter:card"]', "summary_large_image");
+    setMetaContent('meta[name="twitter:title"]', metadata.title);
+    setMetaContent('meta[name="twitter:description"]', metadata.description);
+    setMetaContent('meta[name="twitter:image"]', SOCIAL_IMAGE_URL);
+  }, [location]);
+
+  return null;
+}
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated, login } = useAuth();
@@ -99,6 +141,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <PublicRouteMetadata />
           <div className="pb-16 md:pb-0">
             <Router />
           </div>
