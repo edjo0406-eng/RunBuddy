@@ -38,6 +38,48 @@ if (!basePath) {
 
 const outputDirectory = path.resolve(import.meta.dirname, "dist/public");
 
+const PUBLIC_PAGE_CONTENT = {
+  home: `
+      <header>
+        <nav aria-label="Primary navigation">
+          <a href="/">RunBuddy home</a>
+          <a href="/run-buddy">Find a RunBuddy</a>
+        </nav>
+      </header>
+      <main>
+        <h1>Find running partners worldwide with RunBuddy</h1>
+        <p>Meet runners who share your pace, city, and goals. Find local running partners, plan shared routes, and join a worldwide running community.</p>
+        <p><a href="/run-buddy">Search for a running companion by city, pace, and experience</a></p>
+      </main>
+      <footer><a href="/">RunBuddy</a></footer>`,
+  runBuddy: `
+      <header>
+        <nav aria-label="Primary navigation">
+          <a href="/">RunBuddy home</a>
+          <a href="/run-buddy">Find a RunBuddy</a>
+        </nav>
+      </header>
+      <main>
+        <h1>Find a RunBuddy near you</h1>
+        <p>Search the running community by city, country, pace, and experience. Meet a compatible running partner for a morning loop, travel run, or regular training.</p>
+        <p><a href="/">Learn how RunBuddy connects runners worldwide</a></p>
+      </main>
+      <footer><a href="/">RunBuddy</a></footer>`,
+  runDate: `
+      <header>
+        <nav aria-label="Primary navigation">
+          <a href="/">RunBuddy home</a>
+          <a href="/run-buddy">Find a RunBuddy</a>
+        </nav>
+      </header>
+      <main>
+        <h1>RunDate is now part of RunBuddy</h1>
+        <p>Discover runners by city, pace, and experience for local routes, travel runs, and shared training in one worldwide running community.</p>
+        <p><a href="/run-buddy">Find a running companion with RunBuddy</a></p>
+      </main>
+      <footer><a href="/">RunBuddy</a></footer>`,
+} as const;
+
 function replaceAttributeContent(
   html: string,
   selectorPattern: string,
@@ -50,7 +92,11 @@ function replaceAttributeContent(
   return html.replace(tagPattern, `$1${value}$2`);
 }
 
-function applyMetadata(html: string, metadata: PageMetadata) {
+function applyPublicPage(
+  html: string,
+  metadata: PageMetadata,
+  content: string,
+) {
   const canonicalUrl = getCanonicalUrl(metadata);
   let output = html.replace(/<title>[^<]*<\/title>/, `<title>${metadata.title}</title>`);
 
@@ -66,6 +112,10 @@ function applyMetadata(html: string, metadata: PageMetadata) {
   output = replaceAttributeContent(output, 'name="twitter:title"', "content", metadata.title);
   output = replaceAttributeContent(output, 'name="twitter:description"', "content", metadata.description);
   output = replaceAttributeContent(output, 'name="twitter:image"', "content", SOCIAL_IMAGE_URL);
+  output = output.replace(
+    /(<!-- static-public-content:start -->)[\s\S]*?(<!-- static-public-content:end -->)/,
+    `$1${content}\n      $2`,
+  );
 
   return output;
 }
@@ -73,16 +123,32 @@ function applyMetadata(html: string, metadata: PageMetadata) {
 const routeMetadataPlugin = {
   name: "runbuddy-route-metadata",
   transformIndexHtml(html: string, context?: { path?: string }) {
-    const metadata = getPublicPageMetadata(context?.path?.split(/[?#]/)[0] ?? "/");
-    return metadata ? applyMetadata(html, metadata) : html;
+    const pathname = context?.path?.split(/[?#]/)[0] ?? "/";
+    const metadata = getPublicPageMetadata(pathname);
+    const content =
+      pathname.replace(/\/+$/, "") === "/run-buddy"
+        ? PUBLIC_PAGE_CONTENT.runBuddy
+        : pathname.replace(/\/+$/, "") === "/run-date"
+          ? PUBLIC_PAGE_CONTENT.runDate
+          : PUBLIC_PAGE_CONTENT.home;
+    return metadata ? applyPublicPage(html, metadata, content) : html;
   },
   async closeBundle() {
     const homeHtml = await readFile(path.join(outputDirectory, "index.html"), "utf8");
-    const runBuddyDirectory = path.join(outputDirectory, "run-buddy");
-    await mkdir(runBuddyDirectory, { recursive: true });
-    await writeFile(
-      path.join(runBuddyDirectory, "index.html"),
-      applyMetadata(homeHtml, PUBLIC_PAGE_METADATA.runBuddy),
+    const pages = [
+      ["run-buddy", PUBLIC_PAGE_METADATA.runBuddy, PUBLIC_PAGE_CONTENT.runBuddy],
+      ["run-date", PUBLIC_PAGE_METADATA.runDate, PUBLIC_PAGE_CONTENT.runDate],
+    ] as const;
+
+    await Promise.all(
+      pages.map(async ([route, metadata, content]) => {
+        const directory = path.join(outputDirectory, route);
+        await mkdir(directory, { recursive: true });
+        await writeFile(
+          path.join(directory, "index.html"),
+          applyPublicPage(homeHtml, metadata, content),
+        );
+      }),
     );
   },
 };

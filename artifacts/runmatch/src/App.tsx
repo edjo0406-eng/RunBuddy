@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/home";
 import RunBuddy from "@/pages/run-buddy";
+import RunDate from "@/pages/run-date";
 import RunnerProfile from "@/pages/runner-profile";
 import CreateProfile from "@/pages/create-profile";
 import Inbox from "@/pages/inbox";
@@ -113,6 +114,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/run-buddy" component={RunBuddy} />
+      <Route path="/run-date" component={RunDate} />
       <Route path="/runner/:id" component={RunnerProfile} />
       <Route path="/login" component={LoginRedirect} />
       <Route path="/callback" component={CallbackRedirect} />
