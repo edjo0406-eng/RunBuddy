@@ -54,9 +54,21 @@ function Router() {
       <Route path="/run-date" component={RunDate} />
       <Route path="/run-buddy" component={RunBuddy} />
       <Route path="/runner/:id" component={RunnerProfile} />
-      <Route path="/create-profile" component={CreateProfile} />
-      <Route path="/inbox" component={Inbox} />
-      <Route path="/messages/:otherId" component={ConversationPage} />
+      <Route path="/create-profile">
+        <AuthGate>
+          <CreateProfile />
+        </AuthGate>
+      </Route>
+      <Route path="/inbox">
+        <AuthGate>
+          <Inbox />
+        </AuthGate>
+      </Route>
+      <Route path="/messages/:otherId">
+        <AuthGate>
+          <ConversationPage />
+        </AuthGate>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -66,14 +78,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthGate>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <div className="pb-16 md:pb-0">
-              <Router />
-            </div>
-            <MobileNav />
-          </WouterRouter>
-        </AuthGate>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <div className="pb-16 md:pb-0">
+            <Router />
+          </div>
+          <MobileNav />
+        </WouterRouter>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
