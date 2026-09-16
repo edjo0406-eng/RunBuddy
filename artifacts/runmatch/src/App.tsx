@@ -14,6 +14,7 @@ import CreateProfile from "@/pages/create-profile";
 import Inbox from "@/pages/inbox";
 import ConversationPage from "@/pages/conversation";
 import { useAuth } from "@workspace/replit-auth-web";
+import { trackEvent } from "@/lib/analytics";
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated, login } = useAuth();
@@ -32,7 +33,10 @@ function AuthGate({ children }: { children: ReactNode }) {
           </p>
           <button
             type="button"
-            onClick={login}
+            onClick={() => {
+              trackEvent("sign_in_started", { source: "auth_gate" });
+              login();
+            }}
             className="rounded-full bg-primary px-5 py-3 font-bold text-primary-foreground"
           >
             Sign in

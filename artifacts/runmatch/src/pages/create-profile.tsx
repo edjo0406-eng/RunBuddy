@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -126,6 +127,7 @@ export default function CreateProfile() {
       }
     }, {
       onSuccess: (runner) => {
+        trackEvent("profile_created");
         toast({
           title: "Profile Created!",
           description: "Welcome to the community. Get ready to hit the pavement.",

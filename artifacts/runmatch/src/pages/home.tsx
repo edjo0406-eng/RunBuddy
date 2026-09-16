@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { trackEvent } from "@/lib/analytics";
 import { Activity, ArrowRight, Globe2, Heart, MapPin, Route, Users } from "lucide-react";
 import {
   getGetFeaturedRunnersQueryKey,
@@ -50,6 +51,7 @@ export default function Home() {
                 <Link
                   href="/run-buddy"
                   data-testid="link-hero-find-buddy"
+                  onClick={() => trackEvent("landing_cta_clicked", { action: "find_buddy", location: "hero" })}
                   className="group inline-flex items-center justify-center gap-3 bg-primary px-6 py-3.5 text-sm font-extrabold text-primary-foreground transition-all hover:-translate-y-1 hover:shadow-[5px_5px_0_hsl(var(--secondary))]"
                 >
                   Find a RunBuddy
@@ -58,6 +60,7 @@ export default function Home() {
                 <Link
                   href="/create-profile"
                   data-testid="link-hero-join"
+                  onClick={() => trackEvent("landing_cta_clicked", { action: "join", location: "hero" })}
                   className="inline-flex items-center justify-center gap-2 border border-background/25 px-6 py-3.5 text-sm font-bold text-background transition-colors hover:border-primary hover:text-primary"
                 >
                   Put yourself on the map

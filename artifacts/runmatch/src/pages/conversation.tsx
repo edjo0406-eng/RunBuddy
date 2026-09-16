@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useGetConversation, useSendMessage, useGetRunner, getGetRunnerQueryKey, getGetConversationQueryKey } from "@workspace/api-client-react";
@@ -56,6 +57,7 @@ export default function ConversationPage() {
       { data: { toRunnerId: otherId, content } },
       {
         onSuccess: () => {
+          trackEvent("message_sent");
           queryClient.invalidateQueries({ queryKey: ["getConversation"] });
           queryClient.invalidateQueries({ queryKey: ["getInbox"] });
           queryClient.invalidateQueries({ queryKey: ["getUnreadCount"] });

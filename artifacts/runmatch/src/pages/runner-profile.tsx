@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import { useParams, useLocation } from "wouter";
 import { useGetRunner, getGetRunnerQueryKey, useCreateConnection } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -40,6 +41,7 @@ export default function RunnerProfile() {
       }
     }, {
       onSuccess: () => {
+        trackEvent("connection_request_sent", { mode: type });
         toast({
           title: "Connection request sent!",
           description: `Your ${type} request has been sent to ${runner?.name}.`,

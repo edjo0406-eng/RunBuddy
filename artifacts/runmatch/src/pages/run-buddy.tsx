@@ -1,3 +1,4 @@
+import { trackEvent } from "@/lib/analytics";
 import { useState } from "react";
 import { useListRunners, getListRunnersQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -78,13 +79,19 @@ export default function RunBuddy() {
                   placeholder="e.g. Tokyo"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.value.trim()) trackEvent("runner_filter_used", { mode: "buddy", filter: "city" });
+                  }}
                   className="pl-9"
                 />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="buddy-filter-experience" className="text-xs font-medium text-foreground">Experience level</label>
-              <Select value={experience || ""} onValueChange={(val) => setExperience(val as ListRunnersExperience)}>
+              <Select value={experience || ""} onValueChange={(val) => {
+                setExperience(val as ListRunnersExperience);
+                trackEvent("runner_filter_used", { mode: "buddy", filter: "experience" });
+              }}>
                 <SelectTrigger id="buddy-filter-experience" data-testid="select-filter-experience">
                   <SelectValue placeholder="Any experience" />
                 </SelectTrigger>
@@ -113,7 +120,7 @@ export default function RunBuddy() {
               <button
                 data-testid="button-view-grid"
                 aria-pressed={viewMode === "grid"}
-                onClick={() => setViewMode("grid")}
+                onClick={() => { setViewMode("grid"); trackEvent("directory_view_selected", { view: "grid" }); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === "grid"
                     ? "bg-background text-foreground shadow-sm"
@@ -126,7 +133,7 @@ export default function RunBuddy() {
               <button
                 data-testid="button-view-map"
                 aria-pressed={viewMode === "map"}
-                onClick={() => setViewMode("map")}
+                onClick={() => { setViewMode("map"); trackEvent("directory_view_selected", { view: "map" }); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   viewMode === "map"
                     ? "bg-background text-foreground shadow-sm"
