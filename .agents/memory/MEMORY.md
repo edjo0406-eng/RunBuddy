@@ -2,3 +2,4 @@
 - [Orval and Zod compatibility](orval-zod-compatibility.md) — generated clients must stay Zod 3-compatible until the workspace upgrades Zod.
 - [PWA API navigation exclusions](pwa-api-navigation.md) — service-worker navigation fallback must exclude API paths or OAuth redirects render the SPA instead.
 - [Express auth-state caching](express-auth-state-caching.md) — no-store headers alone may still allow Express to turn conditional JSON responses into 304.
+- [Auth schema synchronization](auth-schema-sync.md) — login callbacks require the development database auth schema to match the Drizzle source schema.
