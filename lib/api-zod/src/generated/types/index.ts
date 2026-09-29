@@ -20,6 +20,7 @@ export * from './createRunnerBody';
 export * from './createRunnerBodyExperience';
 export * from './createRunnerBodyLookingFor';
 export * from './createRunnerBodyProfileType';
+export * from './currentRunnerResponse';
 export * from './getConversationParams';
 export * from './healthStatus';
 export * from './listConnectionsParams';

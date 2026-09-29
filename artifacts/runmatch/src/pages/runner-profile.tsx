@@ -1,6 +1,12 @@
 import { trackEvent } from "@/lib/analytics";
 import { useParams, useLocation } from "wouter";
-import { useGetRunner, getGetRunnerQueryKey, useCreateConnection } from "@workspace/api-client-react";
+import {
+  useGetRunner,
+  getGetRunnerQueryKey,
+  useGetCurrentRunner,
+  getGetCurrentRunnerQueryKey,
+  useCreateConnection,
+} from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,24 +18,24 @@ import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
 import { CreateConnectionBodyType } from "@workspace/api-client-react";
-import { useIdentity } from "@/hooks/use-identity";
 
 export default function RunnerProfile() {
   const params = useParams();
   const id = Number(params.id);
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { myRunnerId } = useIdentity();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });
+  const { data: currentRunner } = useGetCurrentRunner({
+    query: { queryKey: getGetCurrentRunnerQueryKey() },
+  });
   const createConnection = useCreateConnection();
+  const isOwnProfile = currentRunner?.runnerId === id;
 
   const handleMessage = () => {
-    if (!myRunnerId) {
-      navigate("/inbox");
-    } else {
-      navigate(`/messages/${id}`);
-    }
+    const currentRunnerId = currentRunner?.runnerId;
+    if (currentRunnerId == null || currentRunnerId === id) return;
+    navigate(`/messages/${id}`);
   };
 
   const handleConnect = (type: CreateConnectionBodyType) => {
@@ -47,10 +53,13 @@ export default function RunnerProfile() {
           description: `Your ${type} request has been sent to ${runner?.name}.`,
         });
       },
-      onError: () => {
+      onError: (error) => {
         toast({
           title: "Error",
-          description: "Could not send request. Please try again.",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Could not send request. Please try again.",
           variant: "destructive"
         });
       }
@@ -121,12 +130,17 @@ export default function RunnerProfile() {
                 </div>
                 
                 <div className="flex flex-wrap gap-4 mb-8">
-                  {(runner.lookingFor === 'buddy' || runner.lookingFor === 'both') && (
-                    <Button onClick={() => handleConnect('buddy')} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-                      <Users className="w-4 h-4 mr-2" /> Connect for Buddy
+                  {currentRunner?.runnerId != null && !isOwnProfile && (runner.lookingFor === 'buddy' || runner.lookingFor === 'both') && (
+                    <Button
+                      onClick={() => handleConnect('buddy')}
+                      disabled={createConnection.isPending}
+                      className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      {createConnection.isPending ? "Sending..." : "Connect for Buddy"}
                     </Button>
                   )}
-                  {myRunnerId !== id && (
+                  {currentRunner?.runnerId != null && !isOwnProfile && (
                     <Button onClick={handleMessage} variant="outline" className="rounded-full border-border">
                       <MessageSquare className="w-4 h-4 mr-2" /> Send Message
                     </Button>

@@ -97,6 +97,10 @@ export interface Runner {
   updatedAt: string;
 }
 
+export interface CurrentRunnerResponse {
+  runnerId: number | null;
+}
+
 export type CreateRunnerBodyProfileType = typeof CreateRunnerBodyProfileType[keyof typeof CreateRunnerBodyProfileType];
 
 
@@ -410,3 +414,4 @@ export const ListConnectionsStatus = {
 export type GetConversationParams = {
 otherId: number;
 };
+

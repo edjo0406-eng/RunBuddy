@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateRunner, CreateRunnerBodyLookingFor, CreateRunnerBodyExperience, CreateRunnerBodyProfileType } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIdentity } from "@/hooks/use-identity";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -68,6 +69,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CreateProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { setMyRunnerId } = useIdentity();
   const createRunner = useCreateRunner();
 
   const form = useForm<FormValues>({
@@ -127,6 +129,7 @@ export default function CreateProfile() {
       }
     }, {
       onSuccess: (runner) => {
+        setMyRunnerId(runner.id);
         trackEvent("profile_created");
         toast({
           title: "Profile Created!",

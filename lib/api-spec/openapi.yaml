@@ -183,6 +183,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/Runner"
 
+  /runners/me:
+    get:
+      operationId: getCurrentRunner
+      tags: [runners]
+      summary: Get the authenticated user's runner profile ID
+      responses:
+        "200":
+          description: Current runner identity, or null if no profile exists yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentRunnerResponse"
+        "401":
+          description: Authentication required
+
   /runners/{id}:
     get:
       operationId: getRunner
@@ -572,6 +587,14 @@ components:
         - lookingFor
         - createdAt
         - updatedAt
+    CurrentRunnerResponse:
+      type: object
+      required:
+        - runnerId
+      properties:
+        runnerId:
+          type: integer
+          nullable: true
 
     CreateRunnerBody:
       type: object

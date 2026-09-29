@@ -27,6 +27,7 @@ import type {
   CountryCount,
   CreateConnectionBody,
   CreateRunnerBody,
+  CurrentRunnerResponse,
   GetConversationParams,
   HealthStatus,
   ListConnectionsParams,
@@ -141,6 +142,12 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
+
 export const getGetCurrentAuthUserUrl = () => {
 
 
@@ -211,6 +218,11 @@ export function useGetCurrentAuthUser<TData = Awaited<ReturnType<typeof getCurre
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
 
 
 export const getBeginBrowserLoginUrl = (params?: BeginBrowserLoginParams,) => {
@@ -291,6 +303,12 @@ export function useBeginBrowserLogin<TData = Awaited<ReturnType<typeof beginBrow
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+
+
+
+
+
+
 export const getHandleBrowserLoginCallbackUrl = () => {
 
 
@@ -361,6 +379,13 @@ export function useHandleBrowserLoginCallback<TData = Awaited<ReturnType<typeof 
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
+
 export const getLogoutBrowserSessionUrl = () => {
 
 
@@ -438,7 +463,6 @@ export function useLogoutBrowserSession<TData = Awaited<ReturnType<typeof logout
 
 
 
-// End of generated client output.
 export const getExchangeMobileAuthorizationCodeUrl = () => {
 
 
@@ -735,6 +759,83 @@ export const useCreateRunner = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateRunnerMutationOptions(options));
     }
+
+export const getGetCurrentRunnerUrl = () => {
+
+
+
+
+  return `/api/runners/me`
+}
+
+/**
+ * @summary Get the authenticated user's runner profile ID
+ */
+export const getCurrentRunner = async ( options?: RequestInit): Promise<CurrentRunnerResponse> => {
+
+  return customFetch<CurrentRunnerResponse>(getGetCurrentRunnerUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentRunnerQueryKey = () => {
+    return [
+    `/api/runners/me`
+    ] as const;
+    }
+
+
+export const getGetCurrentRunnerQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentRunner>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentRunner>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentRunnerQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentRunner>>> = ({ signal }) => getCurrentRunner({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentRunner>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentRunnerQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentRunner>>>
+export type GetCurrentRunnerQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the authenticated user's runner profile ID
+ */
+
+export function useGetCurrentRunner<TData = Awaited<ReturnType<typeof getCurrentRunner>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentRunner>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentRunnerQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetRunnerUrl = (id: number,) => {
 

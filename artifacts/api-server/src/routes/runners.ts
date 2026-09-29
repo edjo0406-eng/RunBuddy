@@ -120,6 +120,12 @@ router.post("/runners", createRunnerRateLimit, async (req, res) => {
   return res.status(201).json(runner);
 });
 
+router.get("/runners/me", async (req, res) => {
+  if (!requireAuthentication(req, res)) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  return res.json({ runnerId: currentRunner?.id ?? null });
+});
+
 router.get("/runners/:id", async (req, res) => {
   if (!requireAuthentication(req, res)) return;
 

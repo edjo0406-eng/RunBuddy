@@ -240,6 +240,14 @@ export const CreateRunnerResponse = zod.object({
 
 
 /**
+ * @summary Get the authenticated user's runner profile ID
+ */
+export const GetCurrentRunnerResponse = zod.object({
+  "runnerId": zod.number().nullable()
+})
+
+
+/**
  * @summary Get a runner profile
  */
 export const GetRunnerParams = zod.object({
@@ -826,6 +834,8 @@ export const GetUnreadCountResponse = zod.object({
  */
 export const sendMessageBodyContentMax = 4000;
 
+
+
 export const SendMessageBody = zod.object({
   "toRunnerId": zod.number(),
   "content": zod.string().max(sendMessageBodyContentMax)
@@ -914,3 +924,5 @@ export const GetFeaturedRunnersResponseItem = zod.object({
   "updatedAt": zod.coerce.date()
 })
 export const GetFeaturedRunnersResponse = zod.array(GetFeaturedRunnersResponseItem)
+
+

@@ -13,6 +13,10 @@ const authMocks = vi.hoisted(() => ({
   updateSession: vi.fn(),
 }));
 
+const dbMocks = vi.hoisted(() => ({
+  select: vi.fn(),
+}));
+
 const oidcMocks = vi.hoisted(() => ({
   authorizationCodeGrant: vi.fn(),
 }));
@@ -25,7 +29,7 @@ vi.mock("../lib/auth", () => ({
 }));
 
 vi.mock("@workspace/db", () => ({
-  db: {},
+  db: { select: dbMocks.select },
   usersTable: new Proxy(
     {},
     { get: (_target, property) => property },
@@ -129,5 +133,63 @@ describe("web authentication regressions", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ user });
     expect(authMocks.getSession).toHaveBeenCalledWith("valid-session");
+  });
+
+  it("returns the authenticated account's runner ID", async () => {
+    authMocks.getSession.mockResolvedValue({
+      user: {
+        id: "user-1",
+        email: "runner@example.com",
+        firstName: "Test",
+        lastName: "Runner",
+        profileImageUrl: null,
+      },
+      access_token: "access-token",
+      expires_at: Math.floor(Date.now() / 1000) + 60,
+    });
+
+    const runner = { id: 14 };
+    const query = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([runner]),
+    };
+    dbMocks.select.mockReturnValue(query);
+
+    const response = await request(app)
+      .get("/api/runners/me")
+      .set("Cookie", "sid=valid-session");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ runnerId: 14 });
+    expect(query.limit).toHaveBeenCalledWith(1);
+  });
+
+  it("returns a null runner ID when the authenticated account has no profile", async () => {
+    authMocks.getSession.mockResolvedValue({
+      user: {
+        id: "user-without-runner",
+        email: "new@example.com",
+        firstName: "New",
+        lastName: "Runner",
+        profileImageUrl: null,
+      },
+      access_token: "access-token",
+      expires_at: Math.floor(Date.now() / 1000) + 60,
+    });
+
+    const query = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([]),
+    };
+    dbMocks.select.mockReturnValue(query);
+
+    const response = await request(app)
+      .get("/api/runners/me")
+      .set("Cookie", "sid=valid-session");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ runnerId: null });
   });
 });
