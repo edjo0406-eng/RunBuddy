@@ -165,6 +165,44 @@ describe("web authentication regressions", () => {
     expect(query.limit).toHaveBeenCalledWith(1);
   });
 
+  it("never caches or returns 304 for the current runner identity", async () => {
+    authMocks.getSession.mockResolvedValue({
+      user: {
+        id: "user-1",
+        email: "runner@example.com",
+        firstName: "Test",
+        lastName: "Runner",
+        profileImageUrl: null,
+      },
+      access_token: "access-token",
+      expires_at: Math.floor(Date.now() / 1000) + 60,
+    });
+
+    const query = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ id: 14 }]),
+    };
+    dbMocks.select.mockReturnValue(query);
+
+    const initial = await request(app)
+      .get("/api/runners/me")
+      .set("Cookie", "sid=valid-session");
+    expect(initial.status).toBe(200);
+    expect(initial.headers["cache-control"]).toBe(
+      "no-store, no-cache, must-revalidate",
+    );
+    expect(initial.body).toEqual({ runnerId: 14 });
+
+    const conditional = await request(app)
+      .get("/api/runners/me")
+      .set("Cookie", "sid=valid-session")
+      .set("If-None-Match", initial.headers.etag ?? '"cached-runner-identity"');
+
+    expect(conditional.status).toBe(200);
+    expect(conditional.body).toEqual({ runnerId: 14 });
+  });
+
   it("returns a null runner ID when the authenticated account has no profile", async () => {
     authMocks.getSession.mockResolvedValue({
       user: {

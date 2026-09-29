@@ -123,7 +123,9 @@ router.post("/runners", createRunnerRateLimit, async (req, res) => {
 router.get("/runners/me", async (req, res) => {
   if (!requireAuthentication(req, res)) return;
   const currentRunner = await getAuthenticatedRunner(req);
-  return res.json({ runnerId: currentRunner?.id ?? null });
+  const response = { runnerId: currentRunner?.id ?? null };
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  return res.type("application/json").end(JSON.stringify(response));
 });
 
 router.get("/runners/:id", async (req, res) => {
