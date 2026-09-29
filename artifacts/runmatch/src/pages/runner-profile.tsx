@@ -26,7 +26,10 @@ export default function RunnerProfile() {
   const [, navigate] = useLocation();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });
-  const { data: currentRunner } = useGetCurrentRunner({
+  const {
+    data: currentRunner,
+    isError: isCurrentRunnerError,
+  } = useGetCurrentRunner({
     query: { queryKey: getGetCurrentRunnerQueryKey() },
   });
   const createConnection = useCreateConnection();
@@ -145,6 +148,34 @@ export default function RunnerProfile() {
                       <MessageSquare className="w-4 h-4 mr-2" /> Send Message
                     </Button>
                   )}
+                  {isCurrentRunnerError && (
+                    <p role="alert" className="w-full text-sm text-destructive">
+                      We couldn’t verify your runner profile. Sign in again or refresh the page to connect.
+                    </p>
+                  )}
+                  {currentRunner?.runnerId === null && (
+                    <div className="w-full flex flex-wrap items-center gap-3">
+                      <p className="text-sm text-muted-foreground">
+                        Create a runner profile with this account to connect or message other runners.
+                      </p>
+                      <Button variant="outline" onClick={() => navigate("/create-profile")}>
+                        Create my profile
+                      </Button>
+                    </div>
+                  )}
+                  {isOwnProfile && (
+                    <p role="status" className="w-full text-sm text-muted-foreground">
+                      This is your profile. Open another runner’s profile to connect or message them.
+                    </p>
+                  )}
+                  {currentRunner?.runnerId != null &&
+                    !isOwnProfile &&
+                    runner.lookingFor !== "buddy" &&
+                    runner.lookingFor !== "both" && (
+                      <p role="status" className="w-full text-sm text-muted-foreground">
+                        This runner isn’t looking for a buddy, but you can still send them a message.
+                      </p>
+                    )}
                 </div>
               </div>
             </div>
