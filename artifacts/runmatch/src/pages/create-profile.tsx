@@ -18,6 +18,7 @@ import { useIdentity } from "@/hooks/use-identity";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  publicListing: z.boolean(),
   age: z.coerce.number().min(18).max(100).optional().or(z.literal("")),
   bio: z.string().max(500).optional(),
   city: z.string().min(2),
@@ -76,6 +77,7 @@ export default function CreateProfile() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      publicListing: false,
       age: "",
       bio: "",
       city: "",
@@ -108,6 +110,7 @@ export default function CreateProfile() {
     createRunner.mutate({
       data: {
         name: values.name,
+        publicListing: values.publicListing,
         age: values.age ? Number(values.age) : null,
         bio: values.bio,
         city: values.city,
@@ -538,6 +541,28 @@ export default function CreateProfile() {
                           )}
                         />
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <FormField
+                    control={form.control}
+                    name="publicListing"
+                    render={({ field }) => (
+                      <FormItem className="flex items-start gap-3 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
+                        </FormControl>
+                        <div className="space-y-1">
+                          <FormLabel className="cursor-pointer">List my profile publicly</FormLabel>
+                          <FormDescription>
+                            Optional. Anyone, including search engines, can see your name, city, country, club name (if applicable), experience level and running-partner preference. Your bio, travel plans, tracking links, contact information and messages will not appear in the public directory. You can turn this off from your profile.
+                          </FormDescription>
+                        </div>
                       </FormItem>
                     )}
                   />

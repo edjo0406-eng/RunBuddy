@@ -13,6 +13,8 @@ import type { TrackingApps } from './trackingApps';
 
 export interface Runner {
   id: number;
+  /** Whether this profile is listed for anonymous visitors */
+  publicListing?: boolean;
   name: string;
   age?: number | null;
   bio?: string | null;

@@ -15,6 +15,7 @@ declare global {
 
 export const publicRunnerSelection = {
   id: runnersTable.id,
+  publicListing: runnersTable.publicListing,
   name: runnersTable.name,
   age: runnersTable.age,
   bio: runnersTable.bio,
@@ -33,6 +34,21 @@ export const publicRunnerSelection = {
   travelCountry: runnersTable.travelCountry,
   travelUntil: runnersTable.travelUntil,
   travelNote: runnersTable.travelNote,
+  createdAt: runnersTable.createdAt,
+  updatedAt: runnersTable.updatedAt,
+};
+
+// Do not reuse the authenticated selection for anonymous requests: even an
+// opted-in runner's biography or travel details may contain contact information.
+export const discoverableRunnerSelection = {
+  id: runnersTable.id,
+  name: runnersTable.name,
+  city: runnersTable.city,
+  country: runnersTable.country,
+  profileType: runnersTable.profileType,
+  clubName: runnersTable.clubName,
+  lookingFor: runnersTable.lookingFor,
+  experience: runnersTable.experience,
   createdAt: runnersTable.createdAt,
   updatedAt: runnersTable.updatedAt,
 };

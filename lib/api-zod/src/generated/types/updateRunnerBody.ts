@@ -12,6 +12,8 @@ import type { UpdateRunnerBodyLookingFor } from './updateRunnerBodyLookingFor';
 import type { UpdateRunnerBodyProfileType } from './updateRunnerBodyProfileType';
 
 export interface UpdateRunnerBody {
+  /** Opt in or out of anonymous public discovery */
+  publicListing?: boolean;
   name?: string;
   age?: number | null;
   bio?: string | null;

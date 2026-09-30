@@ -61,7 +61,12 @@ const PUBLIC_PAGE_CONTENT = {
       </header>
       <main>
         <h1>Find a RunBuddy near you</h1>
-        <p>Search the running community by city, country, pace, and experience. Meet a compatible running partner for a morning loop, travel run, or regular training.</p>
+        <p>Search the running community by city, country, and experience. Meet a compatible running partner for a morning loop, travel run, or regular training.</p>
+        <section aria-labelledby="directory-intro">
+          <h2 id="directory-intro">Browse runners who choose to be listed</h2>
+          <p>The public directory shows only runners who have chosen to appear in discovery. Search by city or country and compare experience levels to find a running partner for a local route or regular training. Profiles that have not opted in are not shown to visitors.</p>
+          <p>Runner descriptions, travel plans, contact details and messages are not included in the public directory. Sign in to connect with a runner.</p>
+        </section>
         <p><a href="/">Learn how RunBuddy connects runners worldwide</a></p>
       </main>
       <footer><a href="/">RunBuddy</a></footer>`,

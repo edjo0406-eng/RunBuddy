@@ -64,6 +64,8 @@ export const RunnerExperience = {
 
 export interface Runner {
   id: number;
+  /** Whether this profile is listed for anonymous visitors */
+  publicListing?: boolean;
   name: string;
   age?: number | null;
   bio?: string | null;
@@ -130,6 +132,8 @@ export const CreateRunnerBodyExperience = {
 } as const;
 
 export interface CreateRunnerBody {
+  /** Explicit consent to show a limited profile in public discovery; defaults to false */
+  publicListing?: boolean;
   name: string;
   age?: number | null;
   bio?: string | null;
@@ -184,6 +188,8 @@ export const UpdateRunnerBodyExperience = {
 } as const;
 
 export interface UpdateRunnerBody {
+  /** Opt in or out of anonymous public discovery */
+  publicListing?: boolean;
   name?: string;
   age?: number | null;
   bio?: string | null;

@@ -12,6 +12,8 @@ import type { RunningStats } from './runningStats';
 import type { TrackingApps } from './trackingApps';
 
 export interface CreateRunnerBody {
+  /** Explicit consent to show a limited profile in public discovery; defaults to false */
+  publicListing?: boolean;
   name: string;
   age?: number | null;
   bio?: string | null;

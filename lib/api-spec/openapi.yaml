@@ -36,7 +36,7 @@ paths:
     get:
       operationId: listRunners
       tags: [runners]
-      summary: List runners with optional filters
+      summary: List runners with optional filters (anonymous visitors see only opted-in public profiles)
       parameters:
         - name: mode
           in: query
@@ -116,7 +116,7 @@ paths:
     get:
       operationId: getRunner
       tags: [runners]
-      summary: Get a runner profile
+      summary: Get a runner profile (private profiles require sign-in)
       parameters:
         - name: id
           in: path
@@ -413,6 +413,9 @@ components:
       properties:
         id:
           type: integer
+        publicListing:
+          type: boolean
+          description: Whether this profile is listed for anonymous visitors
         name:
           type: string
         age:
@@ -513,6 +516,9 @@ components:
     CreateRunnerBody:
       type: object
       properties:
+        publicListing:
+          type: boolean
+          description: Explicit consent to show a limited profile in public discovery; defaults to false
         name:
           type: string
         age:
@@ -592,6 +598,9 @@ components:
     UpdateRunnerBody:
       type: object
       properties:
+        publicListing:
+          type: boolean
+          description: Opt in or out of anonymous public discovery
         name:
           type: string
         age:

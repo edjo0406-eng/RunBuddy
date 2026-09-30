@@ -31,6 +31,14 @@ from = "/run-buddy/"
 to = "/run-buddy/index.html"
 
 [[services.production.rewrites]]
+from = "/run-date"
+to = "/run-date/index.html"
+
+[[services.production.rewrites]]
+from = "/run-date/"
+to = "/run-date/index.html"
+
+[[services.production.rewrites]]
 from = "/*"
 to = "/index.html"
 

@@ -1,7 +1,8 @@
 import { Router } from "express";
+import { getAuth } from "@clerk/express";
 import { db, runnersTable, connectionsTable } from "@workspace/db";
-import { sql, desc } from "drizzle-orm";
-import { publicRunnerSelection, requireAuthentication } from "../lib/authorization";
+import { sql, desc, eq } from "drizzle-orm";
+import { publicRunnerSelection, discoverableRunnerSelection } from "../lib/authorization";
 
 const router = Router();
 
@@ -48,13 +49,11 @@ router.get("/stats/countries", async (req, res) => {
 });
 
 router.get("/stats/featured", async (req, res) => {
-  if (!(await requireAuthentication(req, res))) return;
-
-  const runners = await db
-    .select(publicRunnerSelection)
-    .from(runnersTable)
-    .orderBy(desc(runnersTable.createdAt))
-    .limit(12);
+  const runners = getAuth(req).userId
+    ? await db.select(publicRunnerSelection).from(runnersTable).orderBy(desc(runnersTable.createdAt)).limit(12)
+    : await db.select(discoverableRunnerSelection).from(runnersTable)
+        .where(eq(runnersTable.publicListing, true))
+        .orderBy(desc(runnersTable.createdAt)).limit(12);
 
   return res.json(runners);
 });

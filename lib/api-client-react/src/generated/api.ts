@@ -159,7 +159,7 @@ export const getListRunnersUrl = (params?: ListRunnersParams,) => {
 }
 
 /**
- * @summary List runners with optional filters
+ * @summary List runners with optional filters (anonymous visitors see only opted-in public profiles)
  */
 export const listRunners = async (params?: ListRunnersParams, options?: RequestInit): Promise<Runner[]> => {
 
@@ -206,7 +206,7 @@ export type ListRunnersQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List runners with optional filters
+ * @summary List runners with optional filters (anonymous visitors see only opted-in public profiles)
  */
 
 export function useListRunners<TData = Awaited<ReturnType<typeof listRunners>>, TError = ErrorType<unknown>>(
@@ -384,7 +384,7 @@ export const getGetRunnerUrl = (id: number,) => {
 }
 
 /**
- * @summary Get a runner profile
+ * @summary Get a runner profile (private profiles require sign-in)
  */
 export const getRunner = async (id: number, options?: RequestInit): Promise<Runner> => {
 
@@ -431,7 +431,7 @@ export type GetRunnerQueryError = ErrorType<void>
 
 
 /**
- * @summary Get a runner profile
+ * @summary Get a runner profile (private profiles require sign-in)
  */
 
 export function useGetRunner<TData = Awaited<ReturnType<typeof getRunner>>, TError = ErrorType<void>>(

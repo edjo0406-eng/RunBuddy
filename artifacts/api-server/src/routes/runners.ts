@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { db, runnersTable, connectionsTable } from "@workspace/db";
+import { getAuth } from "@clerk/express";
+import { db, runnersTable } from "@workspace/db";
 import {
   ListRunnersQueryParams,
   CreateRunnerBody,
@@ -11,6 +12,7 @@ import { eq, and, or, sql, desc } from "drizzle-orm";
 import {
   getAuthenticatedRunner,
   publicRunnerSelection,
+  discoverableRunnerSelection,
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
@@ -27,7 +29,7 @@ const createRunnerRateLimit = createRateLimiter({
 });
 
 router.get("/runners", listRunnersRateLimit, async (req, res) => {
-  if (!(await requireAuthentication(req, res))) return;
+  const signedIn = Boolean(getAuth(req).userId);
 
   const parsed = ListRunnersQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -36,43 +38,36 @@ router.get("/runners", listRunnersRateLimit, async (req, res) => {
   const { mode, country, city, experience } = parsed.data;
 
   const conditions = [];
+  if (!signedIn) conditions.push(eq(runnersTable.publicListing, true));
   if (mode && mode !== "both") {
     conditions.push(
       or(eq(runnersTable.lookingFor, mode), eq(runnersTable.lookingFor, "both"))
     );
   }
   if (country) {
-    conditions.push(
-      or(
-        sql`lower(${runnersTable.country}) = lower(${country})`,
-        sql`lower(${runnersTable.travelCountry}) = lower(${country})`
-      )
-    );
+    conditions.push(signedIn
+      ? or(
+          sql`lower(${runnersTable.country}) = lower(${country})`,
+          sql`lower(${runnersTable.travelCountry}) = lower(${country})`
+        )
+      : sql`lower(${runnersTable.country}) = lower(${country})`);
   }
   if (city) {
-    conditions.push(
-      or(
-        sql`lower(${runnersTable.city}) = lower(${city})`,
-        sql`lower(${runnersTable.travelCity}) = lower(${city})`
-      )
-    );
+    conditions.push(signedIn
+      ? or(
+          sql`lower(${runnersTable.city}) = lower(${city})`,
+          sql`lower(${runnersTable.travelCity}) = lower(${city})`
+        )
+      : sql`lower(${runnersTable.city}) = lower(${city})`);
   }
   if (experience) {
     conditions.push(eq(runnersTable.experience, experience));
   }
 
-  const runners = conditions.length > 0
-    ? await db
-        .select(publicRunnerSelection)
-        .from(runnersTable)
-        .where(and(...conditions))
-        .orderBy(desc(runnersTable.createdAt))
-        .limit(100)
-    : await db
-        .select(publicRunnerSelection)
-        .from(runnersTable)
-        .orderBy(desc(runnersTable.createdAt))
-        .limit(100);
+  const where = conditions.length ? and(...conditions) : undefined;
+  const runners = signedIn
+    ? await db.select(publicRunnerSelection).from(runnersTable).where(where).orderBy(desc(runnersTable.createdAt)).limit(100)
+    : await db.select(discoverableRunnerSelection).from(runnersTable).where(where).orderBy(desc(runnersTable.createdAt)).limit(100);
 
   return res.json(runners);
 });
@@ -129,17 +124,18 @@ router.get("/runners/me", async (req, res) => {
 });
 
 router.get("/runners/:id", async (req, res) => {
-  if (!(await requireAuthentication(req, res))) return;
-
   const parsed = GetRunnerParams.safeParse(req.params);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues });
   }
 
-  const [runner] = await db
-    .select(publicRunnerSelection)
-    .from(runnersTable)
-    .where(eq(runnersTable.id, parsed.data.id));
+  const signedIn = Boolean(getAuth(req).userId);
+  const where = signedIn
+    ? eq(runnersTable.id, parsed.data.id)
+    : and(eq(runnersTable.id, parsed.data.id), eq(runnersTable.publicListing, true));
+  const [runner] = signedIn
+    ? await db.select(publicRunnerSelection).from(runnersTable).where(where)
+    : await db.select(discoverableRunnerSelection).from(runnersTable).where(where);
   if (!runner) {
     return res.status(404).json({ error: "Runner not found" });
   }

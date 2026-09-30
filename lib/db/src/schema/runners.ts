@@ -11,6 +11,7 @@ export const connectionStatusEnum = pgEnum("connection_status", ["pending", "acc
 export const runnersTable = pgTable("runners", {
   id: serial("id").primaryKey(),
   authUserId: varchar("auth_user_id").unique(),
+  publicListing: boolean("public_listing").notNull().default(false),
   name: text("name").notNull(),
   age: integer("age"),
   bio: text("bio"),

@@ -17,7 +17,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary List runners with optional filters
+ * @summary List runners with optional filters (anonymous visitors see only opted-in public profiles)
  */
 export const ListRunnersQueryParams = zod.object({
   "mode": zod.enum(['date', 'buddy', 'both']).optional().describe('Filter by section (date, buddy, or both)'),
@@ -30,6 +30,7 @@ export const ListRunnersQueryParams = zod.object({
 
 export const ListRunnersResponseItem = zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -81,6 +82,7 @@ export const ListRunnersResponse = zod.array(ListRunnersResponseItem)
  * @summary Create a new runner profile
  */
 export const CreateRunnerBody = zod.object({
+  "publicListing": zod.boolean().optional().describe('Explicit consent to show a limited profile in public discovery; defaults to false'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -126,6 +128,7 @@ export const CreateRunnerBody = zod.object({
 
 export const CreateRunnerResponse = zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -181,7 +184,7 @@ export const GetCurrentRunnerResponse = zod.object({
 
 
 /**
- * @summary Get a runner profile
+ * @summary Get a runner profile (private profiles require sign-in)
  */
 export const GetRunnerParams = zod.object({
   "id": zod.coerce.number()
@@ -189,6 +192,7 @@ export const GetRunnerParams = zod.object({
 
 export const GetRunnerResponse = zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -243,6 +247,7 @@ export const UpdateRunnerParams = zod.object({
 })
 
 export const UpdateRunnerBody = zod.object({
+  "publicListing": zod.boolean().optional().describe('Opt in or out of anonymous public discovery'),
   "name": zod.string().optional(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -288,6 +293,7 @@ export const UpdateRunnerBody = zod.object({
 
 export const UpdateRunnerResponse = zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -351,6 +357,7 @@ export const ListConnectionsResponseItem = zod.object({
   "message": zod.string().nullish(),
   "fromRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -397,6 +404,7 @@ export const ListConnectionsResponseItem = zod.object({
 }).nullish(),
   "toRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -464,6 +472,7 @@ export const CreateConnectionResponse = zod.object({
   "message": zod.string().nullish(),
   "fromRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -510,6 +519,7 @@ export const CreateConnectionResponse = zod.object({
 }).nullish(),
   "toRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -578,6 +588,7 @@ export const UpdateConnectionResponse = zod.object({
   "message": zod.string().nullish(),
   "fromRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -624,6 +635,7 @@ export const UpdateConnectionResponse = zod.object({
 }).nullish(),
   "toRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -679,6 +691,7 @@ export const GetInboxResponseItem = zod.object({
   "otherId": zod.number(),
   "otherRunner": zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),
@@ -812,6 +825,7 @@ export const GetRunnersByCountryResponse = zod.array(GetRunnersByCountryResponse
  */
 export const GetFeaturedRunnersResponseItem = zod.object({
   "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
   "name": zod.string(),
   "age": zod.number().nullish(),
   "bio": zod.string().nullish(),

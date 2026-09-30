@@ -1,15 +1,21 @@
 import { trackEvent } from "@/lib/analytics";
 import { useParams, useLocation } from "wouter";
+import { useAuth } from "@clerk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetRunner,
   getGetRunnerQueryKey,
   useGetCurrentRunner,
   getGetCurrentRunnerQueryKey,
   useCreateConnection,
+  useUpdateRunner,
+  getGetFeaturedRunnersQueryKey,
+  getListRunnersQueryKey,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,16 +30,31 @@ export default function RunnerProfile() {
   const id = Number(params.id);
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const { isSignedIn } = useAuth();
+  const queryClient = useQueryClient();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });
   const {
     data: currentRunner,
     isError: isCurrentRunnerError,
   } = useGetCurrentRunner({
-    query: { queryKey: getGetCurrentRunnerQueryKey() },
+    query: { enabled: isSignedIn === true, queryKey: getGetCurrentRunnerQueryKey() },
   });
   const createConnection = useCreateConnection();
+  const updateRunner = useUpdateRunner();
   const isOwnProfile = currentRunner?.runnerId === id;
+
+  const changePublicListing = (checked: boolean) => {
+    updateRunner.mutate({ id, data: { publicListing: checked } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetRunnerQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getGetFeaturedRunnersQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListRunnersQueryKey() });
+        toast({ title: checked ? "Public listing enabled" : "Public listing disabled" });
+      },
+      onError: () => toast({ title: "Could not update public listing", variant: "destructive" }),
+    });
+  };
 
   const handleMessage = () => {
     const currentRunnerId = currentRunner?.runnerId;
@@ -164,9 +185,18 @@ export default function RunnerProfile() {
                     </div>
                   )}
                   {isOwnProfile && (
-                    <p role="status" className="w-full text-sm text-muted-foreground">
-                      This is your profile. Open another runner’s profile to connect or message them.
-                    </p>
+                    <div className="w-full space-y-3">
+                      <p role="status" className="text-sm text-muted-foreground">
+                        This is your profile. Open another runner’s profile to connect or message them.
+                      </p>
+                      <div className="flex items-start gap-3 rounded-lg border bg-background p-4">
+                        <Checkbox id="public-listing" checked={runner.publicListing === true} disabled={updateRunner.isPending} onCheckedChange={(checked) => changePublicListing(checked === true)} />
+                        <div>
+                          <label htmlFor="public-listing" className="cursor-pointer text-sm font-medium">List my profile publicly</label>
+                          <p className="mt-1 text-xs text-muted-foreground">Anyone, including search engines, can see your name, city, country, club name, experience and running-partner preference. Your bio, travel plans, tracking links, contact information and messages remain private. Turn this off to remove your public listing.</p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   {currentRunner?.runnerId != null &&
                     !isOwnProfile &&

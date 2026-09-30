@@ -187,7 +187,7 @@ export default function Home() {
               ) : featuredRunners?.length ? (
                 featuredRunners.map((runner) => <RunnerCard key={runner.id} runner={runner} />)
               ) : (
-                <div className="col-span-full py-12 text-center text-muted-foreground">No featured runners found yet.</div>
+                <div className="col-span-full py-12 text-center text-muted-foreground">No runners have chosen to appear in public discovery yet.</div>
               )}
             </div>
           </div>

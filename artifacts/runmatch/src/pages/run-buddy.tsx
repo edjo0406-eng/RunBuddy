@@ -1,5 +1,6 @@
 import { trackEvent } from "@/lib/analytics";
 import { useState } from "react";
+import { useAuth } from "@clerk/react";
 import { useListRunners, getListRunnersQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -12,6 +13,7 @@ import { ArrowRight, Compass, Search, Users, MapPin, LayoutGrid, Map, SlidersHor
 import { ListRunnersMode, ListRunnersExperience } from "@workspace/api-client-react";
 
 export default function RunBuddy() {
+  const { isSignedIn } = useAuth();
   const [country, setCountry] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [experience, setExperience] = useState<ListRunnersExperience | undefined>();
@@ -44,7 +46,7 @@ export default function RunBuddy() {
             <div className="hidden border-l border-background/20 pl-7 md:block">
               <span className="font-mono-label text-[10px] text-background/45">live directory</span>
               <span className="mt-2 block font-display text-3xl font-bold text-primary">{isLoading ? "—" : runners?.length ?? 0}</span>
-              <span className="text-xs text-background/55">runners open to a buddy</span>
+              <span className="text-xs text-background/55">runners in this directory</span>
             </div>
           </div>
         </section>
@@ -130,19 +132,21 @@ export default function RunBuddy() {
                 <LayoutGrid className="w-4 h-4" />
                 Grid
               </button>
-              <button
-                data-testid="button-view-map"
-                aria-pressed={viewMode === "map"}
-                onClick={() => { setViewMode("map"); trackEvent("directory_view_selected", { view: "map" }); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === "map"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Map className="w-4 h-4" />
-                Map
-              </button>
+              {isSignedIn === true && (
+                <button
+                  data-testid="button-view-map"
+                  aria-pressed={viewMode === "map"}
+                  onClick={() => { setViewMode("map"); trackEvent("directory_view_selected", { view: "map" }); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === "map"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Map className="w-4 h-4" />
+                  Map
+                </button>
+              )}
             </div>
           </div>
 
@@ -155,7 +159,7 @@ export default function RunBuddy() {
                 Try again <ArrowRight className="h-4 w-4" />
               </button>
             </div>
-          ) : viewMode === "map" ? (
+          ) : viewMode === "map" && isSignedIn === true ? (
             <div>
               {isLoading ? (
                 <div className="w-full rounded-xl overflow-hidden border" style={{ height: 580 }}>
@@ -188,7 +192,7 @@ export default function RunBuddy() {
                 <div className="col-span-full py-24 text-center">
                   <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                    <h3 className="mb-2 font-display text-xl font-medium text-foreground">No buddies found here yet</h3>
-                   <p className="mb-6 text-muted-foreground">Try a nearby city, widen the experience filter, or be the first to run in this area.</p>
+                    <p className="mb-6 text-muted-foreground">Try a nearby city or widen the experience filter. Only runners who opt into the public directory appear here for visitors.</p>
                   <button 
                      data-testid="button-empty-clear-filters"
                     onClick={() => { setCountry(""); setCity(""); setExperience(undefined); }}
