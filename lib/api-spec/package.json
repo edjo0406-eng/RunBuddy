@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "codegen": "orval --config ./orval.config.ts && printf 'export * from \"./generated/api\";\\n' > ../api-zod/src/index.ts && pnpm -w run typecheck:libs"
+    "codegen": "orval --config ./orval.config.ts && printf 'export * from \"./generated/api\";\\n' > ../api-zod/src/index.ts && pnpm -w run typecheck:libs",
+    "codegen:check": "pnpm run codegen && (git -C ../.. diff --exit-code HEAD -- lib/api-client-react/src/generated lib/api-zod/src/generated lib/api-zod/src/index.ts || { echo 'Generated API files are stale; run codegen and commit the generated output.' >&2; exit 1; }) && (test -z \"$(git -C ../.. ls-files --others --exclude-standard -- lib/api-client-react/src/generated lib/api-zod/src/generated)\" || { echo 'New generated API files are not committed.' >&2; exit 1; })"
   },
   "devDependencies": {
     "orval": "8.22.0"
