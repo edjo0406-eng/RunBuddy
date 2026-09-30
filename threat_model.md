@@ -7,10 +7,10 @@ Monorepo (pnpm workspaces):
 - **Frontend**: React + Vite (`artifacts/runmatch`) served at `/`
 - **API**: Express 5 (`artifacts/api-server`) served at `/api`
 - **DB**: PostgreSQL + Drizzle ORM (`lib/db`)
-- **Auth**: Replit OIDC (`lib/replit-auth-web`, `artifacts/api-server/src/lib/auth.ts`)
+- **Auth**: Clerk email/password with server-validated browser sessions
 - **Design mockup**: `artifacts/mockup-sandbox` at `/__mockup` (dev/design only)
 
-Users authenticate via Replit OIDC, create runner profiles, browse/filter other
+Users authenticate through the app, create runner profiles, browse/filter other
 runners, send connection requests (date/buddy), and exchange private direct
 messages.
 
@@ -20,30 +20,31 @@ messages.
   conversations between runners. Highest-value confidentiality asset.
 - **Runner PII** — name, age, gender, bio, city/country, precise `lat`/`lng`,
   plus third-party tracking-app profile URLs.
-- **User/auth records** — `users` (OIDC identity) and `sessions` (server-side
-  session store holding access/refresh tokens).
+- **User/auth records** — Clerk owns identity and browser sessions; the local
+  `users` table preserves the account-to-runner bridge and app state. The
+  `sessions` table remains in the schema but is no longer used for web sessions.
 - **Profile integrity** — a runner's public-facing profile content.
 - **Connection state** — pending/accepted/declined requests.
-- **Application secrets** — `DATABASE_URL`, `REPL_ID`, OIDC config (server-only env).
+- **Application secrets** — database credentials and Clerk keys (server-only env).
 
 ## Trust Boundaries
 
 - **Browser → API** — all requests cross this boundary and are untrusted.
 - **API → PostgreSQL** — Drizzle ORM with parameterized queries.
-- **Public / Authenticated** — an OIDC auth layer exists. `authMiddleware`
-  (global) populates `req.user` from a session cookie (`sid`) or `Authorization:
-  Bearer <sid>`. Sensitive endpoints call `requireAuthentication` and derive the
-  acting runner server-side via `getAuthenticatedRunner` (maps `req.user.id` →
-  `runners.authUserId`). The acting runner is NOT taken from client input.
+- **Public / Authenticated** — `clerkMiddleware` validates the browser session
+  cookie. Sensitive endpoints call `requireAuthentication`, which resolves the
+  local user using `sessionClaims.userId` (the legacy ID for migrated accounts,
+  Clerk's ID for new accounts), then derives the acting runner via
+  `getAuthenticatedRunner` (`users.id` → `runners.authUserId`). The acting runner
+  is NOT taken from client input.
 - **User / Admin** — no admin role exists; all authenticated users are peers.
 
 ## Scan Anchors
 
-- Auth core: `artifacts/api-server/src/lib/auth.ts` (session store, OIDC config),
-  `src/middlewares/authMiddleware.ts` (session resolution + refresh),
-  `src/lib/authorization.ts` (`requireAuthentication`, `getAuthenticatedRunner`,
-  `requireRunner`, `publicRunnerSelection`), `src/routes/auth.ts` (login/callback/
-  logout/mobile token exchange).
+- Auth core: Clerk proxy and middleware in `artifacts/api-server/src/app.ts`,
+  `src/middlewares/clerkProxyMiddleware.ts`, and
+  `src/lib/authorization.ts` (`requireAuthentication`, local-user bridge,
+  `getAuthenticatedRunner`, `requireRunner`, `publicRunnerSelection`).
 - Production entry points: `artifacts/api-server/src/routes/*.ts`, wired in
   `routes/index.ts`, mounted under `/api` in `app.ts`.
 - Access control enforced: profile update scoped to `authUserId`; connection
@@ -64,12 +65,12 @@ messages.
 
 ### Spoofing / Improper Authentication
 
-Authentication is provided by Replit OIDC with server-side sessions
-(`sessions` table, random 32-byte `sid`, httpOnly+secure+sameSite=lax cookie).
-The acting runner is derived from the session, not client input. Required
-guarantee: sensitive endpoints MUST call `requireAuthentication` and derive
-identity via `getAuthenticatedRunner`; the OIDC `state`/`nonce`/PKCE parameters
-MUST be verified (they are, in both browser and mobile token-exchange flows).
+Authentication is provided by Clerk; the API validates same-origin browser
+session cookies with `clerkMiddleware`. The acting runner is derived from the
+verified session and local user bridge, not client input. Required guarantee:
+sensitive endpoints MUST call `requireAuthentication` and derive identity via
+`getAuthenticatedRunner`; local database queries for migrated accounts use
+`sessionClaims.userId`, never Clerk's native `auth.userId`.
 
 ### Information Disclosure (BOLA / IDOR)
 
@@ -88,11 +89,10 @@ owns/controls the target object.
 
 ### Redirect handling
 
-Login/logout `returnTo` is validated by `getSafeReturnTo`, which now normalizes
-backslashes before validation, rejects protocol-relative (`//`) and absolute
-URLs, and re-derives a same-origin path via `URL` parsing. The previously
-reported backslash → protocol-relative open-redirect bypass is closed. Required
-guarantee: redirect targets MUST remain normalized and confirmed same-origin.
+Clerk owns sign-in and sign-out redirects. The public home route remains
+accessible when signed out; authenticated users are sent to the runner
+discovery page. Required guarantee: do not add arbitrary external redirect
+targets to authentication links.
 
 ### Security misconfiguration
 

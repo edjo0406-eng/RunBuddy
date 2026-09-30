@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useAuth, useClerk } from "@clerk/react";
 import { ArrowUpRight, MessageSquare, Users } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
@@ -7,6 +8,8 @@ import { useNotifications } from "@/hooks/use-notifications";
 export function Navbar() {
   const [location] = useLocation();
   const { myRunnerId } = useIdentity();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signOut } = useClerk();
 
   const { data: unread } = useGetUnreadCount(
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
@@ -40,6 +43,24 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          {isLoaded && isSignedIn ? (
+            <button
+              type="button"
+              onClick={() =>
+                signOut({ redirectUrl: import.meta.env.BASE_URL || "/" })
+              }
+              className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              Log out
+            </button>
+          ) : isLoaded ? (
+            <Link
+              href="/sign-in"
+              className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              Sign in
+            </Link>
+          ) : null}
           <Link
             href="/inbox"
             data-testid="link-nav-inbox"
@@ -53,7 +74,7 @@ export function Navbar() {
               </span>
             )}
           </Link>
-          <Link href="/create-profile" data-testid="link-nav-join" className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex">
+          <Link href={isSignedIn ? "/create-profile" : "/sign-up"} data-testid="link-nav-join" className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex">
             Join the club
             <ArrowUpRight className="h-4 w-4" />
           </Link>

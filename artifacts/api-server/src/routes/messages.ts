@@ -20,7 +20,7 @@ const sendMessageRateLimit = createRateLimiter({
 });
 
 router.get("/messages/inbox", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -80,7 +80,7 @@ router.get("/messages/inbox", async (req, res) => {
 });
 
 router.get("/messages/conversation", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -127,7 +127,7 @@ router.get("/messages/conversation", async (req, res) => {
 });
 
 router.get("/messages/unread-count", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -147,7 +147,7 @@ router.get("/messages/unread-count", async (req, res) => {
 });
 
 router.post("/messages", sendMessageRateLimit, async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 

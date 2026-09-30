@@ -27,7 +27,7 @@ const createRunnerRateLimit = createRateLimiter({
 });
 
 router.get("/runners", listRunnersRateLimit, async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
 
   const parsed = ListRunnersQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -78,7 +78,7 @@ router.get("/runners", listRunnersRateLimit, async (req, res) => {
 });
 
 router.post("/runners", createRunnerRateLimit, async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const existingRunner = await getAuthenticatedRunner(req);
   if (existingRunner) {
     return res.status(409).json({ error: "A runner profile already exists for this account" });
@@ -115,13 +115,13 @@ router.post("/runners", createRunnerRateLimit, async (req, res) => {
 
   const [runner] = await db
     .insert(runnersTable)
-    .values({ ...parsed.data, authUserId: req.user.id })
+    .values({ ...parsed.data, authUserId: req.dbUser!.id })
     .returning();
   return res.status(201).json(runner);
 });
 
 router.get("/runners/me", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   const response = { runnerId: currentRunner?.id ?? null };
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -129,7 +129,7 @@ router.get("/runners/me", async (req, res) => {
 });
 
 router.get("/runners/:id", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
 
   const parsed = GetRunnerParams.safeParse(req.params);
   if (!parsed.success) {
@@ -147,7 +147,7 @@ router.get("/runners/:id", async (req, res) => {
 });
 
 router.put("/runners/:id", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -171,7 +171,7 @@ router.put("/runners/:id", async (req, res) => {
     .where(
       and(
         eq(runnersTable.id, paramsParsed.data.id),
-        eq(runnersTable.authUserId, req.user.id),
+        eq(runnersTable.authUserId, req.dbUser!.id),
       ),
     )
     .returning();

@@ -12,6 +12,7 @@ A running community web app for finding running partners while traveling or at h
 - **TypeScript version**: 5.9
 - **Frontend**: React + Vite (`artifacts/runmatch`) at `/`
 - **API framework**: Express 5 (`artifacts/api-server`) at `/api`
+- **Authentication**: Clerk email/password sign-in only in the app UI, using same-origin session cookies
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
@@ -36,6 +37,12 @@ A running community web app for finding running partners while traveling or at h
 
 ## API Routes
 
+Authentication pages are served by RunBuddy at `/sign-in` and `/sign-up`.
+`clerkMiddleware` validates API requests; protected routes map
+`sessionClaims.userId` to the local `users.id` bridge and create a local user
+row on first access. The users and sessions tables remain in the schema; Clerk
+manages browser identity and sessions.
+
 - `GET /api/runners` — list runners with optional filters (country, city, experience)
 - `POST /api/runners` — create runner profile
 - `GET /api/runners/:id` — get single runner
@@ -49,6 +56,8 @@ A running community web app for finding running partners while traveling or at h
 
 ## DB Schema
 
+- `users` — local account bridge for runner profiles
+- `sessions` — retained in the schema; browser sessions are managed by Clerk
 - `runners` — runner profiles with JSON columns for `tracking_apps` and `running_stats`
 - `connections` — connection requests with status (pending/accepted/declined)
 

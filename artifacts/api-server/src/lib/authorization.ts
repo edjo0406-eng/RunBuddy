@@ -1,6 +1,17 @@
-import { db, runnersTable, type Runner } from "@workspace/db";
+import { getAuth } from "@clerk/express";
+import { db, runnersTable, usersTable, type Runner } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Request, Response } from "express";
+
+type LocalUser = typeof usersTable.$inferSelect;
+
+declare global {
+  namespace Express {
+    interface Request {
+      dbUser?: LocalUser;
+    }
+  }
+}
 
 export const publicRunnerSelection = {
   id: runnersTable.id,
@@ -29,26 +40,66 @@ export const publicRunnerSelection = {
 export async function getAuthenticatedRunner(
   req: Request,
 ): Promise<Runner | null> {
-  if (!req.isAuthenticated()) return null;
+  if (!req.dbUser) return null;
 
   const [runner] = await db
     .select()
     .from(runnersTable)
-    .where(eq(runnersTable.authUserId, req.user.id))
+    .where(eq(runnersTable.authUserId, req.dbUser.id))
     .limit(1);
 
   return runner ?? null;
 }
 
-export function requireAuthentication(
+export async function requireAuthentication(
   req: Request,
   res: Response,
-): req is Request & { user: NonNullable<Request["user"]> } {
-  if (!req.isAuthenticated()) {
+): Promise<LocalUser | null> {
+  const auth = getAuth(req);
+  const sessionClaims = auth.sessionClaims as
+    | { userId?: unknown }
+    | null
+    | undefined;
+  const claimedUserId = sessionClaims?.userId;
+  const userId =
+    typeof claimedUserId === "string" ? claimedUserId : auth.userId;
+
+  if (!userId) {
     res.status(401).json({ error: "Authentication required" });
-    return false;
+    return null;
   }
-  return true;
+
+  let [dbUser] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!dbUser) {
+    const [inserted] = await db
+      .insert(usersTable)
+      .values({ id: userId })
+      .onConflictDoNothing()
+      .returning();
+    dbUser = inserted;
+
+    if (!dbUser) {
+      [dbUser] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, userId))
+        .limit(1);
+    }
+  }
+
+  if (!dbUser) {
+    req.log.error("Unable to provision the authenticated account");
+    res.status(500).json({ error: "Unable to load your account" });
+    return null;
+  }
+
+  req.dbUser = dbUser;
+  return dbUser;
 }
 
 export function requireRunner(

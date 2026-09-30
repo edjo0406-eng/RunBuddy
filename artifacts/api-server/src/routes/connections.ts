@@ -22,7 +22,7 @@ const createConnectionRateLimit = createRateLimiter({
 });
 
 router.get("/connections", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -69,7 +69,7 @@ router.get("/connections", async (req, res) => {
 });
 
 router.post("/connections", createConnectionRateLimit, async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 
@@ -104,7 +104,7 @@ router.post("/connections", createConnectionRateLimit, async (req, res) => {
 });
 
 router.put("/connections/:id", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
   if (!requireRunner(currentRunner, res)) return;
 

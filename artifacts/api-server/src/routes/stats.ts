@@ -48,7 +48,7 @@ router.get("/stats/countries", async (req, res) => {
 });
 
 router.get("/stats/featured", async (req, res) => {
-  if (!requireAuthentication(req, res)) return;
+  if (!(await requireAuthentication(req, res))) return;
 
   const runners = await db
     .select(publicRunnerSelection)

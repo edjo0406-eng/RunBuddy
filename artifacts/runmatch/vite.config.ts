@@ -158,7 +158,7 @@ export default defineConfig({
   plugins: [
     react(),
     routeMetadataPlugin,
-    tailwindcss(),
+    tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
     VitePWA({
       registerType: "autoUpdate",

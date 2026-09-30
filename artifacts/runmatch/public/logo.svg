@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="64" viewBox="0 0 256 64" fill="none">
+  <rect x="2" y="4" width="56" height="56" rx="18" fill="#162236"/>
+  <path d="M15 39c8 0 8-16 16-16s8 16 16 16" stroke="#B2E119" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="15" cy="39" r="3" fill="#B2E119"/>
+  <circle cx="47" cy="39" r="3" fill="#B2E119"/>
+  <text x="72" y="43" fill="#162236" font-family="Space Grotesk, Manrope, sans-serif" font-size="30" font-weight="700" letter-spacing="-1">RunBuddy</text>
+</svg>

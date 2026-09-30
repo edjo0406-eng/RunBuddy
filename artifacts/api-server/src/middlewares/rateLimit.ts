@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import type { NextFunction, Request, Response } from "express";
 
 type RateLimitOptions = {
@@ -14,7 +15,8 @@ type RateLimitEntry = {
 const DEFAULT_MAX_KEYS = 10_000;
 
 function requestKey(req: Request): string {
-  return req.user?.id ? `user:${req.user.id}` : `ip:${req.ip ?? "unknown"}`;
+  const userId = getAuth(req).userId;
+  return userId ? `user:${userId}` : `ip:${req.ip ?? "unknown"}`;
 }
 
 export function createRateLimiter({
