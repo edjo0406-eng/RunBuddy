@@ -8,7 +8,7 @@ import {
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import {
   Redirect,
   Route,
@@ -19,7 +19,11 @@ import {
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { trackEvent } from "@/lib/analytics";
+import { AuthGate } from "@/components/auth-gate";
+import {
+  getArtifactRoutePath,
+  normalizeArtifactBasePath,
+} from "@/lib/auth-paths";
 import {
   getCanonicalUrl,
   getPublicPageMetadata,
@@ -38,7 +42,7 @@ import RunBuddy from "@/pages/run-buddy";
 import RunDate from "@/pages/run-date";
 import RunnerProfile from "@/pages/runner-profile";
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const basePath = normalizeArtifactBasePath(import.meta.env.BASE_URL);
 
 // Required: resolve the key from the hostname so the same build works on
 // custom domains and on the Replit preview host.
@@ -155,42 +159,6 @@ function PublicRouteMetadata() {
   return null;
 }
 
-function AuthGate({ children }: { children: ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
-
-  if (!isLoaded) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-6">
-        <div className="max-w-md text-center">
-          <h1 className="mb-3 text-3xl font-display font-bold">Sign in to RunBuddy</h1>
-          <p className="mb-6 text-muted-foreground">
-            Sign in to browse profiles and use private connections and messages.
-          </p>
-          <a
-            href={`${basePath}/sign-in`}
-            onClick={() => trackEvent("sign_in_started", { source: "auth_gate" })}
-            className="inline-flex rounded-full bg-primary px-5 py-3 font-bold text-primary-foreground"
-          >
-            Sign in
-          </a>
-          <a
-            href={`${basePath}/sign-up`}
-            className="ml-3 inline-flex rounded-full border border-border px-5 py-3 font-bold text-foreground"
-          >
-            Create account
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}
-
 function HomeRedirect() {
   const { isLoaded, isSignedIn } = useAuth();
   if (isLoaded && isSignedIn) {
@@ -204,8 +172,8 @@ function SignInPage() {
     <main className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10">
       <SignIn
         routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
+        path={getArtifactRoutePath(basePath, "sign-in")}
+        signUpUrl={getArtifactRoutePath(basePath, "sign-up")}
       />
     </main>
   );
@@ -216,8 +184,8 @@ function SignUpPage() {
     <main className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-10">
       <SignUp
         routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
+        path={getArtifactRoutePath(basePath, "sign-up")}
+        signInUrl={getArtifactRoutePath(basePath, "sign-in")}
       />
     </main>
   );
@@ -233,17 +201,17 @@ function Router() {
       <Route path="/run-date" component={RunDate} />
       <Route path="/runner/:id" component={RunnerProfile} />
       <Route path="/create-profile">
-        <AuthGate>
+        <AuthGate basePath={basePath}>
           <CreateProfile />
         </AuthGate>
       </Route>
       <Route path="/inbox">
-        <AuthGate>
+        <AuthGate basePath={basePath}>
           <Inbox />
         </AuthGate>
       </Route>
       <Route path="/messages/:otherId">
-        <AuthGate>
+        <AuthGate basePath={basePath}>
           <ConversationPage />
         </AuthGate>
       </Route>

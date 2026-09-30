@@ -4,6 +4,7 @@ import { ArrowUpRight, MessageSquare, Users } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { getArtifactRootPath } from "@/lib/auth-paths";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -47,7 +48,9 @@ export function Navbar() {
             <button
               type="button"
               onClick={() =>
-                signOut({ redirectUrl: import.meta.env.BASE_URL || "/" })
+                signOut({
+                  redirectUrl: getArtifactRootPath(import.meta.env.BASE_URL),
+                })
               }
               className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
