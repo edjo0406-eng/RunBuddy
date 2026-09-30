@@ -58,6 +58,17 @@ let selectResults: unknown[][];
 let insertResult: unknown[];
 let insertedValues: unknown[];
 
+function authenticateAsRunner(runnerId: number) {
+  clerkMocks.currentAuth = {
+    userId: "clerk-native-user",
+    sessionClaims: { userId: "legacy-replit-subject" },
+  };
+  selectResults = [
+    [{ id: "legacy-replit-subject" }],
+    [{ id: runnerId }],
+  ];
+}
+
 describe("Clerk account migration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -173,5 +184,50 @@ describe("Clerk account migration", () => {
 
     expect(conditional.status).toBe(200);
     expect(conditional.body).toEqual({ runnerId: 14 });
+  });
+
+  describe("self-directed runner actions", () => {
+    it("rejects a connection to the runner resolved from the authenticated session", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app)
+        .post("/api/connections")
+        .send({
+          toRunnerId: 14,
+          type: "buddy",
+          message: "I'd love to connect.",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: "Cannot connect to yourself" });
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+
+    it("rejects a message to the runner resolved from the authenticated session", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 14, content: "A message to myself" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: "Cannot message yourself" });
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+
+    it("rejects opening a conversation with the runner resolved from the session", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app)
+        .get("/api/messages/conversation")
+        .query({ otherId: 14 });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        error: "Cannot open a conversation with yourself",
+      });
+      expect(dbMocks.select).toHaveBeenCalledTimes(2);
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
   });
 });
