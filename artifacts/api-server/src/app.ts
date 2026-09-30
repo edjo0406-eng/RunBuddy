@@ -31,11 +31,24 @@ ${publicSitemapRoutes
 // nearest proxy hop so req.ip identifies the caller for public rate limits.
 app.set("trust proxy", 1);
 
+function normalizeOrigin(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  try {
+    const url = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return new URL(url).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 const allowedCorsOrigins = new Set(
-  (process.env.CORS_ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  [
+    ...(process.env.CORS_ALLOWED_ORIGINS ?? "")
+      .split(",")
+      .map((origin) => normalizeOrigin(origin.trim())),
+    normalizeOrigin(process.env.REPLIT_EXPO_DEV_DOMAIN),
+  ].filter((origin): origin is string => Boolean(origin)),
 );
 
 app.use(
