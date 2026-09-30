@@ -14,7 +14,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-function createRunnerIcon(avatarUrl: string | null | undefined, gender: string | null | undefined) {
+function escapeHtmlAttribute(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]!);
+}
+
+function createRunnerIcon(avatarUrl: string | null | undefined, gender: string | null | undefined, name: string) {
   const fallbackColor = gender?.toLowerCase() === "female" ? "#e85d7a" : "#3b6ef6";
   const initial = "";
   if (avatarUrl) {
@@ -29,7 +39,7 @@ function createRunnerIcon(avatarUrl: string | null | undefined, gender: string |
           box-shadow: 0 2px 8px rgba(0,0,0,0.25);
           background: #f3f4f6;
         ">
-          <img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" />
+          <img src="${escapeHtmlAttribute(avatarUrl)}" alt="${escapeHtmlAttribute(name)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" />
         </div>
         <div style="
           width: 0; height: 0;
@@ -56,7 +66,7 @@ function createRunnerIcon(avatarUrl: string | null | undefined, gender: string |
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         color: white; font-weight: bold; font-size: 14px;
       ">
-        <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white'><path d='M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z'/></svg>
+        <svg aria-hidden="true" xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='white'><path d='M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z'/></svg>
       </div>
       <div style="
         width: 0; height: 0;
@@ -107,7 +117,8 @@ export function RunnerMap({ runners }: RunnerMapProps) {
           <Marker
             key={runner.id}
             position={[runner.lat!, runner.lng!]}
-            icon={createRunnerIcon(runner.avatarUrl, runner.gender)}
+            icon={createRunnerIcon(runner.avatarUrl, runner.gender, runner.name)}
+            title={runner.name}
           >
             <Popup maxWidth={240} className="runner-popup">
               <div style={{ fontFamily: "inherit", minWidth: 200 }}>
