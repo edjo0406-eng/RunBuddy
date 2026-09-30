@@ -1,5 +1,9 @@
 export const SITE_URL = "https://RunBuddy.replit.app";
 export const SOCIAL_IMAGE_URL = `${SITE_URL}/opengraph.jpg`;
+export const SOCIAL_IMAGE_WIDTH = 1200;
+export const SOCIAL_IMAGE_HEIGHT = 630;
+export const SOCIAL_IMAGE_ALT =
+  'RunBuddy runners at sunset with the message "Your next run has company."';
 export const SITE_NAME = "RunBuddy";
 
 export type PageMetadata = {

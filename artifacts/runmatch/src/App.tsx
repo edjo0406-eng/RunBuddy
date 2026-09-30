@@ -24,7 +24,10 @@ import {
   getCanonicalUrl,
   getPublicPageMetadata,
   SITE_NAME,
+  SOCIAL_IMAGE_ALT,
+  SOCIAL_IMAGE_HEIGHT,
   SOCIAL_IMAGE_URL,
+  SOCIAL_IMAGE_WIDTH,
 } from "@/lib/seo";
 import ConversationPage from "@/pages/conversation";
 import CreateProfile from "@/pages/create-profile";
@@ -139,10 +142,14 @@ function PublicRouteMetadata() {
     setMetaContent('meta[property="og:type"]', "website");
     setMetaContent('meta[property="og:site_name"]', SITE_NAME);
     setMetaContent('meta[property="og:image"]', SOCIAL_IMAGE_URL);
+    setMetaContent('meta[property="og:image:width"]', String(SOCIAL_IMAGE_WIDTH));
+    setMetaContent('meta[property="og:image:height"]', String(SOCIAL_IMAGE_HEIGHT));
+    setMetaContent('meta[property="og:image:alt"]', SOCIAL_IMAGE_ALT);
     setMetaContent('meta[name="twitter:card"]', "summary_large_image");
     setMetaContent('meta[name="twitter:title"]', metadata.title);
     setMetaContent('meta[name="twitter:description"]', metadata.description);
     setMetaContent('meta[name="twitter:image"]', SOCIAL_IMAGE_URL);
+    setMetaContent('meta[name="twitter:image:alt"]', SOCIAL_IMAGE_ALT);
   }, [location]);
 
   return null;
