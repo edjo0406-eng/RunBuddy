@@ -83,10 +83,16 @@ describe("Clerk account migration", () => {
         from: ReturnType<typeof vi.fn>;
         where: ReturnType<typeof vi.fn>;
         limit: ReturnType<typeof vi.fn>;
+        then: (
+          onFulfilled?: ((value: unknown[]) => unknown) | null,
+          onRejected?: ((reason: unknown) => unknown) | null,
+        ) => Promise<unknown>;
       } = {
         from: vi.fn(() => query),
         where: vi.fn(() => query),
         limit: vi.fn(async () => selectResults.shift() ?? []),
+        then: (onFulfilled, onRejected) =>
+          Promise.resolve(selectResults.shift() ?? []).then(onFulfilled, onRejected),
       };
       return query;
     });
@@ -228,6 +234,109 @@ describe("Clerk account migration", () => {
       });
       expect(dbMocks.select).toHaveBeenCalledTimes(2);
       expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("requests between runners", () => {
+    it("creates a connection from the session-resolved runner", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{ id: 15 }]);
+      insertResult = [{
+        id: 21,
+        fromRunnerId: 14,
+        toRunnerId: 15,
+        type: "buddy",
+        status: "pending",
+        message: "Let's run together.",
+      }];
+
+      const response = await request(app)
+        .post("/api/connections")
+        .send({
+          toRunnerId: 15,
+          type: "buddy",
+          message: "Let's run together.",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(insertResult[0]);
+      expect(insertedValues).toEqual([{
+        toRunnerId: 15,
+        type: "buddy",
+        message: "Let's run together.",
+        fromRunnerId: 14,
+      }]);
+    });
+
+    it("rejects a connection request with a forged sender", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app)
+        .post("/api/connections")
+        .send({
+          fromRunnerId: 99,
+          toRunnerId: 15,
+          type: "buddy",
+          message: "Let's run together.",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        error: "fromRunnerId is derived from the authenticated session",
+      });
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+      expect(insertedValues).toEqual([]);
+    });
+
+    it("creates a message from the session-resolved runner", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{ id: 15 }]);
+      insertResult = [{
+        id: 34,
+        fromRunnerId: 14,
+        toRunnerId: 15,
+        content: "Are you running this weekend?",
+        isRead: false,
+        createdAt: new Date("2026-09-30T12:00:00.000Z"),
+      }];
+
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 15, content: "Are you running this weekend?" });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        id: 34,
+        fromRunnerId: 14,
+        toRunnerId: 15,
+        content: "Are you running this weekend?",
+        isRead: false,
+        createdAt: "2026-09-30T12:00:00.000Z",
+      });
+      expect(insertedValues).toEqual([{
+        fromRunnerId: 14,
+        toRunnerId: 15,
+        content: "Are you running this weekend?",
+      }]);
+    });
+
+    it("rejects a message with a forged sender", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app)
+        .post("/api/messages")
+        .send({
+          fromRunnerId: 99,
+          toRunnerId: 15,
+          content: "A forged message",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        error: "fromRunnerId is derived from the authenticated session",
+      });
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+      expect(insertedValues).toEqual([]);
     });
   });
 });
