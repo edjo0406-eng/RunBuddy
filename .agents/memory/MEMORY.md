@@ -3,3 +3,4 @@
 - [PWA API navigation exclusions](pwa-api-navigation.md) — service-worker navigation fallback must exclude API paths or OAuth redirects render the SPA instead.
 - [Express auth-state caching](express-auth-state-caching.md) — no-store headers alone may still allow Express to turn conditional JSON responses into 304.
 - [Clerk identity bridge](clerk-identity-bridge.md) — use `sessionClaims.userId` for migrated local users; reserve `auth.userId` for Clerk API calls.
+- [Workspace override installs](pnpm-override-installs.md) — run a full pnpm install after changing workspace overrides so every package's installed tree matches the lockfile.

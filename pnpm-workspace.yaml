@@ -77,7 +77,7 @@ onlyBuiltDependencies:
 overrides:
   # Pin vulnerable transitive dependencies to patched, API-compatible releases.
   qs: 6.16.0
-  fast-uri: 3.1.6
+  fast-uri: 3.1.8
   js-yaml: 4.3.2
   postcss: 8.5.23
   browserslist: 4.28.7
