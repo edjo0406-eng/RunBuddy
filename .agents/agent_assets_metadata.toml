@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "c7uo19pf10AfdLXaTcdH6"
@@ -18,3 +17,17 @@ id = "sFIN0_b8uRyHq1KqcrJOs"
 uri = "file://artifacts/runmatch/src/assets/images/avatar-f.png"
 type = "image"
 title = "Placeholder female runner avatar"
+
+[[outputs]]
+id = "GirLKmUqVyK4zytNZe0fm"
+uri = "file://artifacts/runmatch/public/opengraph.jpg"
+type = "image"
+title = "RunBuddy social sharing card"
+description = "Branded 1200×630 image used for Open Graph and Twitter link previews."
+logical_id = "0113286f-ffcc-4236-932e-44b2cbdd78b1"
+content_hash = "sha256:d429f789234c954bc5bf109290302157e2ada697e65b92f801837acb595b532d"
+size = 100045
+mtime_ms = 1790753978592
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:ceb4073a-6ff2-4cbb-9eaf-665ed0ce912c/0113286f-ffcc-4236-932e-44b2cbdd78b1/46408b20-9bcd-4ffb-9d4e-7144661b0c28"
+storage_version_token = "1790812278425705"
+content_type = "image/jpeg"
