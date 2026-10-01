@@ -9,8 +9,11 @@ import { getArtifactRootPath } from "@/lib/auth-paths";
 export function Navbar() {
   const [location] = useLocation();
   const { myRunnerId } = useIdentity();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const { signOut } = useClerk();
+  const isAuthResolved = isLoaded && isSignedIn !== null;
 
   const { data: unread } = useGetUnreadCount(
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
@@ -44,7 +47,7 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          {isLoaded && isSignedIn ? (
+          {isAuthResolved && isSignedIn === true ? (
             <button
               type="button"
               onClick={() =>
@@ -56,7 +59,7 @@ export function Navbar() {
             >
               Log out
             </button>
-          ) : isLoaded ? (
+          ) : isAuthResolved && isSignedIn === false ? (
             <Link
               href="/sign-in"
               className="rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -77,10 +80,12 @@ export function Navbar() {
               </span>
             )}
           </Link>
-          <Link href={isSignedIn ? "/create-profile" : "/sign-up"} data-testid="link-nav-join" className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex">
-            Join the club
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          {isAuthResolved && (
+            <Link href={isSignedIn === true ? "/create-profile" : "/sign-up"} data-testid="link-nav-join" className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex">
+              Join the club
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
       </div>
     </header>

@@ -13,7 +13,9 @@ import { ArrowRight, Compass, Search, Users, MapPin, LayoutGrid, Map, SlidersHor
 import { ListRunnersMode, ListRunnersExperience } from "@workspace/api-client-react";
 
 export default function RunBuddy() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const [country, setCountry] = useState<string>("");
   const [city, setCity] = useState<string>("");
   const [experience, setExperience] = useState<ListRunnersExperience | undefined>();

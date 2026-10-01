@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RunnerProfile from "./runner-profile";
 
 const profileMocks = vi.hoisted(() => ({
@@ -9,6 +10,10 @@ const profileMocks = vi.hoisted(() => ({
   currentRunnerId: 14 as number | null,
   mutate: vi.fn(),
   navigate: vi.fn(),
+}));
+
+vi.mock("@clerk/react", () => ({
+  useAuth: () => ({ isSignedIn: true }),
 }));
 
 vi.mock("@workspace/api-client-react", () => ({
@@ -24,6 +29,10 @@ vi.mock("@workspace/api-client-react", () => ({
   getGetCurrentRunnerQueryKey: () => ["current-runner"],
   useCreateConnection: () => ({
     mutate: profileMocks.mutate,
+    isPending: false,
+  }),
+  useUpdateRunner: () => ({
+    mutate: vi.fn(),
     isPending: false,
   }),
 }));
@@ -57,7 +66,17 @@ function makeRunner(id: number, lookingFor: "date" | "buddy" | "both") {
 }
 
 function renderProfile() {
-  return renderToStaticMarkup(createElement(RunnerProfile));
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  return renderToStaticMarkup(
+    createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      createElement(RunnerProfile),
+    ),
+  );
 }
 
 describe("runner profile actions", () => {

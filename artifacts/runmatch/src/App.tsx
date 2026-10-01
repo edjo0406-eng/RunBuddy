@@ -160,8 +160,10 @@ function PublicRouteMetadata() {
 }
 
 function HomeRedirect() {
-  const { isLoaded, isSignedIn } = useAuth();
-  if (isLoaded && isSignedIn) {
+  const { isLoaded, isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
+  if (isLoaded && isSignedIn === true) {
     return <Redirect to="/run-buddy" />;
   }
   return <Home />;

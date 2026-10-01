@@ -30,7 +30,9 @@ export default function RunnerProfile() {
   const id = Number(params.id);
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const queryClient = useQueryClient();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });

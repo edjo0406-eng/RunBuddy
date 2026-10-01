@@ -16,7 +16,9 @@ interface IdentityState {
 }
 
 export function useIdentity() {
-  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const [identity, setIdentity] = useState<IdentityState>({
     userId: null,
     runnerId: null,
@@ -28,9 +30,9 @@ export function useIdentity() {
   const myRunnerId = belongsToCurrentUser ? identity.runnerId : null;
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isSignedIn === null) return;
 
-    if (!isSignedIn || !userId || !storageKey) {
+    if (isSignedIn === false || !userId || !storageKey) {
       setIdentity({
         userId: null,
         runnerId: null,
@@ -103,7 +105,7 @@ export function useIdentity() {
   }, [currentRunner, identity, storageKey, userId]);
 
   const setMyRunnerId = (id: number | null) => {
-    if (!isLoaded || !isSignedIn || !userId || !storageKey) return;
+    if (!isLoaded || isSignedIn !== true || !userId || !storageKey) return;
 
     if (id === null) {
       localStorage.setItem(storageKey, CLEARED_VALUE);
