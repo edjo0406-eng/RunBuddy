@@ -1,4 +1,6 @@
+import { useRef, useState, type ChangeEvent } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { resolveAvatarUrl } from "@/lib/avatar";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,8 +11,10 @@ import {
   getGetCurrentRunnerQueryKey,
   useCreateConnection,
   useUpdateRunner,
+  useRequestUploadUrl,
   getGetFeaturedRunnersQueryKey,
   getListRunnersQueryKey,
+  type UploadUrlRequestContentType,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -24,6 +28,12 @@ import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
 import { CreateConnectionBodyType } from "@workspace/api-client-react";
+
+function isSupportedProfilePhotoType(
+  value: string,
+): value is UploadUrlRequestContentType {
+  return value === "image/jpeg" || value === "image/png" || value === "image/webp";
+}
 
 export default function RunnerProfile() {
   const params = useParams();
@@ -44,6 +54,9 @@ export default function RunnerProfile() {
   });
   const createConnection = useCreateConnection();
   const updateRunner = useUpdateRunner();
+  const requestUploadUrl = useRequestUploadUrl();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const isOwnProfile = currentRunner?.runnerId === id;
 
   const changePublicListing = (checked: boolean) => {
@@ -56,6 +69,75 @@ export default function RunnerProfile() {
       },
       onError: () => toast({ title: "Could not update public listing", variant: "destructive" }),
     });
+  };
+
+  const uploadProfilePhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !runner) return;
+
+    if (!isSupportedProfilePhotoType(file.type)) {
+      toast({
+        title: "Choose a JPEG, PNG, or WebP photo",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({
+        title: "Photo is too large",
+        description: "Choose an image up to 8 MiB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const { uploadURL, objectPath } =
+        await requestUploadUrl.mutateAsync({
+          data: {
+            name: file.name || "profile-photo",
+            size: file.size,
+            contentType: file.type,
+          },
+        });
+      const uploadResponse = await fetch(uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadResponse.ok) {
+        throw new Error("The image upload did not complete.");
+      }
+
+      await updateRunner.mutateAsync({
+        id: runner.id,
+        data: { avatarUrl: `/api/storage${objectPath}?v=${Date.now()}` },
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getGetRunnerQueryKey(runner.id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getGetCurrentRunnerQueryKey(),
+        }),
+        queryClient.invalidateQueries({ queryKey: getListRunnersQueryKey() }),
+        queryClient.invalidateQueries({
+          queryKey: getGetFeaturedRunnersQueryKey(),
+        }),
+      ]);
+      toast({ title: "Profile photo updated" });
+    } catch (error) {
+      toast({
+        title: "Could not update profile photo",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const handleMessage = () => {
@@ -122,11 +204,37 @@ export default function RunnerProfile() {
         <div className="bg-muted/30 border-b border-border/50 py-12">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-8 items-start">
-              <img 
-                src={runner.avatarUrl || defaultAvatar} 
-                alt={displayName}
-                className="w-48 h-48 object-cover rounded-2xl shadow-xl border-4 border-background"
-              />
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={resolveAvatarUrl(runner.avatarUrl) || defaultAvatar}
+                  alt={displayName}
+                  className="w-48 h-48 object-cover rounded-2xl shadow-xl border-4 border-background"
+                />
+                {isOwnProfile && (
+                  <div className="w-48 space-y-2 text-center">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={uploadProfilePhoto}
+                      aria-label="Choose a profile photo"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full rounded-full"
+                      disabled={isUploadingAvatar || updateRunner.isPending}
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      {isUploadingAvatar ? "Uploading…" : runner.avatarUrl ? "Change photo" : "Add photo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      JPEG, PNG, or WebP, up to 8 MiB. Anyone with the image link can view it.
+                    </p>
+                  </div>
+                )}
+              </div>
               
               <div className="flex-grow">
                 <div className="flex flex-wrap items-center gap-3 mb-2">

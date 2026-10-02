@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Activity, Timer, Plane } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface RunnerCardProps {
   runner: Runner;
@@ -22,7 +23,7 @@ export function RunnerCard({ runner }: RunnerCardProps) {
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30 flex flex-col">
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img
-          src={runner.avatarUrl || defaultAvatar}
+          src={resolveAvatarUrl(runner.avatarUrl) || defaultAvatar}
           alt={displayName}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
         />

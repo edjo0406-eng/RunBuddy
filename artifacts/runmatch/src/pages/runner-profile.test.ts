@@ -35,6 +35,10 @@ vi.mock("@workspace/api-client-react", () => ({
     mutate: vi.fn(),
     isPending: false,
   }),
+  useRequestUploadUrl: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 vi.mock("wouter", () => ({

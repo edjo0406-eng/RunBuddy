@@ -220,6 +220,17 @@ export function RunnerAvatar({
   size?: number;
 }) {
   const [imageFailed, setImageFailed] = React.useState(false);
+  const resolvedUri = React.useMemo(() => {
+    if (!uri || /^(https?:|data:|blob:)/i.test(uri)) return uri;
+    const path = uri.startsWith('/') ? uri : `/${uri}`;
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    if (domain) return `https://${domain}${path}`;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return new URL(path, window.location.origin).toString();
+    }
+    return uri;
+  }, [uri]);
+  React.useEffect(() => setImageFailed(false), [uri]);
   const fallback =
     gender?.toLowerCase() === 'male' || gender?.toLowerCase() === 'man'
       ? require('../assets/images/avatar-m.png')
@@ -227,7 +238,7 @@ export function RunnerAvatar({
 
   return (
     <Image
-      source={uri && !imageFailed ? { uri } : fallback}
+      source={resolvedUri && !imageFailed ? { uri: resolvedUri } : fallback}
       onError={() => setImageFailed(true)}
       style={{
         width: size,

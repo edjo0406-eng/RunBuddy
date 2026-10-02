@@ -10,6 +10,7 @@ import { useIdentity } from "@/hooks/use-identity";
 import { MessageSquare, User } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
@@ -113,7 +114,7 @@ export default function Inbox() {
               {conversations?.map((conv) => {
                 const other = conv.otherRunner;
                 const isFemale = other?.gender?.toLowerCase() === "female";
-                const avatar = other?.avatarUrl || (isFemale ? defaultAvatarF : defaultAvatarM);
+                const avatar = resolveAvatarUrl(other?.avatarUrl) || (isFemale ? defaultAvatarF : defaultAvatarM);
                 const initials = other?.name?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() ?? "?";
                 return (
                   <Link key={conv.otherId} href={`/messages/${conv.otherId}`}>

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Send, MapPin } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
@@ -43,7 +44,7 @@ export default function ConversationPage() {
   const sendMessage = useSendMessage();
 
   const isFemale = otherRunner?.gender?.toLowerCase() === "female";
-  const otherAvatar = otherRunner?.avatarUrl || (isFemale ? defaultAvatarF : defaultAvatarM);
+  const otherAvatar = resolveAvatarUrl(otherRunner?.avatarUrl) || (isFemale ? defaultAvatarF : defaultAvatarM);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,7 +100,7 @@ export default function ConversationPage() {
 
   const myRunner = allRunners?.find((r) => r.id === myRunnerId);
   const myIsFemale = myRunner?.gender?.toLowerCase() === "female";
-  const myAvatar = myRunner?.avatarUrl || (myIsFemale ? defaultAvatarF : defaultAvatarM);
+  const myAvatar = resolveAvatarUrl(myRunner?.avatarUrl) || (myIsFemale ? defaultAvatarF : defaultAvatarM);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

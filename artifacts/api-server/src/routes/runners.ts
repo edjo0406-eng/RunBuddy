@@ -23,8 +23,10 @@ import {
   requireRunner,
 } from "../lib/authorization";
 import { createRateLimiter } from "../middlewares/rateLimit";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 const router = Router();
+const objectStorageService = new ObjectStorageService();
 const listRunnersRateLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 60,
@@ -33,6 +35,22 @@ const createRunnerRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
 });
+
+function getOwnedAvatarObjectPath(
+  avatarUrl: string | null | undefined,
+  runnerId: number,
+): string | null {
+  if (!avatarUrl) return null;
+  const pathname = avatarUrl.split("?")[0];
+  const storagePrefix = "/api/storage";
+  if (!pathname.startsWith(`${storagePrefix}/objects/`)) return null;
+
+  const objectPath = pathname.slice(storagePrefix.length);
+  const ownedAvatarPattern = new RegExp(
+    `^/objects/uploads/avatars/${runnerId}/[0-9a-f-]{36}$`,
+  );
+  return ownedAvatarPattern.test(objectPath) ? objectPath : null;
+}
 
 router.get("/runners", listRunnersRateLimit, async (req, res) => {
   const signedIn = Boolean(getAuth(req).userId);
@@ -173,6 +191,17 @@ router.delete("/runners/me", async (req, res) => {
       await clerkClient.users.deleteUser(clerkUserId);
     });
 
+    const oldAvatarObjectPath = currentRunner
+      ? getOwnedAvatarObjectPath(currentRunner.avatarUrl, currentRunner.id)
+      : null;
+    if (oldAvatarObjectPath) {
+      try {
+        await objectStorageService.deleteObjectEntity(oldAvatarObjectPath);
+      } catch (error) {
+        req.log.warn({ err: error }, "Profile photo cleanup failed after account deletion");
+      }
+    }
+
     return res.status(204).end();
   } catch (error) {
     req.log.error({ err: error }, "RunBuddy account deletion failed");
@@ -232,6 +261,23 @@ router.put("/runners/:id", async (req, res) => {
   if (!updated) {
     return res.status(404).json({ error: "Runner not found" });
   }
+
+  const oldAvatarObjectPath = getOwnedAvatarObjectPath(
+    currentRunner.avatarUrl,
+    currentRunner.id,
+  );
+  const newAvatarObjectPath = getOwnedAvatarObjectPath(
+    updated.avatarUrl,
+    updated.id,
+  );
+  if (oldAvatarObjectPath && oldAvatarObjectPath !== newAvatarObjectPath) {
+    try {
+      await objectStorageService.deleteObjectEntity(oldAvatarObjectPath);
+    } catch (error) {
+      req.log.warn({ err: error }, "Previous profile photo cleanup failed");
+    }
+  }
+
   return res.json(updated);
 });
 

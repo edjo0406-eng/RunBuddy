@@ -310,6 +310,46 @@ export interface UnreadCount {
   count: number;
 }
 
+/**
+ * Supported profile photo MIME type
+ */
+export type UploadUrlRequestContentType = typeof UploadUrlRequestContentType[keyof typeof UploadUrlRequestContentType];
+
+
+export const UploadUrlRequestContentType = {
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+  'image/webp': 'image/webp',
+} as const;
+
+export interface UploadUrlRequest {
+  /**
+     * Original image file name
+     * @minLength 1
+     */
+  name: string;
+  /**
+     * Image file size in bytes, up to 8 MiB
+     * @minimum 1
+     * @maximum 8388608
+     */
+  size: number;
+  /** Supported profile photo MIME type */
+  contentType: UploadUrlRequestContentType;
+}
+
+export interface UploadUrlResponse {
+  /** Presigned URL for a direct PUT upload */
+  uploadURL: string;
+  /** Normalized object path to store as the avatar URL */
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}
+
+export interface ErrorEnvelope {
+  error: string;
+}
+
 export type ListRunnersParams = {
 /**
  * Filter by section (date, buddy, or both)

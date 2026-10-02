@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { Runner } from "@workspace/api-client-react";
 import { MapPin, Timer, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -117,7 +118,11 @@ export function RunnerMap({ runners }: RunnerMapProps) {
           <Marker
             key={runner.id}
             position={[runner.lat!, runner.lng!]}
-            icon={createRunnerIcon(runner.avatarUrl, runner.gender, runner.name)}
+            icon={createRunnerIcon(
+              resolveAvatarUrl(runner.avatarUrl),
+              runner.gender,
+              runner.name,
+            )}
             title={runner.name}
           >
             <Popup maxWidth={240} className="runner-popup">
@@ -125,7 +130,7 @@ export function RunnerMap({ runners }: RunnerMapProps) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   {runner.avatarUrl ? (
                     <img
-                      src={runner.avatarUrl}
+                      src={resolveAvatarUrl(runner.avatarUrl)}
                       alt={runner.name}
                       style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                     />

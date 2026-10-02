@@ -20,6 +20,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow RunBuddy to use a photo from your library for your runner profile."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F8F7F1",

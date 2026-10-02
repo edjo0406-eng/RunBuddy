@@ -17,6 +17,51 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Requires an authenticated runner profile. The client uploads the photo
+ * directly to the returned URL, then stores the returned object path as
+ * the runner's avatar URL.
+ * @summary Request a presigned profile photo upload URL
+ */
+
+export const requestUploadUrlBodySizeMax = 8388608;
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1).describe('Original image file name'),
+  "size": zod.number().min(1).max(requestUploadUrlBodySizeMax).describe('Image file size in bytes, up to 8 MiB'),
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp']).describe('Supported profile photo MIME type')
+})
+
+
+export const requestUploadUrlResponseMetadataSizeMax = 8388608;
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().describe('Presigned URL for a direct PUT upload'),
+  "objectPath": zod.string().describe('Normalized object path to store as the avatar URL'),
+  "metadata": zod.object({
+  "name": zod.string().min(1).describe('Original image file name'),
+  "size": zod.number().min(1).max(requestUploadUrlResponseMetadataSizeMax).describe('Image file size in bytes, up to 8 MiB'),
+  "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp']).describe('Supported profile photo MIME type')
+}).optional()
+})
+
+
+/**
+ * Serves an uploaded profile photo. Photos are accessible to anyone who
+ * has the image URL, so clients should not upload sensitive images.
+ * @summary Serve a stored profile photo
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string().describe('Object path within the private object directory')
+})
+
+export const GetStorageObjectResponse = zod.unknown()
+
+
+/**
  * @summary List runners with optional filters (anonymous visitors see only opted-in public profiles)
  */
 export const ListRunnersQueryParams = zod.object({

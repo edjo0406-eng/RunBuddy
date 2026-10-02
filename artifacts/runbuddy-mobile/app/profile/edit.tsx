@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useClerk } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { File } from 'expo-file-system';
+import { fetch as expoFetch } from 'expo/fetch';
 import {
   getGetRunnerQueryKey,
   useDeleteCurrentRunner,
   useGetRunner,
+  useRequestUploadUrl,
   useUpdateRunner,
   type Runner,
   type TrackingApps,
+  type UploadUrlRequestContentType,
 } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
@@ -23,6 +28,7 @@ import {
   LoadingState,
   Page,
   Pill,
+  RunnerAvatar,
   TextField,
   errorMessage,
 } from '@/components/ui';
@@ -35,6 +41,12 @@ type TrackerKey =
   | 'polarUrl'
   | 'suuntoUrl'
   | 'wahooPlan';
+
+function isSupportedProfilePhotoType(
+  value: string,
+): value is UploadUrlRequestContentType {
+  return value === 'image/jpeg' || value === 'image/png' || value === 'image/webp';
+}
 
 const trackers: { key: TrackerKey; label: string }[] = [
   { key: 'stravaUrl', label: 'Strava' },
@@ -63,6 +75,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   const clerk = useClerk();
   const queryClient = useQueryClient();
   const updateRunner = useUpdateRunner();
+  const requestUploadUrl = useRequestUploadUrl();
   const deleteCurrentRunner = useDeleteCurrentRunner();
   const [name, setName] = useState(runner.name);
   const [city, setCity] = useState(runner.city ?? '');
@@ -80,6 +93,9 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
   const [deleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoFeedback, setPhotoFeedback] = useState<string | null>(null);
+  const [photoSettingsRequired, setPhotoSettingsRequired] = useState(false);
   const trackerLink = getTrackerLink(trackingApps, tracker);
   const appleHealthConnected = Boolean(trackingApps.appleHealthConnected);
   const validTrackerLink =
@@ -120,6 +136,84 @@ function EditProfileForm({ runner }: { runner: Runner }) {
     }
   };
 
+  const chooseProfilePhoto = async () => {
+    setPhotoFeedback(null);
+    setPhotoSettingsRequired(false);
+
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          setPhotoFeedback('Allow photo library access to choose a profile photo.');
+          setPhotoSettingsRequired(!permission.canAskAgain);
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        preferredAssetRepresentationMode:
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      });
+      if (result.canceled || !result.assets[0]) return;
+
+      const asset = result.assets[0];
+      const candidateContentType = asset.mimeType ?? 'image/jpeg';
+      if (!isSupportedProfilePhotoType(candidateContentType)) {
+        setPhotoFeedback('Choose a JPEG, PNG, or WebP image.');
+        return;
+      }
+      const contentType = candidateContentType;
+
+      const uploadFile = new File(asset.uri);
+      const size = asset.fileSize ?? uploadFile.size;
+      if (!size || size > 8 * 1024 * 1024) {
+        setPhotoFeedback('Choose an image up to 8 MiB.');
+        return;
+      }
+
+      setIsUploadingPhoto(true);
+      const { uploadURL, objectPath } = await requestUploadUrl.mutateAsync({
+        data: {
+          name: asset.fileName ?? 'profile-photo.jpg',
+          size,
+          contentType,
+        },
+      });
+      const uploadResponse = await expoFetch(uploadURL, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: uploadFile,
+      });
+      if (!uploadResponse.ok) {
+        throw new Error('The photo upload did not complete.');
+      }
+
+      await updateRunner.mutateAsync({
+        id: runner.id,
+        data: { avatarUrl: `/api/storage${objectPath}?v=${Date.now()}` },
+      });
+      await queryClient.invalidateQueries();
+      setPhotoFeedback('Profile photo updated.');
+    } catch (error) {
+      setPhotoFeedback(errorMessage(error, 'Your profile photo could not be updated.'));
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const openPhotoSettings = async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      await Linking.openSettings();
+    } catch {
+      setPhotoFeedback('Open your device settings and allow RunBuddy to access photos.');
+    }
+  };
+
   const deleteAccount = async () => {
     setDeleteFeedback(null);
     try {
@@ -155,6 +249,54 @@ function EditProfileForm({ runner }: { runner: Runner }) {
         subtitle="Update your details and choose whether to appear in discovery."
       />
       <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <RunnerAvatar uri={runner.avatarUrl} gender={runner.gender} size={72} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={[styles.label, { color: colors.foreground }]}>
+              Profile photo
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Choose a profile photo"
+              accessibilityState={{
+                disabled: isUploadingPhoto || updateRunner.isPending || requestUploadUrl.isPending,
+              }}
+              testID="edit-profile-photo"
+              disabled={isUploadingPhoto || updateRunner.isPending || requestUploadUrl.isPending}
+              onPress={() => void chooseProfilePhoto()}
+              style={({ pressed }) => ({ opacity: pressed || isUploadingPhoto ? 0.65 : 1 })}
+            >
+              <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                {isUploadingPhoto ? 'Uploading…' : runner.avatarUrl ? 'Change photo' : 'Add photo'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+        <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+          JPEG, PNG, or WebP, up to 8 MiB. Anyone with the image link can view it.
+        </Text>
+        {photoFeedback ? (
+          <Text
+            accessibilityRole={photoSettingsRequired ? 'alert' : undefined}
+            accessibilityLiveRegion="polite"
+            style={[
+              styles.helper,
+              { color: photoSettingsRequired ? colors.destructive : colors.mutedForeground },
+            ]}
+          >
+            {photoFeedback}
+          </Text>
+        ) : null}
+        {photoSettingsRequired && Platform.OS !== 'web' ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void openPhotoSettings()}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '700' }}>
+              Open device settings
+            </Text>
+          </Pressable>
+        ) : null}
         <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" testID="edit-name" />
         <View style={styles.locationFields}>
           <TextField
@@ -288,7 +430,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
           title="Save changes"
           onPress={save}
           loading={updateRunner.isPending}
-          disabled={name.trim().length < 2}
+          disabled={name.trim().length < 2 || isUploadingPhoto}
           icon="check"
           testID="save-profile-changes"
         />

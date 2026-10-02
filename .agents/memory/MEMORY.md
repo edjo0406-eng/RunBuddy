@@ -8,3 +8,4 @@
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.
 - [Mobile profile edit verification](runbuddy-mobile-profile-edit-testing.md) — confirm a runner profile field appears in the signed-in app after saving, not only in API logs.
 - [Apple Health profile label](apple-health-profile-label.md) — Apple Health is a self-reported profile label, not a HealthKit connection or workout sync.
+- [RunBuddy profile photos](runbuddy-profile-photos.md) — support photo editing on both surfaces and disclose that anyone with a link can view uploads.
