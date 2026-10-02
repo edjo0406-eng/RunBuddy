@@ -375,6 +375,77 @@ export function useGetCurrentRunner<TData = Awaited<ReturnType<typeof getCurrent
 
 
 
+export const getDeleteCurrentRunnerUrl = () => {
+
+
+
+
+  return `/api/runners/me`
+}
+
+/**
+ * @summary Permanently delete the authenticated user's RunBuddy account and data
+ */
+export const deleteCurrentRunner = async ( options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteCurrentRunnerUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCurrentRunnerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentRunner>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentRunner>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteCurrentRunner'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCurrentRunner>>, void> = () => {
+
+
+          return  deleteCurrentRunner(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCurrentRunnerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCurrentRunner>>>
+
+    export type DeleteCurrentRunnerMutationError = ErrorType<void>
+
+    /**
+ * @summary Permanently delete the authenticated user's RunBuddy account and data
+ */
+export const useDeleteCurrentRunner = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCurrentRunner>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCurrentRunner>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteCurrentRunnerMutationOptions(options));
+    }
+
 export const getGetRunnerUrl = (id: number,) => {
 
 

@@ -111,6 +111,17 @@ paths:
                 $ref: "#/components/schemas/CurrentRunnerResponse"
         "401":
           description: Authentication required
+    delete:
+      operationId: deleteCurrentRunner
+      tags: [runners]
+      summary: Permanently delete the authenticated user's RunBuddy account and data
+      responses:
+        "204":
+          description: Account, runner profile, connections, and messages deleted
+        "401":
+          description: Authentication required
+        "500":
+          description: Account deletion failed
 
   /runners/{id}:
     get:

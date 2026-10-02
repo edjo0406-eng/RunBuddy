@@ -1,6 +1,12 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
-import { db, runnersTable } from "@workspace/db";
+import { clerkClient, getAuth } from "@clerk/express";
+import {
+  db,
+  connectionsTable,
+  messagesTable,
+  runnersTable,
+  usersTable,
+} from "@workspace/db";
 import {
   ListRunnersQueryParams,
   CreateRunnerBody,
@@ -121,6 +127,57 @@ router.get("/runners/me", async (req, res) => {
   const response = { runnerId: currentRunner?.id ?? null };
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   return res.type("application/json").end(JSON.stringify(response));
+});
+
+router.delete("/runners/me", async (req, res) => {
+  const clerkUserId = getAuth(req).userId;
+  if (!clerkUserId) {
+    return res.status(401).json({ error: "A Clerk account is required to delete this account" });
+  }
+
+  const localUser = await requireAuthentication(req, res);
+  if (!localUser) return;
+
+  const currentRunner = await getAuthenticatedRunner(req);
+
+  try {
+    await db.transaction(async (tx) => {
+      if (currentRunner) {
+        await tx
+          .delete(messagesTable)
+          .where(
+            or(
+              eq(messagesTable.fromRunnerId, currentRunner.id),
+              eq(messagesTable.toRunnerId, currentRunner.id),
+            ),
+          );
+        await tx
+          .delete(connectionsTable)
+          .where(
+            or(
+              eq(connectionsTable.fromRunnerId, currentRunner.id),
+              eq(connectionsTable.toRunnerId, currentRunner.id),
+            ),
+          );
+        await tx
+          .delete(runnersTable)
+          .where(
+            and(
+              eq(runnersTable.id, currentRunner.id),
+              eq(runnersTable.authUserId, localUser.id),
+            ),
+          );
+      }
+
+      await tx.delete(usersTable).where(eq(usersTable.id, localUser.id));
+      await clerkClient.users.deleteUser(clerkUserId);
+    });
+
+    return res.status(204).end();
+  } catch (error) {
+    req.log.error({ err: error }, "RunBuddy account deletion failed");
+    return res.status(500).json({ error: "Account deletion failed" });
+  }
 });
 
 router.get("/runners/:id", async (req, res) => {

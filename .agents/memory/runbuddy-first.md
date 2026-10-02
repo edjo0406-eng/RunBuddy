@@ -16,3 +16,11 @@ Runner profiles should preserve and show the running-app links that members prov
 **Why:** The user wants to use Strava and similar profiles to judge whether a potential running buddy appears genuine and to reduce scam risk.
 
 **How to apply:** Keep running-app links through unrelated profile edits, show valid external links to signed-in profile viewers, and label them as runner-provided rather than verified.
+
+## Account deletion
+
+Account deletion removes the complete RunBuddy account: the Clerk sign-in identity, local user and runner profile, running-account links, connections, and all messages tied to that runner. Require explicit confirmation and explain that connections and messages also disappear for the other runners involved.
+
+**Why:** The user chose full account deletion and said everything should be removed after a confirmation request.
+
+**How to apply:** Keep deletion available from Edit Profile, describe the irreversible scope before the final action, and remove profile-linked messages and connections before deleting their runner record.

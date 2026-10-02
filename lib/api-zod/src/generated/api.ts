@@ -184,6 +184,12 @@ export const GetCurrentRunnerResponse = zod.object({
 
 
 /**
+ * @summary Permanently delete the authenticated user's RunBuddy account and data
+ */
+export const DeleteCurrentRunnerResponse = zod.void()
+
+
+/**
  * @summary Get a runner profile (private profiles require sign-in)
  */
 export const GetRunnerParams = zod.object({

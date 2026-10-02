@@ -10,7 +10,10 @@ const mocks = vi.hoisted(() => ({
   filters: [] as unknown[],
 }));
 
-vi.mock("@clerk/express", () => ({ getAuth: mocks.getAuth }));
+vi.mock("@clerk/express", () => ({
+  getAuth: mocks.getAuth,
+  clerkClient: { users: { deleteUser: vi.fn() } },
+}));
 vi.mock("@workspace/db", () => {
   const columns = new Proxy({}, { get: (_target, name) => name });
   return {

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useClerk } from '@clerk/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import { Feather } from '@expo/vector-icons';
 import {
   getGetRunnerQueryKey,
+  useDeleteCurrentRunner,
   useGetRunner,
   useUpdateRunner,
   type Runner,
@@ -58,8 +60,10 @@ function getInitialTracker(apps: TrackingApps | null | undefined): TrackerKey {
 function EditProfileForm({ runner }: { runner: Runner }) {
   const colors = useColors();
   const router = useRouter();
+  const clerk = useClerk();
   const queryClient = useQueryClient();
   const updateRunner = useUpdateRunner();
+  const deleteCurrentRunner = useDeleteCurrentRunner();
   const [name, setName] = useState(runner.name);
   const [city, setCity] = useState(runner.city ?? '');
   const [country, setCountry] = useState(runner.country ?? '');
@@ -74,6 +78,8 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   );
   const [trackingAppsEdited, setTrackingAppsEdited] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
+  const [deleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
   const trackerLink = getTrackerLink(trackingApps, tracker);
   const validTrackerLink =
     !trackerLink.trim() ||
@@ -113,11 +119,35 @@ function EditProfileForm({ runner }: { runner: Runner }) {
     }
   };
 
+  const deleteAccount = async () => {
+    setDeleteFeedback(null);
+    try {
+      await deleteCurrentRunner.mutateAsync();
+    } catch (error) {
+      setDeleteFeedback(errorMessage(error, 'Your account could not be deleted. Please try again.'));
+      return;
+    }
+
+    queryClient.clear();
+    try {
+      await clerk.signOut();
+    } catch {
+      setDeleteFeedback(
+        'Your account was deleted, but this device could not clear its session. Close and reopen RunBuddy.',
+      );
+      return;
+    }
+    router.replace('/(tabs)/profile');
+  };
+
+  const confirmAccountDeletion = () => setDeleteConfirmationVisible(true);
+
   return (
-    <KeyboardAwareScrollViewCompat
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.formWrapper}>
+      <KeyboardAwareScrollViewCompat
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
       <BrandHeader
         eyebrow="RUNNER PROFILE"
         title="Keep it current."
@@ -231,7 +261,115 @@ function EditProfileForm({ runner }: { runner: Runner }) {
           testID="save-profile-changes"
         />
       </View>
-    </KeyboardAwareScrollViewCompat>
+      <View style={[styles.dangerCard, { backgroundColor: colors.card, borderColor: colors.destructive }]}>
+        <View style={styles.dangerHeading}>
+          <Feather name="alert-triangle" size={17} color={colors.destructive} />
+          <Text style={[styles.dangerTitle, { color: colors.foreground }]}>Delete account</Text>
+        </View>
+        <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+          Permanently remove your RunBuddy account, profile, connections, and messages.
+        </Text>
+        {deleteFeedback ? (
+          <Text accessibilityRole="alert" style={[styles.error, { color: colors.destructive }]}>
+            {deleteFeedback}
+          </Text>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Delete your RunBuddy profile and account"
+          accessibilityState={{ disabled: deleteCurrentRunner.isPending }}
+          testID="delete-runbuddy-account"
+          disabled={deleteCurrentRunner.isPending}
+          onPress={confirmAccountDeletion}
+          style={({ pressed }) => [
+            styles.deleteButton,
+            {
+              backgroundColor: colors.destructive,
+              opacity: pressed || deleteCurrentRunner.isPending ? 0.76 : 1,
+            },
+          ]}
+        >
+          <Feather
+            name="trash-2"
+            size={16}
+            color={colors.destructiveForeground}
+          />
+          <Text style={[styles.deleteButtonText, { color: colors.destructiveForeground }]}>
+            {deleteCurrentRunner.isPending ? 'Deleting account…' : 'Delete profile and account'}
+          </Text>
+        </Pressable>
+      </View>
+      </KeyboardAwareScrollViewCompat>
+      <Modal
+        visible={deleteConfirmationVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmationVisible(false)}
+      >
+        <View style={styles.confirmationOverlay}>
+          <View
+            accessibilityViewIsModal
+            accessibilityLabel="Confirm deletion of your RunBuddy account"
+            style={[
+              styles.confirmationCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.confirmationHeader}>
+              <Feather name="alert-triangle" size={20} color={colors.destructive} />
+              <Text style={[styles.confirmationTitle, { color: colors.foreground }]}>
+                Delete your RunBuddy account?
+              </Text>
+            </View>
+            <Text style={[styles.confirmationBody, { color: colors.mutedForeground }]}>
+              This permanently deletes your account, runner profile, linked running-account details,
+              connections, and all messages you sent or received. Messages and connections will also
+              disappear for the other runners. This cannot be undone.
+            </Text>
+            <View style={styles.confirmationActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setDeleteConfirmationVisible(false)}
+                style={[
+                  styles.confirmationButton,
+                  styles.cancelButton,
+                  { borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.confirmationButtonText, { color: colors.foreground }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Confirm delete everything"
+                disabled={deleteCurrentRunner.isPending}
+                onPress={() => {
+                  setDeleteConfirmationVisible(false);
+                  void deleteAccount();
+                }}
+                style={[
+                  styles.confirmationButton,
+                  {
+                    backgroundColor: colors.destructive,
+                    opacity: deleteCurrentRunner.isPending ? 0.76 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.confirmationButtonText,
+                    { color: colors.destructiveForeground },
+                  ]}
+                >
+                  Delete everything
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -288,11 +426,26 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  formWrapper: { flex: 1 },
   topBar: { height: 44, paddingHorizontal: 20, justifyContent: 'center' },
   back: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
   gate: { flex: 1, paddingHorizontal: 20, justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 28, gap: 14 },
   formCard: { borderWidth: 1, borderRadius: 24, padding: 17, gap: 17 },
+  dangerCard: { borderWidth: 1, borderRadius: 20, padding: 16, gap: 12 },
+  dangerHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dangerTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
+  deleteButton: { minHeight: 46, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  deleteButtonText: { fontFamily: 'Manrope_700Bold', fontSize: 13 },
+  confirmationOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(11, 20, 24, 0.62)' },
+  confirmationCard: { width: '100%', maxWidth: 440, borderWidth: 1, borderRadius: 24, padding: 20, gap: 16 },
+  confirmationHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  confirmationTitle: { flex: 1, fontFamily: 'SpaceGrotesk_700Bold', fontSize: 19, lineHeight: 25 },
+  confirmationBody: { fontFamily: 'Manrope_500Medium', fontSize: 14, lineHeight: 21 },
+  confirmationActions: { flexDirection: 'row', gap: 10 },
+  confirmationButton: { flex: 1, minHeight: 48, borderRadius: 14, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
+  cancelButton: { borderWidth: 1 },
+  confirmationButtonText: { textAlign: 'center', fontFamily: 'Manrope_700Bold', fontSize: 13 },
   locationFields: { gap: 14 },
   fieldGroup: { gap: 10 },
   label: { fontFamily: 'Manrope_700Bold', fontSize: 13 },
