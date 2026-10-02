@@ -1,11 +1,18 @@
 import { Link, useLocation } from "wouter";
-import { Home, Users, MessageSquare, UserPlus } from "lucide-react";
+import { useAuth, useClerk } from "@clerk/react";
+import { Home, Users, MessageSquare, UserPlus, LogOut } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
 import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
+import { getArtifactRootPath } from "@/lib/auth-paths";
 
 export function MobileNav() {
   const [location] = useLocation();
   const { myRunnerId } = useIdentity();
+  const { isLoaded, isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
+  const { signOut } = useClerk();
+  const isAuthResolved = isLoaded && isSignedIn !== null;
 
   const { data: unread } = useGetUnreadCount(
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
@@ -40,6 +47,22 @@ export function MobileNav() {
             <span className={`text-[10px] font-bold leading-none ${primary ? "tracking-tight" : ""}`}>{label}</span>
           </Link>
         ))}
+        {isAuthResolved && isSignedIn === true ? (
+          <button
+            type="button"
+            aria-label="Log out"
+            data-testid="button-mobile-logout"
+            onClick={() =>
+              signOut({
+                redirectUrl: getArtifactRootPath(import.meta.env.BASE_URL),
+              })
+            }
+            className="relative flex min-w-[48px] flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <LogOut aria-hidden="true" className="h-5 w-5" />
+            <span className="text-[10px] font-bold leading-none">Log out</span>
+          </button>
+        ) : null}
       </div>
     </nav>
   );
