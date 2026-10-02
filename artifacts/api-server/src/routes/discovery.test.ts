@@ -127,6 +127,21 @@ describe("anonymous runner discovery", () => {
     expect(JSON.stringify(mocks.filters)).toContain('"column":"publicListing","value":true');
   });
 
+  it("does not expose running app links on anonymous profile details", async () => {
+    mocks.rows = [{
+      id: 12,
+      name: "Runner",
+      publicListing: true,
+      trackingApps: { stravaUrl: "https://strava.example/runner" },
+    }];
+
+    const response = await request(app).get("/api/runners/12");
+
+    expect(response.status).toBe(200);
+    expect(response.body).not.toHaveProperty("trackingApps");
+    expect(mocks.selections[0]).not.toHaveProperty("trackingApps");
+  });
+
   it("preserves the authenticated profile view", async () => {
     mocks.getAuth.mockReturnValue({ userId: "signed-in" });
     const response = await request(app).get("/api/runners");

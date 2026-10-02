@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,6 +26,10 @@ import {
   experienceLabel,
   locationLabel,
 } from '@/components/ui';
+
+function isWebProfileUrl(value?: string | null): value is string {
+  return Boolean(value && /^https?:\/\/\S+/i.test(value.trim()));
+}
 
 function connectionFor(connections: Connection[], runnerId: number, otherId: number) {
   return connections.find(
@@ -170,6 +174,24 @@ export default function RunnerDetailScreen() {
     runner.trackingApps?.wahooPlan ? 'Wahoo' : null,
     runner.trackingApps?.appleHealthConnected ? 'Apple Health' : null,
   ].filter((item): item is string => Boolean(item));
+  const trackingUrls: Record<string, string | undefined> = {
+    Strava: runner.trackingApps?.stravaUrl ?? undefined,
+    Garmin: runner.trackingApps?.garminUrl ?? runner.trackingApps?.garminConnectUrl ?? undefined,
+    'Nike Run Club': runner.trackingApps?.nikeRunClubUrl ?? undefined,
+    Polar: runner.trackingApps?.polarUrl ?? undefined,
+    Suunto: runner.trackingApps?.suuntoUrl ?? undefined,
+    Wahoo: runner.trackingApps?.wahooPlan ?? undefined,
+  };
+  const hasRunningProfileLinks = trackingNames.some((name) =>
+    isWebProfileUrl(trackingUrls[name]),
+  );
+
+  const openRunningProfile = (name: string, url: string) => {
+    if (!isWebProfileUrl(url)) return;
+    void Linking.openURL(url.trim()).catch(() => {
+      setActionError(`We couldn't open the ${name} profile link.`);
+    });
+  };
 
   return (
     <Page>
@@ -226,7 +248,40 @@ export default function RunnerDetailScreen() {
         {trackingNames.length > 0 ? (
           <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Running accounts</Text>
-            <View style={styles.pills}>{trackingNames.map((name) => <Pill key={name} label={name} />)}</View>
+            <View style={styles.pills}>
+              {trackingNames.map((name) => {
+                const url = trackingUrls[name];
+                return isWebProfileUrl(url) ? (
+                  <Pressable
+                    key={name}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${name} running profile`}
+                    testID={`open-running-profile-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                    onPress={() => openRunningProfile(name, url)}
+                    style={({ pressed }) => [
+                      styles.accountLink,
+                      {
+                        backgroundColor: colors.muted,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.78 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.accountLinkText, { color: colors.foreground }]}>
+                      View {name} profile
+                    </Text>
+                    <Feather name="external-link" size={14} color={colors.mutedForeground} />
+                  </Pressable>
+                ) : (
+                  <Pill key={name} label={name} />
+                );
+              })}
+            </View>
+            {hasRunningProfileLinks ? (
+              <Text style={[styles.linkNote, { color: colors.mutedForeground }]}>
+                Links are shared by the runner and are not independently verified.
+              </Text>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -248,6 +303,9 @@ const styles = StyleSheet.create({
   detailCard: { borderWidth: 1, borderRadius: 22, padding: 17, gap: 13 },
   sectionTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 17 },
   statRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  accountLink: { minHeight: 36, paddingHorizontal: 13, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  accountLinkText: { fontFamily: 'Manrope_700Bold', fontSize: 12 },
+  linkNote: { fontFamily: 'Manrope_400Regular', fontSize: 11, lineHeight: 16 },
   stat: { minWidth: 95, flexGrow: 1, padding: 12, borderRadius: 14, gap: 3 },
   statValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
   statLabel: { fontFamily: 'Manrope_500Medium', fontSize: 11 },

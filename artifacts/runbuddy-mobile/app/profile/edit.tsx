@@ -171,7 +171,6 @@ function EditProfileForm({ runner }: { runner: Runner }) {
               setTrackingAppsEdited(true);
               setTrackingApps((current) => ({ ...current, [tracker]: value }))
             }}
-            }
             placeholder={tracker === 'wahooPlan' ? 'Your Wahoo plan or profile' : 'Paste your public profile link'}
             autoCapitalize="none"
             keyboardType={tracker === 'wahooPlan' ? 'default' : 'url'}
