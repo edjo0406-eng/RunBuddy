@@ -30,6 +30,7 @@ export const publicRunnerSelection = {
   lookingFor: runnersTable.lookingFor,
   experience: runnersTable.experience,
   runningStats: runnersTable.runningStats,
+  trackingApps: runnersTable.trackingApps,
   travelCity: runnersTable.travelCity,
   travelCountry: runnersTable.travelCountry,
   travelUntil: runnersTable.travelUntil,

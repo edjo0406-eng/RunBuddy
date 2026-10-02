@@ -134,4 +134,16 @@ describe("anonymous runner discovery", () => {
     expect(mocks.selections[0]).toHaveProperty("bio");
     expect(mocks.filters).toEqual([undefined]);
   });
+
+  it("includes linked running accounts in signed-in profile details", async () => {
+    const trackingApps = { stravaUrl: "https://strava.example/runner" };
+    mocks.getAuth.mockReturnValue({ userId: "signed-in" });
+    mocks.rows = [{ id: 14, name: "Runner", trackingApps }];
+
+    const response = await request(app).get("/api/runners/14");
+
+    expect(response.status).toBe(200);
+    expect(response.body.trackingApps).toEqual(trackingApps);
+    expect(mocks.selections[0]).toHaveProperty("trackingApps");
+  });
 });

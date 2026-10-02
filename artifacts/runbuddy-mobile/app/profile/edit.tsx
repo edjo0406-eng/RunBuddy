@@ -72,6 +72,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   const [trackingApps, setTrackingApps] = useState<TrackingApps>(
     runner.trackingApps ?? {},
   );
+  const [trackingAppsEdited, setTrackingAppsEdited] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const trackerLink = getTrackerLink(trackingApps, tracker);
   const validTrackerLink =
@@ -81,7 +82,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
 
   const save = async () => {
     setFeedback(null);
-    if (!validTrackerLink) {
+    if (trackingAppsEdited && !validTrackerLink) {
       setFeedback('Use a full link starting with https://.');
       return;
     }
@@ -102,7 +103,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
           bio: bio.trim() || null,
           experience,
           publicListing,
-          trackingApps: nextTrackingApps,
+          ...(trackingAppsEdited ? { trackingApps: nextTrackingApps } : {}),
         },
       });
       await queryClient.invalidateQueries();
@@ -166,8 +167,10 @@ function EditProfileForm({ runner }: { runner: Runner }) {
           <TextField
             label="Profile link"
             value={trackerLink}
-            onChangeText={(value) =>
+            onChangeText={(value) => {
+              setTrackingAppsEdited(true);
               setTrackingApps((current) => ({ ...current, [tracker]: value }))
+            }}
             }
             placeholder={tracker === 'wahooPlan' ? 'Your Wahoo plan or profile' : 'Paste your public profile link'}
             autoCapitalize="none"
@@ -175,7 +178,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
             autoComplete="url"
             testID="edit-tracking-account-link"
           />
-          {!validTrackerLink && trackerLink.trim() ? (
+          {trackingAppsEdited && !validTrackerLink && trackerLink.trim() ? (
             <Text style={[styles.helper, { color: colors.destructive }]}>
               Use a full link starting with https://.
             </Text>
