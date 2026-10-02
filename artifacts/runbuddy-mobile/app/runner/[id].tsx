@@ -289,13 +289,25 @@ export default function RunnerDetailScreen() {
           ) : null}
         </View>
 
-        {runner.runningStats ? (
+        {runner.runningStats &&
+        (runner.runningStats.weeklyMileageKm != null ||
+          runner.runningStats.totalRaces != null ||
+          Boolean(runner.runningStats.avgPacePerKm) ||
+          Boolean(runner.runningStats.personalBest5k) ||
+          Boolean(runner.runningStats.personalBest10k) ||
+          Boolean(runner.runningStats.personalBestHalfMarathon) ||
+          Boolean(runner.runningStats.personalBestMarathon) ||
+          Boolean(runner.runningStats.preferredRunTypes?.length)) ? (
           <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Running details</Text>
             <View style={styles.statRow}>
               {typeof runner.runningStats.weeklyMileageKm === 'number' ? (
                 <View style={[styles.stat, { backgroundColor: colors.muted }]}>
-                  <Text style={[styles.statValue, { color: colors.foreground }]}>{Math.round(runner.runningStats.weeklyMileageKm)} km</Text>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>
+                    {Number.isInteger(runner.runningStats.weeklyMileageKm)
+                      ? runner.runningStats.weeklyMileageKm
+                      : runner.runningStats.weeklyMileageKm.toFixed(1)} km
+                  </Text>
                   <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>per week</Text>
                 </View>
               ) : null}
@@ -305,13 +317,44 @@ export default function RunnerDetailScreen() {
                   <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>average pace</Text>
                 </View>
               ) : null}
+              {typeof runner.runningStats.totalRaces === 'number' ? (
+                <View style={[styles.stat, { backgroundColor: colors.muted }]}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{runner.runningStats.totalRaces}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>races</Text>
+                </View>
+              ) : null}
               {runner.runningStats.personalBest5k ? (
                 <View style={[styles.stat, { backgroundColor: colors.muted }]}>
                   <Text style={[styles.statValue, { color: colors.foreground }]}>{runner.runningStats.personalBest5k}</Text>
                   <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>5K best</Text>
                 </View>
               ) : null}
+              {runner.runningStats.personalBest10k ? (
+                <View style={[styles.stat, { backgroundColor: colors.muted }]}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{runner.runningStats.personalBest10k}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>10K best</Text>
+                </View>
+              ) : null}
+              {runner.runningStats.personalBestHalfMarathon ? (
+                <View style={[styles.stat, { backgroundColor: colors.muted }]}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{runner.runningStats.personalBestHalfMarathon}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>half marathon</Text>
+                </View>
+              ) : null}
+              {runner.runningStats.personalBestMarathon ? (
+                <View style={[styles.stat, { backgroundColor: colors.muted }]}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{runner.runningStats.personalBestMarathon}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>marathon</Text>
+                </View>
+              ) : null}
             </View>
+            {runner.runningStats.preferredRunTypes?.length ? (
+              <View style={styles.statRow}>
+                {runner.runningStats.preferredRunTypes.map((runType) => (
+                  <Pill key={runType} label={runType} />
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : null}
         {trackingNames.length > 0 ? (

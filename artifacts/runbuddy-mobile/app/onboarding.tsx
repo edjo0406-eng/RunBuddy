@@ -8,6 +8,13 @@ import { useColors } from '@/hooks/useColors';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
 import { CountryPickerField } from '@/components/CountryPickerField';
 import {
+  emptyRunningDetails,
+  RunningDetailsFields,
+  runningStatsFromInput,
+  validateRunningDetails,
+  type RunningDetailsInput,
+} from '@/components/RunningDetailsFields';
+import {
   ActionButton,
   BrandHeader,
   EmptyState,
@@ -51,6 +58,7 @@ export default function OnboardingScreen() {
   const [trackerLink, setTrackerLink] = useState('');
   const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [experience, setExperience] = useState<Experience>('intermediate');
+  const [runningDetails, setRunningDetails] = useState<RunningDetailsInput>(emptyRunningDetails);
   const [publicListing, setPublicListing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -60,6 +68,11 @@ export default function OnboardingScreen() {
 
   const createProfile = async () => {
     setFeedback(null);
+    const runningDetailsError = validateRunningDetails(runningDetails);
+    if (runningDetailsError) {
+      setFeedback(runningDetailsError);
+      return;
+    }
     const trackingApps: TrackingApps = {};
     if (trackerLink.trim()) trackingApps[tracker] = trackerLink.trim();
     if (appleHealthConnected) trackingApps.appleHealthConnected = true;
@@ -72,6 +85,7 @@ export default function OnboardingScreen() {
           profileType: 'individual',
           lookingFor: 'buddy',
           experience,
+          runningStats: runningStatsFromInput(runningDetails),
           trackingApps,
           publicListing,
         },
@@ -161,6 +175,14 @@ export default function OnboardingScreen() {
                 ))}
               </View>
             </View>
+            <RunningDetailsFields
+              value={runningDetails}
+              onChange={(nextValue) => {
+                setRunningDetails(nextValue);
+                setFeedback(null);
+              }}
+              testIDPrefix="setup-running"
+            />
             <View style={styles.fieldGroup}>
               <Text style={[styles.label, { color: colors.foreground }]}>Running account or tracker</Text>
               <View style={styles.pills}>

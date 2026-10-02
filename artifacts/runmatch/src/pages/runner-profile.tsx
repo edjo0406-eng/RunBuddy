@@ -553,56 +553,70 @@ export default function RunnerProfile() {
                 </section>
               )}
 
-              <section>
-                <h2 className="text-2xl font-display font-bold mb-4">Running Stats</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card className="bg-primary/5 border-primary/20">
-                    <CardContent className="p-4 flex flex-col items-center text-center">
-                      <Activity className="w-6 h-6 text-primary mb-2" />
-                      <span className="text-2xl font-display font-bold">{runner.runningStats?.weeklyMileageKm || 0}</span>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Weekly km</span>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-secondary/5 border-secondary/20">
-                    <CardContent className="p-4 flex flex-col items-center text-center">
-                      <Timer className="w-6 h-6 text-secondary mb-2" />
-                      <span className="text-2xl font-display font-bold">{runner.runningStats?.avgPacePerKm || '-'}</span>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Avg Pace /km</span>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-muted/50 border-border/50">
-                    <CardContent className="p-4 flex flex-col items-center text-center">
-                      <Medal className="w-6 h-6 text-foreground mb-2" />
-                      <span className="text-2xl font-display font-bold">{runner.runningStats?.totalRaces || 0}</span>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Races</span>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-muted/50 border-border/50">
-                    <CardContent className="p-4 flex flex-col items-center text-center">
-                      <Activity className="w-6 h-6 text-foreground mb-2" />
-                      <span className="text-2xl font-display font-bold capitalize">{runner.experience || '-'}</span>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Level</span>
-                    </CardContent>
-                  </Card>
-                </div>
-              </section>
+              {(typeof runner.runningStats?.weeklyMileageKm === "number" ||
+                typeof runner.runningStats?.totalRaces === "number" ||
+                Boolean(runner.runningStats?.avgPacePerKm) ||
+                Boolean(runner.runningStats?.personalBest5k) ||
+                Boolean(runner.runningStats?.personalBest10k) ||
+                Boolean(runner.runningStats?.personalBestHalfMarathon) ||
+                Boolean(runner.runningStats?.personalBestMarathon)) && (
+                <section>
+                  <h2 className="text-2xl font-display font-bold mb-4">Running Details</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {typeof runner.runningStats?.weeklyMileageKm === "number" && (
+                      <Card className="bg-primary/5 border-primary/20">
+                        <CardContent className="p-4 flex flex-col items-center text-center">
+                          <Activity className="w-6 h-6 text-primary mb-2" />
+                          <span className="text-2xl font-display font-bold">{runner.runningStats.weeklyMileageKm}</span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Weekly km</span>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {runner.runningStats?.avgPacePerKm && (
+                      <Card className="bg-secondary/5 border-secondary/20">
+                        <CardContent className="p-4 flex flex-col items-center text-center">
+                          <Timer className="w-6 h-6 text-secondary mb-2" />
+                          <span className="text-2xl font-display font-bold">{runner.runningStats.avgPacePerKm}</span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Avg Pace /km</span>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {typeof runner.runningStats?.totalRaces === "number" && (
+                      <Card className="bg-muted/50 border-border/50">
+                        <CardContent className="p-4 flex flex-col items-center text-center">
+                          <Medal className="w-6 h-6 text-foreground mb-2" />
+                          <span className="text-2xl font-display font-bold">{runner.runningStats.totalRaces}</span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Races</span>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </section>
+              )}
 
-              <section>
-                <h2 className="text-2xl font-display font-bold mb-4">Personal Bests</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: "5K", value: runner.runningStats?.personalBest5k },
-                    { label: "10K", value: runner.runningStats?.personalBest10k },
-                    { label: "Half", value: runner.runningStats?.personalBestHalfMarathon },
-                    { label: "Marathon", value: runner.runningStats?.personalBestMarathon },
-                  ].map((pb) => (
-                    <div key={pb.label} className="border rounded-xl p-4 text-center bg-card">
-                      <span className="text-sm font-semibold text-muted-foreground block mb-1">{pb.label}</span>
-                      <span className="text-xl font-display font-bold text-foreground">{pb.value || '--:--'}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {[
+                { label: "5K", value: runner.runningStats?.personalBest5k },
+                { label: "10K", value: runner.runningStats?.personalBest10k },
+                { label: "Half", value: runner.runningStats?.personalBestHalfMarathon },
+                { label: "Marathon", value: runner.runningStats?.personalBestMarathon },
+              ].some((pb) => Boolean(pb.value)) && (
+                <section>
+                  <h2 className="text-2xl font-display font-bold mb-4">Personal Bests</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { label: "5K", value: runner.runningStats?.personalBest5k },
+                      { label: "10K", value: runner.runningStats?.personalBest10k },
+                      { label: "Half", value: runner.runningStats?.personalBestHalfMarathon },
+                      { label: "Marathon", value: runner.runningStats?.personalBestMarathon },
+                    ].filter((pb) => Boolean(pb.value)).map((pb) => (
+                      <div key={pb.label} className="border rounded-xl p-4 text-center bg-card">
+                        <span className="text-sm font-semibold text-muted-foreground block mb-1">{pb.label}</span>
+                        <span className="text-xl font-display font-bold text-foreground">{pb.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* Right Column */}

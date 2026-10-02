@@ -21,6 +21,13 @@ import { useColors } from '@/hooks/useColors';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
 import { CountryPickerField } from '@/components/CountryPickerField';
 import {
+  RunningDetailsFields,
+  runningDetailsFromStats,
+  runningStatsFromInput,
+  validateRunningDetails,
+  type RunningDetailsInput,
+} from '@/components/RunningDetailsFields';
+import {
   ActionButton,
   BrandHeader,
   EmptyState,
@@ -82,6 +89,9 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   const [country, setCountry] = useState(runner.country ?? '');
   const [bio, setBio] = useState(runner.bio ?? '');
   const [experience, setExperience] = useState(runner.experience ?? 'intermediate');
+  const [runningDetails, setRunningDetails] = useState<RunningDetailsInput>(() =>
+    runningDetailsFromStats(runner.runningStats),
+  );
   const [publicListing, setPublicListing] = useState(Boolean(runner.publicListing));
   const [tracker, setTracker] = useState<TrackerKey>(() =>
     getInitialTracker(runner.trackingApps),
@@ -105,6 +115,11 @@ function EditProfileForm({ runner }: { runner: Runner }) {
 
   const save = async () => {
     setFeedback(null);
+    const runningDetailsError = validateRunningDetails(runningDetails);
+    if (runningDetailsError) {
+      setFeedback(runningDetailsError);
+      return;
+    }
     if (trackingAppsEdited && !validTrackerLink) {
       setFeedback('Use a full link starting with https://.');
       return;
@@ -125,6 +140,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
           country: country.trim() || null,
           bio: bio.trim() || null,
           experience,
+          runningStats: runningStatsFromInput(runningDetails),
           publicListing,
           ...(trackingAppsEdited ? { trackingApps: nextTrackingApps } : {}),
         },
@@ -401,6 +417,14 @@ function EditProfileForm({ runner }: { runner: Runner }) {
             ))}
           </View>
         </View>
+        <RunningDetailsFields
+          value={runningDetails}
+          onChange={(nextValue) => {
+            setRunningDetails(nextValue);
+            setFeedback(null);
+          }}
+          testIDPrefix="edit-running"
+        />
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: publicListing }}

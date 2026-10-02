@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIdentity } from "@/hooks/use-identity";
 
+const RUN_TYPES = ["road", "trail", "track", "treadmill", "ultra"] as const;
+const TIME_PATTERN = /^(?:\d{1,2}:)?\d{1,2}:[0-5]\d$/;
+
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   publicListing: z.boolean(),
@@ -46,8 +49,24 @@ const formSchema = z.object({
     ),
     { message: "Select at least one tracking app." }
   ),
-  weeklyMileageKm: z.coerce.number().optional().or(z.literal("")),
-  avgPacePerKm: z.string().optional()
+  weeklyMileageKm: z.union([z.literal(""), z.coerce.number().min(0).max(500)]),
+  totalRaces: z.union([z.literal(""), z.coerce.number().int().min(0).max(5000)]),
+  avgPacePerKm: z.string().trim().max(8).refine((value) => !value || TIME_PATTERN.test(value), {
+    message: "Use mm:ss or h:mm:ss.",
+  }),
+  personalBest5k: z.string().trim().max(8).refine((value) => !value || TIME_PATTERN.test(value), {
+    message: "Use mm:ss or h:mm:ss.",
+  }),
+  personalBest10k: z.string().trim().max(8).refine((value) => !value || TIME_PATTERN.test(value), {
+    message: "Use mm:ss or h:mm:ss.",
+  }),
+  personalBestHalfMarathon: z.string().trim().max(8).refine((value) => !value || TIME_PATTERN.test(value), {
+    message: "Use mm:ss or h:mm:ss.",
+  }),
+  personalBestMarathon: z.string().trim().max(8).refine((value) => !value || TIME_PATTERN.test(value), {
+    message: "Use mm:ss or h:mm:ss.",
+  }),
+  preferredRunTypes: z.array(z.enum(RUN_TYPES)),
 }).superRefine((values, ctx) => {
   if (values.profileType !== "individual" && !values.clubName?.trim()) {
     ctx.addIssue({
@@ -101,7 +120,13 @@ export default function CreateProfile() {
         appleHealthConnected: false,
       },
       weeklyMileageKm: "",
-      avgPacePerKm: ""
+      totalRaces: "",
+      avgPacePerKm: "",
+      personalBest5k: "",
+      personalBest10k: "",
+      personalBestHalfMarathon: "",
+      personalBestMarathon: "",
+      preferredRunTypes: [],
     },
   });
   const profileType = form.watch("profileType");
@@ -126,8 +151,14 @@ export default function CreateProfile() {
         experience: values.experience as CreateRunnerBodyExperience,
         trackingApps: values.trackingApps,
         runningStats: {
-          weeklyMileageKm: values.weeklyMileageKm ? Number(values.weeklyMileageKm) : null,
-          avgPacePerKm: values.avgPacePerKm || null
+          weeklyMileageKm: values.weeklyMileageKm === "" ? null : Number(values.weeklyMileageKm),
+          totalRaces: values.totalRaces === "" ? null : Number(values.totalRaces),
+          avgPacePerKm: values.avgPacePerKm || null,
+          personalBest5k: values.personalBest5k || null,
+          personalBest10k: values.personalBest10k || null,
+          personalBestHalfMarathon: values.personalBestHalfMarathon || null,
+          personalBestMarathon: values.personalBestMarathon || null,
+          preferredRunTypes: values.preferredRunTypes.length ? values.preferredRunTypes : null,
         }
       }
     }, {
@@ -364,7 +395,7 @@ export default function CreateProfile() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-display text-2xl">Preferences & Stats</CardTitle>
+                  <CardTitle className="font-display text-2xl">Preferences & Running Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -441,6 +472,110 @@ export default function CreateProfile() {
                       )}
                     />
                   </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Running details are optional and appear on your profile for signed-in runners.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="totalRaces"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Total Races</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="0" max="5000" step="1" placeholder="12" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="personalBest5k"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>5K Personal Best</FormLabel>
+                          <FormControl>
+                            <Input placeholder="25:30" maxLength={8} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="personalBest10k"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>10K Personal Best</FormLabel>
+                          <FormControl>
+                            <Input placeholder="52:00" maxLength={8} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="personalBestHalfMarathon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Half Marathon Personal Best</FormLabel>
+                          <FormControl>
+                            <Input placeholder="1:55:00" maxLength={8} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="personalBestMarathon"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Marathon Personal Best</FormLabel>
+                          <FormControl>
+                            <Input placeholder="4:10:00" maxLength={8} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="preferredRunTypes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Preferred Run Types</FormLabel>
+                        <FormDescription>Select any terrain or format you enjoy.</FormDescription>
+                        <div className="flex flex-wrap gap-3">
+                          {RUN_TYPES.map((runType) => (
+                            <label
+                              key={runType}
+                              className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+                            >
+                              <Checkbox
+                                checked={field.value.includes(runType)}
+                                onCheckedChange={(checked) =>
+                                  field.onChange(
+                                    checked === true
+                                      ? [...field.value, runType]
+                                      : field.value.filter((value) => value !== runType),
+                                  )
+                                }
+                              />
+                              <span className="capitalize">{runType}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}

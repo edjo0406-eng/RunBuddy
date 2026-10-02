@@ -133,6 +133,41 @@ describe("runner profile actions", () => {
     expect(markup).toContain("This runner isn’t looking for a buddy");
   });
 
+  it("shows saved running details without placeholder values", () => {
+    profileMocks.runner = {
+      ...makeRunner(14, "both"),
+      runningStats: {
+        weeklyMileageKm: 42,
+        totalRaces: 8,
+        avgPacePerKm: "5:20",
+        personalBest5k: "22:30",
+        personalBest10k: null,
+        personalBestHalfMarathon: null,
+        personalBestMarathon: null,
+        preferredRunTypes: ["trail"],
+      },
+    };
+
+    const markup = renderProfile();
+
+    expect(markup).toContain("Running Details");
+    expect(markup).toContain("Weekly km");
+    expect(markup).toContain("42");
+    expect(markup).toContain("22:30");
+    expect(markup).toContain("trail");
+    expect(markup).not.toContain("--:--");
+  });
+
+  it("does not render empty running-stat sections for unset details", () => {
+    profileMocks.runner = makeRunner(14, "both");
+
+    const markup = renderProfile();
+
+    expect(markup).not.toContain("Running Details");
+    expect(markup).not.toContain("Personal Bests");
+    expect(markup).not.toContain("--:--");
+  });
+
   it("offers unfriend for an accepted connection", () => {
     profileMocks.profileId = 28;
     profileMocks.runner = makeRunner(28, "both");
