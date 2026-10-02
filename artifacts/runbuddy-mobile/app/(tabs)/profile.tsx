@@ -105,6 +105,7 @@ export default function ProfileScreen() {
               <View style={styles.tags}>
                 <Pill label={runner.experience ? runner.experience.charAt(0).toUpperCase() + runner.experience.slice(1) : 'Experience not set'} />
                 <Pill label={runner.publicListing ? 'Discoverable' : 'Private profile'} />
+                {runner.trackingApps?.appleHealthConnected ? <Pill label="Apple Health / Watch" /> : null}
               </View>
               <View style={[styles.privacyRow, { backgroundColor: colors.muted }]}>
                 <Feather name={runner.publicListing ? 'eye' : 'eye-off'} size={15} color={colors.mutedForeground} />

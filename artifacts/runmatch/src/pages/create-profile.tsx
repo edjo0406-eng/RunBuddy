@@ -536,7 +536,7 @@ export default function CreateProfile() {
                                   onCheckedChange={field.onChange}
                                 />
                               </FormControl>
-                              <FormLabel className="cursor-pointer font-normal">I use Apple Health</FormLabel>
+                              <FormLabel className="cursor-pointer font-normal">Show Apple Health / Apple Watch on my profile</FormLabel>
                             </FormItem>
                           )}
                         />

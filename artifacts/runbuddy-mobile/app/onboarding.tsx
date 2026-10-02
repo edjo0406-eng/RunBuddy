@@ -49,6 +49,7 @@ export default function OnboardingScreen() {
   const [country, setCountry] = useState('');
   const [tracker, setTracker] = useState<TrackerKey>('stravaUrl');
   const [trackerLink, setTrackerLink] = useState('');
+  const [appleHealthConnected, setAppleHealthConnected] = useState(false);
   const [experience, setExperience] = useState<Experience>('intermediate');
   const [publicListing, setPublicListing] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -60,7 +61,8 @@ export default function OnboardingScreen() {
   const createProfile = async () => {
     setFeedback(null);
     const trackingApps: TrackingApps = {};
-    trackingApps[tracker] = trackerLink.trim();
+    if (trackerLink.trim()) trackingApps[tracker] = trackerLink.trim();
+    if (appleHealthConnected) trackingApps.appleHealthConnected = true;
     try {
       await createRunner.mutateAsync({
         data: {
@@ -82,12 +84,15 @@ export default function OnboardingScreen() {
   };
 
   const validTrackerLink =
-    tracker === 'wahooPlan' || /^https?:\/\/\S+/i.test(trackerLink.trim());
+    !trackerLink.trim() ||
+    tracker === 'wahooPlan' ||
+    /^https?:\/\/\S+/i.test(trackerLink.trim());
+  const hasTracker = Boolean(trackerLink.trim()) || appleHealthConnected;
   const canCreate =
     name.trim().length >= 2 &&
     city.trim().length >= 2 &&
     country.trim().length >= 2 &&
-    trackerLink.trim().length > 0 &&
+    hasTracker &&
     validTrackerLink;
 
   return (
@@ -157,7 +162,7 @@ export default function OnboardingScreen() {
               </View>
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: colors.foreground }]}>Link one running account</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>Running account or tracker</Text>
               <View style={styles.pills}>
                 {trackers.map((option) => (
                   <Pill
@@ -182,8 +187,33 @@ export default function OnboardingScreen() {
                 <Text style={[styles.validation, { color: colors.destructive }]}>Use a full link starting with https://.</Text>
               ) : null}
               <Text style={[styles.helper, { color: colors.mutedForeground }]}>
-                RunBuddy uses this to make your running profile more useful to potential buddies.
+                Add a public running profile, or leave this blank if you choose Apple Health below.
               </Text>
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityLabel="Show Apple Health and Apple Watch as a profile tracker"
+                accessibilityState={{ checked: appleHealthConnected }}
+                testID="apple-health-profile-toggle"
+                onPress={() => setAppleHealthConnected((value) => !value)}
+                style={({ pressed }) => [
+                  styles.privacyCard,
+                  {
+                    backgroundColor: appleHealthConnected ? colors.accent : colors.muted,
+                    borderColor: appleHealthConnected ? colors.accent : colors.border,
+                    opacity: pressed ? 0.78 : 1,
+                  },
+                ]}
+              >
+                <View style={[styles.checkBox, { borderColor: colors.foreground, backgroundColor: appleHealthConnected ? colors.primary : 'transparent' }]}>
+                  {appleHealthConnected ? <Feather name="check" size={14} color={colors.primaryForeground} /> : null}
+                </View>
+                <View style={styles.privacyCopy}>
+                  <Text style={[styles.label, { color: colors.foreground }]}>Show Apple Health / Apple Watch on my profile</Text>
+                  <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+                    Profile label only. RunBuddy won’t read or sync Health data.
+                  </Text>
+                </View>
+              </Pressable>
             </View>
             <Pressable
               accessibilityRole="checkbox"

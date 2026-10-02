@@ -329,7 +329,13 @@ export default function RunnerProfile() {
                       <ExternalLink className="w-4 h-4 text-muted-foreground" />
                     </a>
                   )}
-                  {!runner.trackingApps?.stravaUrl && !runner.trackingApps?.garminUrl && !runner.trackingApps?.nikeRunClubUrl && (
+                  {runner.trackingApps?.appleHealthConnected && (
+                    <div className="rounded-lg border p-3">
+                      <span className="block font-medium text-foreground">Apple Health / Apple Watch</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">Runner-reported profile label; no workout data is synced.</span>
+                    </div>
+                  )}
+                  {!runner.trackingApps?.stravaUrl && !runner.trackingApps?.garminUrl && !runner.trackingApps?.nikeRunClubUrl && !runner.trackingApps?.appleHealthConnected && (
                     <p className="text-sm text-muted-foreground">No tracking apps linked.</p>
                   )}
                 </CardContent>

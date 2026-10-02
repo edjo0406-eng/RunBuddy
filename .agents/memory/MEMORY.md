@@ -7,3 +7,4 @@
 - [Public runner discovery](public-runner-discovery.md) — public discovery is explicit opt-in and only the directory landing page is intended to rank.
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.
 - [Mobile profile edit verification](runbuddy-mobile-profile-edit-testing.md) — confirm a runner profile field appears in the signed-in app after saving, not only in API logs.
+- [Apple Health profile label](apple-health-profile-label.md) — Apple Health is a self-reported profile label, not a HealthKit connection or workout sync.

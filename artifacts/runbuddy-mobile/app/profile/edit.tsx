@@ -81,6 +81,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
   const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
   const [deleteConfirmationVisible, setDeleteConfirmationVisible] = useState(false);
   const trackerLink = getTrackerLink(trackingApps, tracker);
+  const appleHealthConnected = Boolean(trackingApps.appleHealthConnected);
   const validTrackerLink =
     !trackerLink.trim() ||
     tracker === 'wahooPlan' ||
@@ -212,6 +213,37 @@ function EditProfileForm({ runner }: { runner: Runner }) {
               Use a full link starting with https://.
             </Text>
           ) : null}
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityLabel="Show Apple Health and Apple Watch as a profile tracker"
+            accessibilityState={{ checked: appleHealthConnected }}
+            testID="edit-apple-health-profile-toggle"
+            onPress={() => {
+              setTrackingAppsEdited(true);
+              setTrackingApps((current) => ({
+                ...current,
+                appleHealthConnected: !current.appleHealthConnected,
+              }));
+            }}
+            style={({ pressed }) => [
+              styles.privacyCard,
+              {
+                backgroundColor: appleHealthConnected ? colors.accent : colors.muted,
+                borderColor: appleHealthConnected ? colors.accent : colors.border,
+                opacity: pressed ? 0.78 : 1,
+              },
+            ]}
+          >
+            <View style={[styles.checkBox, { borderColor: colors.foreground, backgroundColor: appleHealthConnected ? colors.primary : 'transparent' }]}>
+              {appleHealthConnected ? <Feather name="check" size={14} color={colors.primaryForeground} /> : null}
+            </View>
+            <View style={styles.privacyCopy}>
+              <Text style={[styles.label, { color: colors.foreground }]}>Show Apple Health / Apple Watch on my profile</Text>
+              <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+                Profile label only. RunBuddy won’t read or sync Health data.
+              </Text>
+            </View>
+          </Pressable>
         </View>
         <View style={styles.fieldGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>Experience</Text>
