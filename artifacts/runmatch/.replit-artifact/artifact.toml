@@ -1,0 +1,47 @@
+kind = "web"
+previewPath = "/"
+title = "Run Buddy"
+version = "1.0.0"
+id = "artifacts/runmatch"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20894
+
+[services.development]
+run = "pnpm --filter @workspace/runmatch run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/runmatch", "run", "build" ]
+publicDir = "artifacts/runmatch/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/run-buddy"
+to = "/run-buddy/index.html"
+
+[[services.production.rewrites]]
+from = "/run-buddy/"
+to = "/run-buddy/index.html"
+
+[[services.production.rewrites]]
+from = "/run-date"
+to = "/run-date/index.html"
+
+[[services.production.rewrites]]
+from = "/run-date/"
+to = "/run-date/index.html"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20894"
+BASE_PATH = "/"

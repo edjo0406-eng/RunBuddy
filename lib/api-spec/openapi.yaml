@@ -1,0 +1,1083 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: RunMatch API - runner dating and running partner finder
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: runners
+    description: Runner profiles
+  - name: connections
+    description: Connection requests between runners
+  - name: messages
+    description: Direct messages between runners
+  - name: safety
+    description: Runner blocking and safety reports
+  - name: stats
+    description: App-wide statistics and summaries
+  - name: Storage
+    description: Profile photo upload and serving endpoints
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [Storage]
+      summary: Request a presigned profile photo upload URL
+      description: |
+        Requires an authenticated runner profile. The client uploads the photo
+        directly to the returned URL, then stores the returned object path as
+        the runner's avatar URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Invalid image metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Authentication required
+        "403":
+          description: A runner profile is required
+        "500":
+          description: Failed to generate upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/objects/{objectPath}:
+    get:
+      operationId: getStorageObject
+      tags: [Storage]
+      summary: Serve a stored profile photo
+      description: |
+        Serves an uploaded profile photo. Photos are accessible to anyone who
+        has the image URL, so clients should not upload sensitive images. Only
+        avatar objects are served by this route.
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object directory
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to serve object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /runners:
+    get:
+      operationId: listRunners
+      tags: [runners]
+      summary: List runners with optional filters (anonymous visitors see only opted-in public profiles)
+      parameters:
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [date, buddy, both]
+          description: Filter by section (date, buddy, or both)
+        - name: country
+          in: query
+          schema:
+            type: string
+          description: Filter by country
+        - name: city
+          in: query
+          schema:
+            type: string
+          description: Filter by city
+        - name: minPace
+          in: query
+          schema:
+            type: string
+          description: Minimum pace (mm:ss per km)
+        - name: maxPace
+          in: query
+          schema:
+            type: string
+          description: Maximum pace (mm:ss per km)
+        - name: experience
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced, elite]
+      responses:
+        "200":
+          description: List of runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Runner"
+
+    post:
+      operationId: createRunner
+      tags: [runners]
+      summary: Create a new runner profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerBody"
+      responses:
+        "201":
+          description: Created runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+
+  /runners/me:
+    get:
+      operationId: getCurrentRunner
+      tags: [runners]
+      summary: Get the authenticated user's runner profile ID
+      responses:
+        "200":
+          description: Current runner identity, or null if no profile exists yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentRunnerResponse"
+        "401":
+          description: Authentication required
+    delete:
+      operationId: deleteCurrentRunner
+      tags: [runners]
+      summary: Permanently delete the authenticated user's RunBuddy account and data
+      responses:
+        "204":
+          description: Account, runner profile, connections, and messages deleted
+        "401":
+          description: Authentication required
+        "500":
+          description: Account deletion failed
+
+  /runners/{id}:
+    get:
+      operationId: getRunner
+      tags: [runners]
+      summary: Get a runner profile (private profiles require sign-in)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Runner profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+        "404":
+          description: Not found
+
+    put:
+      operationId: updateRunner
+      tags: [runners]
+      summary: Update a runner profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRunnerBody"
+      responses:
+        "200":
+          description: Updated runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Runner"
+
+  /connections:
+    get:
+      operationId: listConnections
+      tags: [connections]
+      summary: List connections for a runner
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [date, buddy]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, declined]
+      responses:
+        "200":
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Connection"
+
+    post:
+      operationId: createConnection
+      tags: [connections]
+      summary: Send a connection request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConnectionBody"
+      responses:
+        "201":
+          description: Created connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+
+  /connections/{id}:
+    put:
+      operationId: updateConnection
+      tags: [connections]
+      summary: Accept or decline a connection request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConnectionBody"
+      responses:
+        "200":
+          description: Updated connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+    delete:
+      operationId: deleteConnection
+      tags: [connections]
+      summary: Remove a connection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Connection removed
+
+  /runner-blocks:
+    get:
+      operationId: listRunnerBlocks
+      tags: [safety]
+      summary: List runners blocked by the authenticated runner
+      responses:
+        "200":
+          description: Blocked runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunnerBlock"
+    post:
+      operationId: createRunnerBlock
+      tags: [safety]
+      summary: Block another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerBlockBody"
+      responses:
+        "201":
+          description: Runner blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerBlock"
+
+  /runner-blocks/{runnerId}:
+    delete:
+      operationId: deleteRunnerBlock
+      tags: [safety]
+      summary: Unblock a runner
+      parameters:
+        - name: runnerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Runner unblocked
+
+  /runner-reports:
+    post:
+      operationId: createRunnerReport
+      tags: [safety]
+      summary: Submit a report about another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerReportBody"
+      responses:
+        "201":
+          description: Report recorded for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerReportReceipt"
+
+  /messages/inbox:
+    get:
+      operationId: getInbox
+      tags: [messages]
+      summary: Get all conversations for a runner
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+
+  /messages/conversation:
+    get:
+      operationId: getConversation
+      tags: [messages]
+      summary: Get all messages between two runners
+      parameters:
+        - name: otherId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+
+  /messages/unread-count:
+    get:
+      operationId: getUnreadCount
+      tags: [messages]
+      summary: Get unread message count for a runner
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /messages:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send a message to another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get app-wide statistics summary
+      responses:
+        "200":
+          description: App statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /stats/countries:
+    get:
+      operationId: getRunnersByCountry
+      tags: [stats]
+      summary: Get runner counts grouped by country
+      responses:
+        "200":
+          description: Country breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CountryCount"
+
+  /stats/featured:
+    get:
+      operationId: getFeaturedRunners
+      tags: [stats]
+      summary: Get featured/recently active runners for the homepage
+      responses:
+        "200":
+          description: Featured runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Runner"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    TrackingApps:
+      type: object
+      properties:
+        stravaUrl:
+          type: string
+          nullable: true
+        garminUrl:
+          type: string
+          nullable: true
+        nikeRunClubUrl:
+          type: string
+          nullable: true
+        wahooPlan:
+          type: string
+          nullable: true
+        polarUrl:
+          type: string
+          nullable: true
+        suuntoUrl:
+          type: string
+          nullable: true
+        appleHealthConnected:
+          type: boolean
+          nullable: true
+        garminConnectUrl:
+          type: string
+          nullable: true
+
+    RunningStats:
+      type: object
+      properties:
+        weeklyMileageKm:
+          type: number
+          nullable: true
+        totalRaces:
+          type: integer
+          nullable: true
+        personalBest5k:
+          type: string
+          nullable: true
+          description: Time in mm:ss format
+        personalBest10k:
+          type: string
+          nullable: true
+        personalBestHalfMarathon:
+          type: string
+          nullable: true
+        personalBestMarathon:
+          type: string
+          nullable: true
+        avgPacePerKm:
+          type: string
+          nullable: true
+          description: Pace in mm:ss format
+        preferredRunTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: e.g. road, trail, track, ultra
+
+    Runner:
+      type: object
+      properties:
+        id:
+          type: integer
+        publicListing:
+          type: boolean
+          description: Whether this profile is listed for anonymous visitors
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+        lat:
+          type: number
+          nullable: true
+          description: Latitude coordinate
+        lng:
+          type: number
+          nullable: true
+          description: Longitude coordinate
+        travelCity:
+          type: string
+          nullable: true
+          description: City the runner is currently visiting
+        travelCountry:
+          type: string
+          nullable: true
+          description: Country the runner is currently visiting
+        travelUntil:
+          type: string
+          nullable: true
+          description: Date until which the runner is travelling (e.g. "May 24")
+        travelNote:
+          type: string
+          nullable: true
+          description: Short note about the trip
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - profileType
+        - lookingFor
+        - createdAt
+        - updatedAt
+    CurrentRunnerResponse:
+      type: object
+      required:
+        - runnerId
+      properties:
+        runnerId:
+          type: integer
+          nullable: true
+
+    CreateRunnerBody:
+      type: object
+      properties:
+        publicListing:
+          type: boolean
+          description: Explicit consent to show a limited profile in public discovery; defaults to false
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          allOf:
+            - $ref: "#/components/schemas/TrackingApps"
+          minProperties: 1
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+        lat:
+          type: number
+          nullable: true
+        lng:
+          type: number
+          nullable: true
+        travelCity:
+          type: string
+          nullable: true
+        travelCountry:
+          type: string
+          nullable: true
+        travelUntil:
+          type: string
+          nullable: true
+        travelNote:
+          type: string
+          nullable: true
+      required:
+        - name
+        - profileType
+        - lookingFor
+        - trackingApps
+
+    UpdateRunnerBody:
+      type: object
+      properties:
+        publicListing:
+          type: boolean
+          description: Opt in or out of anonymous public discovery
+        name:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        profileType:
+          type: string
+          enum: [individual, social_club, official_club]
+        clubName:
+          type: string
+          nullable: true
+        clubDescription:
+          type: string
+          nullable: true
+        clubWebsite:
+          type: string
+          nullable: true
+        clubSocialUrl:
+          type: string
+          nullable: true
+        clubAssociation:
+          type: string
+          nullable: true
+        lookingFor:
+          type: string
+          enum: [date, buddy, both]
+        experience:
+          type: string
+          enum: [beginner, intermediate, advanced, elite]
+          nullable: true
+        trackingApps:
+          $ref: "#/components/schemas/TrackingApps"
+          nullable: true
+        runningStats:
+          $ref: "#/components/schemas/RunningStats"
+          nullable: true
+        lat:
+          type: number
+          nullable: true
+        lng:
+          type: number
+          nullable: true
+        travelCity:
+          type: string
+          nullable: true
+        travelCountry:
+          type: string
+          nullable: true
+        travelUntil:
+          type: string
+          nullable: true
+        travelNote:
+          type: string
+          nullable: true
+
+    Connection:
+      type: object
+      properties:
+        id:
+          type: integer
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        type:
+          type: string
+          enum: [date, buddy]
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+        message:
+          type: string
+          nullable: true
+        fromRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        toRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fromRunnerId
+        - toRunnerId
+        - type
+        - status
+        - createdAt
+
+    CreateConnectionBody:
+      type: object
+      properties:
+        toRunnerId:
+          type: integer
+        type:
+          type: string
+          enum: [date, buddy]
+        message:
+          type: string
+          nullable: true
+      required:
+        - toRunnerId
+        - type
+
+    UpdateConnectionBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, declined]
+      required:
+        - status
+
+    RunnerBlock:
+      type: object
+      properties:
+        id:
+          type: integer
+        blockedRunnerId:
+          type: integer
+        blockedRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, blockedRunnerId, createdAt]
+
+    CreateRunnerBlockBody:
+      type: object
+      properties:
+        blockedRunnerId:
+          type: integer
+      required: [blockedRunnerId]
+
+    CreateRunnerReportBody:
+      type: object
+      properties:
+        reportedRunnerId:
+          type: integer
+        reason:
+          type: string
+          enum: [spam, harassment, impersonation, inappropriate_content, unsafe_behavior, other]
+        details:
+          type: string
+          maxLength: 2000
+          nullable: true
+      required: [reportedRunnerId, reason]
+
+    RunnerReportReceipt:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [pending]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, status, createdAt]
+
+    StatsSummary:
+      type: object
+      properties:
+        totalRunners:
+          type: integer
+        dateRunners:
+          type: integer
+        buddyRunners:
+          type: integer
+        bothRunners:
+          type: integer
+        totalConnections:
+          type: integer
+        countriesRepresented:
+          type: integer
+      required:
+        - totalRunners
+        - dateRunners
+        - buddyRunners
+        - bothRunners
+        - totalConnections
+        - countriesRepresented
+
+    CountryCount:
+      type: object
+      properties:
+        country:
+          type: string
+        count:
+          type: integer
+      required:
+        - country
+        - count
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        fromRunnerId:
+          type: integer
+        toRunnerId:
+          type: integer
+        content:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fromRunnerId
+        - toRunnerId
+        - content
+        - isRead
+        - createdAt
+
+    Conversation:
+      type: object
+      properties:
+        otherId:
+          type: integer
+        otherRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        latestMessage:
+          $ref: "#/components/schemas/Message"
+        unreadCount:
+          type: integer
+      required:
+        - otherId
+        - latestMessage
+        - unreadCount
+
+    SendMessageBody:
+      type: object
+      properties:
+        toRunnerId:
+          type: integer
+        content:
+          type: string
+          maxLength: 4000
+      required:
+        - toRunnerId
+        - content
+
+    UnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required:
+        - count
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Original image file name
+        size:
+          type: integer
+          minimum: 1
+          maximum: 8388608
+          description: Image file size in bytes, up to 8 MiB
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+          description: Supported profile photo MIME type
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          description: Presigned URL for a direct PUT upload
+        objectPath:
+          type: string
+          description: Normalized object path to store as the avatar URL
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
