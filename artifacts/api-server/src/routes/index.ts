@@ -5,6 +5,7 @@ import connectionsRouter from "./connections";
 import statsRouter from "./stats";
 import messagesRouter from "./messages";
 import storageRouter from "./storage";
+import safetyRouter from "./safety";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(connectionsRouter);
 router.use(statsRouter);
 router.use(messagesRouter);
 router.use(storageRouter);
+router.use(safetyRouter);
 
 export default router;

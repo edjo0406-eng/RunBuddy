@@ -24,7 +24,9 @@ import type {
   Conversation,
   CountryCount,
   CreateConnectionBody,
+  CreateRunnerBlockBody,
   CreateRunnerBody,
+  CreateRunnerReportBody,
   CurrentRunnerResponse,
   ErrorEnvelope,
   GetConversationParams,
@@ -33,6 +35,8 @@ import type {
   ListRunnersParams,
   Message,
   Runner,
+  RunnerBlock,
+  RunnerReportReceipt,
   SendMessageBody,
   StatsSummary,
   UnreadCount,
@@ -230,7 +234,8 @@ export const getGetStorageObjectUrl = (objectPath: string,) => {
 
 /**
  * Serves an uploaded profile photo. Photos are accessible to anyone who
- * has the image URL, so clients should not upload sensitive images.
+ * has the image URL, so clients should not upload sensitive images. Only
+ * avatar objects are served by this route.
  * @summary Serve a stored profile photo
  */
 export const getStorageObject = async (objectPath: string, options?: RequestInit): Promise<Blob> => {
@@ -976,6 +981,367 @@ export const useUpdateConnection = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateConnectionMutationOptions(options));
+    }
+
+export const getDeleteConnectionUrl = (id: number,) => {
+
+
+
+
+  return `/api/connections/${id}`
+}
+
+/**
+ * @summary Remove a connection
+ */
+export const deleteConnection = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteConnectionUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteConnectionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteConnection>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteConnection>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteConnection'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteConnection>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteConnection(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteConnectionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteConnection>>>
+
+    export type DeleteConnectionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove a connection
+ */
+export const useDeleteConnection = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteConnection>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteConnection>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteConnectionMutationOptions(options));
+    }
+
+export const getListRunnerBlocksUrl = () => {
+
+
+
+
+  return `/api/runner-blocks`
+}
+
+/**
+ * @summary List runners blocked by the authenticated runner
+ */
+export const listRunnerBlocks = async ( options?: RequestInit): Promise<RunnerBlock[]> => {
+
+  return customFetch<RunnerBlock[]>(getListRunnerBlocksUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRunnerBlocksQueryKey = () => {
+    return [
+    `/api/runner-blocks`
+    ] as const;
+    }
+
+
+export const getListRunnerBlocksQueryOptions = <TData = Awaited<ReturnType<typeof listRunnerBlocks>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRunnerBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRunnerBlocksQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRunnerBlocks>>> = ({ signal }) => listRunnerBlocks({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRunnerBlocks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListRunnerBlocksQueryResult = NonNullable<Awaited<ReturnType<typeof listRunnerBlocks>>>
+export type ListRunnerBlocksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List runners blocked by the authenticated runner
+ */
+
+export function useListRunnerBlocks<TData = Awaited<ReturnType<typeof listRunnerBlocks>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRunnerBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListRunnerBlocksQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateRunnerBlockUrl = () => {
+
+
+
+
+  return `/api/runner-blocks`
+}
+
+/**
+ * @summary Block another runner
+ */
+export const createRunnerBlock = async (createRunnerBlockBody: CreateRunnerBlockBody, options?: RequestInit): Promise<RunnerBlock> => {
+
+  return customFetch<RunnerBlock>(getCreateRunnerBlockUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createRunnerBlockBody)
+  }
+);}
+
+
+
+
+
+export const getCreateRunnerBlockMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRunnerBlock>>, TError,{data: BodyType<CreateRunnerBlockBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRunnerBlock>>, TError,{data: BodyType<CreateRunnerBlockBody>}, TContext> => {
+
+const mutationKey = ['createRunnerBlock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRunnerBlock>>, {data: BodyType<CreateRunnerBlockBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createRunnerBlock(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRunnerBlockMutationResult = NonNullable<Awaited<ReturnType<typeof createRunnerBlock>>>
+    export type CreateRunnerBlockMutationBody = BodyType<CreateRunnerBlockBody>
+    export type CreateRunnerBlockMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Block another runner
+ */
+export const useCreateRunnerBlock = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRunnerBlock>>, TError,{data: BodyType<CreateRunnerBlockBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRunnerBlock>>,
+        TError,
+        {data: BodyType<CreateRunnerBlockBody>},
+        TContext
+      > => {
+      return useMutation(getCreateRunnerBlockMutationOptions(options));
+    }
+
+export const getDeleteRunnerBlockUrl = (runnerId: number,) => {
+
+
+
+
+  return `/api/runner-blocks/${runnerId}`
+}
+
+/**
+ * @summary Unblock a runner
+ */
+export const deleteRunnerBlock = async (runnerId: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteRunnerBlockUrl(runnerId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteRunnerBlockMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRunnerBlock>>, TError,{runnerId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRunnerBlock>>, TError,{runnerId: number}, TContext> => {
+
+const mutationKey = ['deleteRunnerBlock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRunnerBlock>>, {runnerId: number}> = (props) => {
+          const {runnerId} = props ?? {};
+
+          return  deleteRunnerBlock(runnerId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRunnerBlockMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRunnerBlock>>>
+
+    export type DeleteRunnerBlockMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unblock a runner
+ */
+export const useDeleteRunnerBlock = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRunnerBlock>>, TError,{runnerId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRunnerBlock>>,
+        TError,
+        {runnerId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRunnerBlockMutationOptions(options));
+    }
+
+export const getCreateRunnerReportUrl = () => {
+
+
+
+
+  return `/api/runner-reports`
+}
+
+/**
+ * @summary Submit a report about another runner
+ */
+export const createRunnerReport = async (createRunnerReportBody: CreateRunnerReportBody, options?: RequestInit): Promise<RunnerReportReceipt> => {
+
+  return customFetch<RunnerReportReceipt>(getCreateRunnerReportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createRunnerReportBody)
+  }
+);}
+
+
+
+
+
+export const getCreateRunnerReportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRunnerReport>>, TError,{data: BodyType<CreateRunnerReportBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRunnerReport>>, TError,{data: BodyType<CreateRunnerReportBody>}, TContext> => {
+
+const mutationKey = ['createRunnerReport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRunnerReport>>, {data: BodyType<CreateRunnerReportBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createRunnerReport(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRunnerReportMutationResult = NonNullable<Awaited<ReturnType<typeof createRunnerReport>>>
+    export type CreateRunnerReportMutationBody = BodyType<CreateRunnerReportBody>
+    export type CreateRunnerReportMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a report about another runner
+ */
+export const useCreateRunnerReport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRunnerReport>>, TError,{data: BodyType<CreateRunnerReportBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRunnerReport>>,
+        TError,
+        {data: BodyType<CreateRunnerReportBody>},
+        TContext
+      > => {
+      return useMutation(getCreateRunnerReportMutationOptions(options));
     }
 
 export const getGetInboxUrl = () => {

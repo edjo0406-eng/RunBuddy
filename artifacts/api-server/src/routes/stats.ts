@@ -1,8 +1,14 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { db, runnersTable, connectionsTable } from "@workspace/db";
-import { sql, desc, eq } from "drizzle-orm";
-import { publicRunnerSelection, discoverableRunnerSelection } from "../lib/authorization";
+import { sql, desc, eq, notInArray } from "drizzle-orm";
+import {
+  getAuthenticatedRunner,
+  getOptionalAuthenticatedRunner,
+  getAuthenticatedUserId,
+  publicRunnerSelection,
+  discoverableRunnerSelection,
+} from "../lib/authorization";
+import { getHiddenRunnerIds } from "../lib/safety";
 
 const router = Router();
 
@@ -49,11 +55,27 @@ router.get("/stats/countries", async (req, res) => {
 });
 
 router.get("/stats/featured", async (req, res) => {
-  const runners = getAuth(req).userId
-    ? await db.select(publicRunnerSelection).from(runnersTable).orderBy(desc(runnersTable.createdAt)).limit(12)
-    : await db.select(discoverableRunnerSelection).from(runnersTable)
-        .where(eq(runnersTable.publicListing, true))
-        .orderBy(desc(runnersTable.createdAt)).limit(12);
+  const currentRunner = await getOptionalAuthenticatedRunner(req);
+  const signedIn = Boolean(getAuthenticatedUserId(req));
+  if (signedIn) {
+    const hiddenRunnerIds = currentRunner
+      ? await getHiddenRunnerIds(currentRunner.id)
+      : [];
+    const runners = await db
+      .select(publicRunnerSelection)
+      .from(runnersTable)
+      .where(hiddenRunnerIds.length ? notInArray(runnersTable.id, hiddenRunnerIds) : undefined)
+      .orderBy(desc(runnersTable.createdAt))
+      .limit(12);
+    return res.json(runners);
+  }
+
+  const runners = await db
+    .select(discoverableRunnerSelection)
+    .from(runnersTable)
+    .where(eq(runnersTable.publicListing, true))
+    .orderBy(desc(runnersTable.createdAt))
+    .limit(12);
 
   return res.json(runners);
 });

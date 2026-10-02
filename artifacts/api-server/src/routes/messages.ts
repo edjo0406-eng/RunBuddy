@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, messagesTable, runnersTable } from "@workspace/db";
-import { eq, or, and, desc, sql } from "drizzle-orm";
+import { eq, or, and, desc, sql, notInArray } from "drizzle-orm";
 import {
   GetConversationQueryParams,
   SendMessageBody,
@@ -12,6 +12,7 @@ import {
   requireRunner,
 } from "../lib/authorization";
 import { createRateLimiter } from "../middlewares/rateLimit";
+import { areRunnersBlocked, getHiddenRunnerIds } from "../lib/safety";
 
 const router = Router();
 const sendMessageRateLimit = createRateLimiter({
@@ -26,7 +27,7 @@ router.get("/messages/inbox", async (req, res) => {
 
   const runnerId = currentRunner.id;
 
-  const msgs = await db
+  const allMessages = await db
     .select()
     .from(messagesTable)
     .where(
@@ -36,6 +37,14 @@ router.get("/messages/inbox", async (req, res) => {
       )
     )
     .orderBy(desc(messagesTable.createdAt));
+  const hiddenRunnerIds = new Set(await getHiddenRunnerIds(runnerId));
+  const msgs = allMessages.filter((message) => {
+    const otherId =
+      message.fromRunnerId === runnerId
+        ? message.toRunnerId
+        : message.fromRunnerId;
+    return !hiddenRunnerIds.has(otherId);
+  });
 
   const conversationMap = new Map<number, {
     otherId: number;
@@ -94,6 +103,9 @@ router.get("/messages/conversation", async (req, res) => {
   if (meId === otherId) {
     return res.status(400).json({ error: "Cannot open a conversation with yourself" });
   }
+  if (await areRunnersBlocked(meId, otherId)) {
+    return res.status(404).json({ error: "Conversation not found" });
+  }
 
   const msgs = await db
     .select()
@@ -132,15 +144,20 @@ router.get("/messages/unread-count", async (req, res) => {
   if (!requireRunner(currentRunner, res)) return;
 
   const runnerId = currentRunner.id;
+  const hiddenRunnerIds = await getHiddenRunnerIds(runnerId);
+  const unreadConditions = [
+    eq(messagesTable.toRunnerId, runnerId),
+    eq(messagesTable.isRead, false),
+  ];
+  if (hiddenRunnerIds.length > 0) {
+    unreadConditions.push(notInArray(messagesTable.fromRunnerId, hiddenRunnerIds));
+  }
 
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(messagesTable)
     .where(
-      and(
-        eq(messagesTable.toRunnerId, runnerId),
-        eq(messagesTable.isRead, false)
-      )
+      and(...unreadConditions)
     );
 
   return res.json({ count: row?.count ?? 0 });
@@ -173,6 +190,9 @@ router.post("/messages", sendMessageRateLimit, async (req, res) => {
     .from(runnersTable)
     .where(eq(runnersTable.id, toRunnerId));
   if (!target) {
+    return res.status(404).json({ error: "Target runner not found" });
+  }
+  if (await areRunnersBlocked(fromRunnerId, toRunnerId)) {
     return res.status(404).json({ error: "Target runner not found" });
   }
 

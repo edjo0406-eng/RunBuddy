@@ -51,7 +51,8 @@ export const RequestUploadUrlResponse = zod.object({
 
 /**
  * Serves an uploaded profile photo. Photos are accessible to anyone who
- * has the image URL, so clients should not upload sensitive images.
+ * has the image URL, so clients should not upload sensitive images. Only
+ * avatar objects are served by this route.
  * @summary Serve a stored profile photo
  */
 export const GetStorageObjectParams = zod.object({
@@ -731,6 +732,165 @@ export const UpdateConnectionResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 }).nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Remove a connection
+ */
+export const DeleteConnectionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteConnectionResponse = zod.void()
+
+
+/**
+ * @summary List runners blocked by the authenticated runner
+ */
+export const ListRunnerBlocksResponseItem = zod.object({
+  "id": zod.number(),
+  "blockedRunnerId": zod.number(),
+  "blockedRunner": zod.object({
+  "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
+  "name": zod.string(),
+  "age": zod.number().nullish(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "gender": zod.string().nullish(),
+  "profileType": zod.enum(['individual', 'social_club', 'official_club']),
+  "clubName": zod.string().nullish(),
+  "clubDescription": zod.string().nullish(),
+  "clubWebsite": zod.string().nullish(),
+  "clubSocialUrl": zod.string().nullish(),
+  "clubAssociation": zod.string().nullish(),
+  "lookingFor": zod.enum(['date', 'buddy', 'both']),
+  "experience": zod.enum(['beginner', 'intermediate', 'advanced', 'elite']).nullish(),
+  "trackingApps": zod.object({
+  "stravaUrl": zod.string().nullish(),
+  "garminUrl": zod.string().nullish(),
+  "nikeRunClubUrl": zod.string().nullish(),
+  "wahooPlan": zod.string().nullish(),
+  "polarUrl": zod.string().nullish(),
+  "suuntoUrl": zod.string().nullish(),
+  "appleHealthConnected": zod.boolean().nullish(),
+  "garminConnectUrl": zod.string().nullish()
+}).nullish(),
+  "runningStats": zod.object({
+  "weeklyMileageKm": zod.number().nullish(),
+  "totalRaces": zod.number().nullish(),
+  "personalBest5k": zod.string().nullish().describe('Time in mm:ss format'),
+  "personalBest10k": zod.string().nullish(),
+  "personalBestHalfMarathon": zod.string().nullish(),
+  "personalBestMarathon": zod.string().nullish(),
+  "avgPacePerKm": zod.string().nullish().describe('Pace in mm:ss format'),
+  "preferredRunTypes": zod.array(zod.string()).nullish().describe('e.g. road, trail, track, ultra')
+}).nullish(),
+  "lat": zod.number().nullish().describe('Latitude coordinate'),
+  "lng": zod.number().nullish().describe('Longitude coordinate'),
+  "travelCity": zod.string().nullish().describe('City the runner is currently visiting'),
+  "travelCountry": zod.string().nullish().describe('Country the runner is currently visiting'),
+  "travelUntil": zod.string().nullish().describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  "travelNote": zod.string().nullish().describe('Short note about the trip'),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListRunnerBlocksResponse = zod.array(ListRunnerBlocksResponseItem)
+
+
+/**
+ * @summary Block another runner
+ */
+export const CreateRunnerBlockBody = zod.object({
+  "blockedRunnerId": zod.number()
+})
+
+export const CreateRunnerBlockResponse = zod.object({
+  "id": zod.number(),
+  "blockedRunnerId": zod.number(),
+  "blockedRunner": zod.object({
+  "id": zod.number(),
+  "publicListing": zod.boolean().optional().describe('Whether this profile is listed for anonymous visitors'),
+  "name": zod.string(),
+  "age": zod.number().nullish(),
+  "bio": zod.string().nullish(),
+  "avatarUrl": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "gender": zod.string().nullish(),
+  "profileType": zod.enum(['individual', 'social_club', 'official_club']),
+  "clubName": zod.string().nullish(),
+  "clubDescription": zod.string().nullish(),
+  "clubWebsite": zod.string().nullish(),
+  "clubSocialUrl": zod.string().nullish(),
+  "clubAssociation": zod.string().nullish(),
+  "lookingFor": zod.enum(['date', 'buddy', 'both']),
+  "experience": zod.enum(['beginner', 'intermediate', 'advanced', 'elite']).nullish(),
+  "trackingApps": zod.object({
+  "stravaUrl": zod.string().nullish(),
+  "garminUrl": zod.string().nullish(),
+  "nikeRunClubUrl": zod.string().nullish(),
+  "wahooPlan": zod.string().nullish(),
+  "polarUrl": zod.string().nullish(),
+  "suuntoUrl": zod.string().nullish(),
+  "appleHealthConnected": zod.boolean().nullish(),
+  "garminConnectUrl": zod.string().nullish()
+}).nullish(),
+  "runningStats": zod.object({
+  "weeklyMileageKm": zod.number().nullish(),
+  "totalRaces": zod.number().nullish(),
+  "personalBest5k": zod.string().nullish().describe('Time in mm:ss format'),
+  "personalBest10k": zod.string().nullish(),
+  "personalBestHalfMarathon": zod.string().nullish(),
+  "personalBestMarathon": zod.string().nullish(),
+  "avgPacePerKm": zod.string().nullish().describe('Pace in mm:ss format'),
+  "preferredRunTypes": zod.array(zod.string()).nullish().describe('e.g. road, trail, track, ultra')
+}).nullish(),
+  "lat": zod.number().nullish().describe('Latitude coordinate'),
+  "lng": zod.number().nullish().describe('Longitude coordinate'),
+  "travelCity": zod.string().nullish().describe('City the runner is currently visiting'),
+  "travelCountry": zod.string().nullish().describe('Country the runner is currently visiting'),
+  "travelUntil": zod.string().nullish().describe('Date until which the runner is travelling (e.g. \"May 24\")'),
+  "travelNote": zod.string().nullish().describe('Short note about the trip'),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Unblock a runner
+ */
+export const DeleteRunnerBlockParams = zod.object({
+  "runnerId": zod.coerce.number()
+})
+
+export const DeleteRunnerBlockResponse = zod.void()
+
+
+/**
+ * @summary Submit a report about another runner
+ */
+export const createRunnerReportBodyDetailsMax = 2000;
+
+
+
+export const CreateRunnerReportBody = zod.object({
+  "reportedRunnerId": zod.number(),
+  "reason": zod.enum(['spam', 'harassment', 'impersonation', 'inappropriate_content', 'unsafe_behavior', 'other']),
+  "details": zod.string().max(createRunnerReportBodyDetailsMax).nullish()
+})
+
+export const CreateRunnerReportResponse = zod.object({
+  "id": zod.number(),
+  "status": zod.enum(['pending']),
   "createdAt": zod.coerce.date()
 })
 

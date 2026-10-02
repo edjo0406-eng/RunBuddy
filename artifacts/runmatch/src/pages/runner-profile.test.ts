@@ -8,6 +8,7 @@ const profileMocks = vi.hoisted(() => ({
   profileId: 14,
   runner: null as Record<string, unknown> | null,
   currentRunnerId: 14 as number | null,
+  connection: null as Record<string, unknown> | null,
   mutate: vi.fn(),
   navigate: vi.fn(),
 }));
@@ -27,6 +28,16 @@ vi.mock("@workspace/api-client-react", () => ({
     isError: false,
   }),
   getGetCurrentRunnerQueryKey: () => ["current-runner"],
+  useListConnections: () => ({
+    data: profileMocks.connection ? [profileMocks.connection] : [],
+  }),
+  getListConnectionsQueryKey: () => ["connections"],
+  useDeleteConnection: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateRunnerBlock: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useListRunnerBlocks: () => ({ data: [] }),
+  getListRunnerBlocksQueryKey: () => ["runner-blocks"],
+  useDeleteRunnerBlock: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateRunnerReport: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCreateConnection: () => ({
     mutate: profileMocks.mutate,
     isPending: false,
@@ -88,6 +99,7 @@ describe("runner profile actions", () => {
     profileMocks.profileId = 14;
     profileMocks.currentRunnerId = 14;
     profileMocks.runner = makeRunner(14, "both");
+    profileMocks.connection = null;
     profileMocks.mutate = vi.fn();
     profileMocks.navigate = vi.fn();
   });
@@ -119,5 +131,22 @@ describe("runner profile actions", () => {
     expect(markup).not.toContain("Connect for Buddy");
     expect(markup).toContain("Send Message");
     expect(markup).toContain("This runner isn’t looking for a buddy");
+  });
+
+  it("offers unfriend for an accepted connection", () => {
+    profileMocks.profileId = 28;
+    profileMocks.runner = makeRunner(28, "both");
+    profileMocks.connection = {
+      id: 6,
+      fromRunnerId: 14,
+      toRunnerId: 28,
+      status: "accepted",
+    };
+
+    const markup = renderProfile();
+
+    expect(markup).toContain("Unfriend");
+    expect(markup).toContain("Block");
+    expect(markup).toContain("Report");
   });
 });

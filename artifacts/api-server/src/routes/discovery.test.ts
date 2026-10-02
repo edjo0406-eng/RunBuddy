@@ -149,8 +149,8 @@ describe("anonymous runner discovery", () => {
     mocks.getAuth.mockReturnValue({ userId: "signed-in" });
     const response = await request(app).get("/api/runners");
     expect(response.status).toBe(200);
-    expect(mocks.selections[0]).toHaveProperty("bio");
-    expect(mocks.filters).toEqual([undefined]);
+    expect(mocks.selections.some((selection) => "bio" in selection)).toBe(true);
+    expect(mocks.filters.at(-1)).toBeUndefined();
   });
 
   it("includes linked running accounts in signed-in profile details", async () => {
@@ -162,6 +162,6 @@ describe("anonymous runner discovery", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.trackingApps).toEqual(trackingApps);
-    expect(mocks.selections[0]).toHaveProperty("trackingApps");
+    expect(mocks.selections.some((selection) => "trackingApps" in selection)).toBe(true);
   });
 });

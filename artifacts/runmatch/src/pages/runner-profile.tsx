@@ -10,11 +10,20 @@ import {
   useGetCurrentRunner,
   getGetCurrentRunnerQueryKey,
   useCreateConnection,
+  useListConnections,
+  getListConnectionsQueryKey,
+  useDeleteConnection,
+  useCreateRunnerBlock,
+  useListRunnerBlocks,
+  useDeleteRunnerBlock,
+  useCreateRunnerReport,
+  getListRunnerBlocksQueryKey,
   useUpdateRunner,
   useRequestUploadUrl,
   getGetFeaturedRunnersQueryKey,
   getListRunnersQueryKey,
   type UploadUrlRequestContentType,
+  type CreateRunnerReportBodyReason,
 } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -23,7 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Activity, Timer, Medal, Users, ExternalLink, MessageSquare, Plane } from "lucide-react";
+import { MapPin, Activity, Timer, Medal, Users, ExternalLink, MessageSquare, Plane, Flag, ShieldBan, UserMinus } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
@@ -53,11 +62,35 @@ export default function RunnerProfile() {
     query: { enabled: isSignedIn === true, queryKey: getGetCurrentRunnerQueryKey() },
   });
   const createConnection = useCreateConnection();
+  const connectionsQuery = useListConnections(undefined, {
+    query: {
+      enabled: Boolean(currentRunner?.runnerId),
+      queryKey: getListConnectionsQueryKey(),
+    },
+  });
+  const deleteConnection = useDeleteConnection();
+  const createRunnerBlock = useCreateRunnerBlock();
+  const blockedRunnersQuery = useListRunnerBlocks({
+    query: {
+      enabled: Boolean(currentRunner?.runnerId),
+      queryKey: getListRunnerBlocksQueryKey(),
+    },
+  });
+  const deleteRunnerBlock = useDeleteRunnerBlock();
+  const createRunnerReport = useCreateRunnerReport();
   const updateRunner = useUpdateRunner();
   const requestUploadUrl = useRequestUploadUrl();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<CreateRunnerReportBodyReason>("spam");
+  const [reportDetails, setReportDetails] = useState("");
   const isOwnProfile = currentRunner?.runnerId === id;
+  const connection = connectionsQuery.data?.find(
+    (item) =>
+      (item.fromRunnerId === currentRunner?.runnerId && item.toRunnerId === id) ||
+      (item.fromRunnerId === id && item.toRunnerId === currentRunner?.runnerId),
+  );
 
   const changePublicListing = (checked: boolean) => {
     updateRunner.mutate({ id, data: { publicListing: checked } }, {
@@ -174,6 +207,74 @@ export default function RunnerProfile() {
     });
   };
 
+  const handleUnfriend = async () => {
+    if (!connection || connection.status !== "accepted") return;
+    if (!window.confirm(`Remove ${runner?.name ?? "this runner"} from your connections?`)) return;
+    try {
+      await deleteConnection.mutateAsync({ id: connection.id });
+      await queryClient.invalidateQueries();
+      toast({ title: "Connection removed" });
+    } catch (error) {
+      toast({
+        title: "Could not remove this connection",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!currentRunner?.runnerId || isOwnProfile) return;
+    if (!window.confirm(`Block ${runner?.name ?? "this runner"}? When signed in, they can no longer access your profile or contact you through RunBuddy. Public profile pages may still be visible to signed-out visitors.`)) return;
+    try {
+      await createRunnerBlock.mutateAsync({ data: { blockedRunnerId: id } });
+      await queryClient.invalidateQueries();
+      toast({ title: "Runner blocked", description: "They can no longer find or message you." });
+      navigate("/run-buddy");
+    } catch (error) {
+      toast({
+        title: "Could not block this runner",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnblock = async (blockedRunnerId: number) => {
+    try {
+      await deleteRunnerBlock.mutateAsync({ runnerId: blockedRunnerId });
+      await queryClient.invalidateQueries();
+      toast({ title: "Runner unblocked" });
+    } catch (error) {
+      toast({
+        title: "Could not unblock this runner",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReport = async () => {
+    try {
+      await createRunnerReport.mutateAsync({
+        data: {
+          reportedRunnerId: id,
+          reason: reportReason,
+          details: reportDetails.trim() || undefined,
+        },
+      });
+      setReportOpen(false);
+      setReportDetails("");
+      toast({ title: "Report submitted", description: "The report has been recorded for review. This runner won’t be notified." });
+    } catch (error) {
+      toast({
+        title: "Could not submit report",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -279,6 +380,88 @@ export default function RunnerProfile() {
                       <MessageSquare className="w-4 h-4 mr-2" /> Send Message
                     </Button>
                   )}
+                  {currentRunner?.runnerId != null && !isOwnProfile && (
+                    <>
+                      {connection?.status === "accepted" && (
+                        <Button
+                          onClick={handleUnfriend}
+                          variant="outline"
+                          className="rounded-full border-border"
+                          disabled={deleteConnection.isPending}
+                        >
+                          <UserMinus className="w-4 h-4 mr-2" />
+                          {deleteConnection.isPending ? "Removing…" : "Unfriend"}
+                        </Button>
+                      )}
+                      <Button
+                        onClick={handleBlock}
+                        variant="outline"
+                        className="rounded-full border-border"
+                        disabled={createRunnerBlock.isPending}
+                      >
+                        <ShieldBan className="w-4 h-4 mr-2" />
+                        Block
+                      </Button>
+                      <Button
+                        onClick={() => setReportOpen((open) => !open)}
+                        variant="ghost"
+                        className="rounded-full"
+                      >
+                        <Flag className="w-4 h-4 mr-2" />
+                        Report
+                      </Button>
+                    </>
+                  )}
+                  {reportOpen && (
+                    <Card className="w-full text-left">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg">Report this runner</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Choose a reason. This runner won’t be notified.
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <label className="block space-y-2 text-sm font-medium">
+                          Reason
+                          <select
+                            value={reportReason}
+                            onChange={(event) => setReportReason(event.target.value as CreateRunnerReportBodyReason)}
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                          >
+                            <option value="spam">Spam or scam</option>
+                            <option value="harassment">Harassment or bullying</option>
+                            <option value="impersonation">Impersonation</option>
+                            <option value="inappropriate_content">Inappropriate content</option>
+                            <option value="unsafe_behavior">Unsafe behavior</option>
+                            <option value="other">Something else</option>
+                          </select>
+                        </label>
+                        <label className="block space-y-2 text-sm font-medium">
+                          Details (optional)
+                          <textarea
+                            value={reportDetails}
+                            onChange={(event) => setReportDetails(event.target.value.slice(0, 2000))}
+                            maxLength={2000}
+                            rows={4}
+                            className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            placeholder="Add details that may help us review the report."
+                          />
+                        </label>
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="ghost" onClick={() => setReportOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleReport}
+                            disabled={createRunnerReport.isPending}
+                          >
+                            {createRunnerReport.isPending ? "Submitting…" : "Submit report"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   {isCurrentRunnerError && (
                     <p role="alert" className="w-full text-sm text-destructive">
                       We couldn’t verify your runner profile. Sign in again or refresh the page to connect.
@@ -306,6 +489,33 @@ export default function RunnerProfile() {
                           <p className="mt-1 text-xs text-muted-foreground">Anyone, including search engines, can see your name, city, country, club name, experience and running-partner preference. Your bio, travel plans, tracking links, contact information and messages remain private. Turn this off to remove your public listing.</p>
                         </div>
                       </div>
+                      {blockedRunnersQuery.data && blockedRunnersQuery.data.length > 0 && (
+                        <div className="rounded-lg border bg-background p-4">
+                          <h2 className="font-semibold">Blocked runners</h2>
+                          <ul className="mt-3 space-y-2">
+                            {blockedRunnersQuery.data.map((block) => {
+                              const blockedRunner = block.blockedRunner;
+                              const blockedName = blockedRunner?.profileType === "individual"
+                                ? blockedRunner.name
+                                : blockedRunner?.clubName || blockedRunner?.name || `Runner #${block.blockedRunnerId}`;
+                              return (
+                                <li key={block.id} className="flex items-center justify-between gap-3 text-sm">
+                                  <span className="truncate">{blockedName}</span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={deleteRunnerBlock.isPending}
+                                    onClick={() => void handleUnblock(block.blockedRunnerId)}
+                                  >
+                                    Unblock
+                                  </Button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                   {currentRunner?.runnerId != null &&

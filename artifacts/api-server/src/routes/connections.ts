@@ -5,6 +5,7 @@ import {
   CreateConnectionBody,
   UpdateConnectionParams,
   UpdateConnectionBody,
+  DeleteConnectionParams,
 } from "@workspace/api-zod";
 import { eq, and, or, inArray } from "drizzle-orm";
 import {
@@ -14,6 +15,7 @@ import {
   requireRunner,
 } from "../lib/authorization";
 import { createRateLimiter } from "../middlewares/rateLimit";
+import { areRunnersBlocked, getHiddenRunnerIds } from "../lib/safety";
 
 const router = Router();
 const createConnectionRateLimit = createRateLimiter({
@@ -41,10 +43,18 @@ router.get("/connections", async (req, res) => {
   if (type) conditions.push(eq(connectionsTable.type, type));
   if (status) conditions.push(eq(connectionsTable.status, status));
 
-  const rawConnections = await db
+  const allConnections = await db
     .select()
     .from(connectionsTable)
     .where(and(...conditions));
+  const hiddenRunnerIds = new Set(await getHiddenRunnerIds(currentRunner.id));
+  const rawConnections = allConnections.filter((connection) => {
+    const otherRunnerId =
+      connection.fromRunnerId === currentRunner.id
+        ? connection.toRunnerId
+        : connection.fromRunnerId;
+    return !hiddenRunnerIds.has(otherRunnerId);
+  });
 
   const runnerIds = [
     ...new Set(rawConnections.flatMap((c) => [c.fromRunnerId, c.toRunnerId])),
@@ -95,6 +105,9 @@ router.post("/connections", createConnectionRateLimit, async (req, res) => {
   if (!target) {
     return res.status(404).json({ error: "Target runner not found" });
   }
+  if (await areRunnersBlocked(currentRunner.id, parsed.data.toRunnerId)) {
+    return res.status(404).json({ error: "Target runner not found" });
+  }
 
   const [connection] = await db
     .insert(connectionsTable)
@@ -126,6 +139,9 @@ router.put("/connections/:id", async (req, res) => {
   if (!existing) {
     return res.status(404).json({ error: "Connection not found" });
   }
+  if (await areRunnersBlocked(existing.fromRunnerId, existing.toRunnerId)) {
+    return res.status(404).json({ error: "Connection not found" });
+  }
   if (existing.toRunnerId !== currentRunner.id) {
     return res.status(403).json({ error: "Only the recipient can update a connection" });
   }
@@ -149,6 +165,45 @@ router.put("/connections/:id", async (req, res) => {
     return res.status(404).json({ error: "Connection not found" });
   }
   return res.json(updated);
+});
+
+router.delete("/connections/:id", async (req, res) => {
+  if (!(await requireAuthentication(req, res))) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
+  const paramsParsed = DeleteConnectionParams.safeParse(req.params);
+  if (!paramsParsed.success) {
+    return res.status(400).json({ error: paramsParsed.error.issues });
+  }
+
+  const [existing] = await db
+    .select()
+    .from(connectionsTable)
+    .where(eq(connectionsTable.id, paramsParsed.data.id))
+    .limit(1);
+  if (!existing) return res.status(404).json({ error: "Connection not found" });
+  if (
+    existing.fromRunnerId !== currentRunner.id &&
+    existing.toRunnerId !== currentRunner.id
+  ) {
+    return res.status(403).json({ error: "Only a connection participant can remove it" });
+  }
+
+  const [deleted] = await db
+    .delete(connectionsTable)
+    .where(
+      and(
+        eq(connectionsTable.id, paramsParsed.data.id),
+        or(
+          eq(connectionsTable.fromRunnerId, currentRunner.id),
+          eq(connectionsTable.toRunnerId, currentRunner.id),
+        ),
+      ),
+    )
+    .returning({ id: connectionsTable.id });
+  if (!deleted) return res.status(404).json({ error: "Connection not found" });
+  return res.status(204).end();
 });
 
 export default router;

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Feather } from '@expo/vector-icons';
 import {
   getListConnectionsQueryKey,
+  getListRunnerBlocksQueryKey,
   useListConnections,
+  useListRunnerBlocks,
   useUpdateConnection,
+  useDeleteConnection,
+  useDeleteRunnerBlock,
   type Connection,
   type Runner,
 } from '@workspace/api-client-react';
@@ -98,7 +102,17 @@ function RequestCard({
   );
 }
 
-function AcceptedCard({ connection, runnerId }: { connection: Connection; runnerId: number }) {
+function AcceptedCard({
+  connection,
+  runnerId,
+  onUnfriend,
+  busy,
+}: {
+  connection: Connection;
+  runnerId: number;
+  onUnfriend: (connectionId: number) => void;
+  busy: boolean;
+}) {
   const colors = useColors();
   const router = useRouter();
   const runner = otherRunner(connection, runnerId);
@@ -132,6 +146,15 @@ function AcceptedCard({ connection, runnerId }: { connection: Connection; runner
         }
         testID={`message-buddy-${connection.id}`}
       />
+      <ActionButton
+        title="Unfriend"
+        variant="outline"
+        compact
+        icon="user-minus"
+        onPress={() => onUnfriend(connection.id)}
+        loading={busy}
+        testID={`unfriend-buddy-${connection.id}`}
+      />
     </View>
   );
 }
@@ -149,6 +172,14 @@ export default function ConnectionsScreen() {
     },
   });
   const updateConnection = useUpdateConnection();
+  const deleteConnection = useDeleteConnection();
+  const blockedRunnersQuery = useListRunnerBlocks({
+    query: {
+      queryKey: getListRunnerBlocksQueryKey(),
+      enabled: Boolean(identity.signedIn && identity.runnerId),
+    },
+  });
+  const deleteRunnerBlock = useDeleteRunnerBlock();
   const all = connectionsQuery.data ?? [];
   const pending = all.filter((connection) => connection.status === 'pending');
   const accepted = all.filter((connection) => connection.status === 'accepted');
@@ -162,6 +193,41 @@ export default function ConnectionsScreen() {
       await queryClient.invalidateQueries();
     } catch (error) {
       setActionError(errorMessage(error, 'That request could not be updated.'));
+    }
+  };
+
+  const unfriend = (id: number) => {
+    Alert.alert(
+      'Remove this connection?',
+      'They will no longer appear in your connections. Your message history is kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unfriend',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setActionError(null);
+              try {
+                await deleteConnection.mutateAsync({ id });
+                await queryClient.invalidateQueries();
+              } catch (error) {
+                setActionError(errorMessage(error, 'This connection could not be removed.'));
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
+  const unblock = async (runnerId: number) => {
+    setActionError(null);
+    try {
+      await deleteRunnerBlock.mutateAsync({ runnerId });
+      await queryClient.invalidateQueries();
+    } catch (error) {
+      setActionError(errorMessage(error, 'This runner could not be unblocked.'));
     }
   };
 
@@ -226,8 +292,50 @@ export default function ConnectionsScreen() {
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your running buddies</Text>
                 {accepted.map((connection) => (
-                  <AcceptedCard key={connection.id} connection={connection} runnerId={identity.runnerId!} />
+                  <AcceptedCard
+                    key={connection.id}
+                    connection={connection}
+                    runnerId={identity.runnerId!}
+                    onUnfriend={unfriend}
+                    busy={deleteConnection.isPending}
+                  />
                 ))}
+              </View>
+            ) : null}
+            {blockedRunnersQuery.isError ? (
+              <ErrorState
+                message="Your blocked runners could not be loaded."
+                onRetry={() => void blockedRunnersQuery.refetch()}
+              />
+            ) : blockedRunnersQuery.data && blockedRunnersQuery.data.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Blocked runners</Text>
+                {blockedRunnersQuery.data.map((block) => {
+                  const runner = block.blockedRunner;
+                  const name = runner?.profileType === 'individual'
+                    ? runner.name
+                    : runner?.clubName || runner?.name || `Runner #${block.blockedRunnerId}`;
+                  return (
+                    <View key={block.id} style={[styles.connectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={styles.connectionTop}>
+                        <RunnerAvatar uri={runner?.avatarUrl} gender={runner?.gender} size={46} />
+                        <View style={styles.runnerCopy}>
+                          <Text style={[styles.runnerName, { color: colors.foreground }]} numberOfLines={1}>{name}</Text>
+                          <Text style={[styles.runnerMeta, { color: colors.mutedForeground }]}>Blocked runner</Text>
+                        </View>
+                      </View>
+                      <ActionButton
+                        title="Unblock"
+                        variant="outline"
+                        compact
+                        icon="user-check"
+                        onPress={() => void unblock(block.blockedRunnerId)}
+                        loading={deleteRunnerBlock.isPending}
+                        testID={`unblock-runner-${block.blockedRunnerId}`}
+                      />
+                    </View>
+                  );
+                })}
               </View>
             ) : null}
             {outgoing.length > 0 ? (

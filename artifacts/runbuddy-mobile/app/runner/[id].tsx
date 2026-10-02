@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useCreateConnection,
+  useCreateRunnerBlock,
+  useCreateRunnerReport,
   getGetRunnerQueryKey,
   getListConnectionsQueryKey,
   useGetRunner,
@@ -61,8 +63,13 @@ export default function RunnerDetailScreen() {
     },
   });
   const createConnection = useCreateConnection();
+  const createRunnerBlock = useCreateRunnerBlock();
+  const createRunnerReport = useCreateRunnerReport();
   const updateConnection = useUpdateConnection();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason>('spam');
+  const [reportDetails, setReportDetails] = useState('');
   const runner = runnerQuery.data;
   const ownProfile = Boolean(identity.runnerId && runner?.id === identity.runnerId);
   const connection =
@@ -95,6 +102,49 @@ export default function RunnerDetailScreen() {
       await queryClient.invalidateQueries();
     } catch (error) {
       setActionError(errorMessage(error, 'That request could not be updated.'));
+    }
+  };
+
+  const performBlock = async () => {
+    if (!runner) return;
+    setActionError(null);
+    try {
+      await createRunnerBlock.mutateAsync({ data: { blockedRunnerId: runner.id } });
+      await queryClient.invalidateQueries();
+      router.replace('/(tabs)/connections');
+    } catch (error) {
+      setActionError(errorMessage(error, 'This runner could not be blocked.'));
+    }
+  };
+
+  const confirmBlock = () => {
+    if (!runner) return;
+    Alert.alert(
+      `Block ${displayName}?`,
+      'While signed in, they will no longer be able to view your profile, find you in RunBuddy, or message you. Your connection will be removed. Public profile pages can still be viewed by signed-out visitors.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Block runner', style: 'destructive', onPress: () => void performBlock() },
+      ],
+    );
+  };
+
+  const submitReport = async () => {
+    if (!runner) return;
+    setActionError(null);
+    try {
+      await createRunnerReport.mutateAsync({
+        data: {
+          reportedRunnerId: runner.id,
+          reason: reportReason,
+          details: reportDetails.trim() || undefined,
+        },
+      });
+      setReportOpen(false);
+      setReportDetails('');
+      Alert.alert('Report submitted', 'The report has been recorded for review. This runner won’t be notified.');
+    } catch (error) {
+      setActionError(errorMessage(error, 'Your report could not be submitted.'));
     }
   };
 
@@ -218,6 +268,25 @@ export default function RunnerDetailScreen() {
           {runner.bio ? <Text style={[styles.bio, { color: colors.foreground }]}>{runner.bio}</Text> : null}
           {actionError ? <Text accessibilityRole="alert" style={[styles.actionError, { color: colors.destructive }]}>{actionError}</Text> : null}
           {connectionAction()}
+          {identity.signedIn && identity.runnerId && !ownProfile ? (
+            <View style={styles.safetyActions}>
+              <ActionButton
+                title="Block runner"
+                variant="outline"
+                icon="slash"
+                onPress={confirmBlock}
+                loading={createRunnerBlock.isPending}
+                testID="block-runner"
+              />
+              <ActionButton
+                title="Report"
+                variant="outline"
+                icon="flag"
+                onPress={() => setReportOpen(true)}
+                testID="report-runner"
+              />
+            </View>
+          ) : null}
         </View>
 
         {runner.runningStats ? (
@@ -285,9 +354,88 @@ export default function RunnerDetailScreen() {
           </View>
         ) : null}
       </ScrollView>
+      <Modal
+        visible={reportOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReportOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.reportSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Report this runner</Text>
+            <Text style={[styles.reportHint, { color: colors.mutedForeground }]}>
+              Choose the reason that best fits. This runner won’t be notified.
+            </Text>
+            <View style={styles.reportReasons}>
+              {REPORT_REASONS.map((reason) => {
+                const selected = reportReason === reason.value;
+                return (
+                  <Pressable
+                    key={reason.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setReportReason(reason.value)}
+                    style={[
+                      styles.reportReason,
+                      {
+                        backgroundColor: selected ? colors.primary : colors.muted,
+                        borderColor: selected ? colors.primary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.reportReasonText, { color: selected ? colors.primaryForeground : colors.foreground }]}>
+                      {reason.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              value={reportDetails}
+              onChangeText={(value) => setReportDetails(value.slice(0, 2000))}
+              placeholder="Add details (optional)"
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              maxLength={2000}
+              textAlignVertical="top"
+              style={[
+                styles.reportInput,
+                { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border },
+              ]}
+            />
+            <View style={styles.respondRow}>
+              <ActionButton title="Cancel" variant="outline" compact onPress={() => setReportOpen(false)} />
+              <ActionButton
+                title="Submit report"
+                compact
+                onPress={() => void submitReport()}
+                loading={createRunnerReport.isPending}
+                testID="submit-runner-report"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Page>
   );
 }
+
+type ReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'impersonation'
+  | 'inappropriate_content'
+  | 'unsafe_behavior'
+  | 'other';
+
+const REPORT_REASONS: { value: ReportReason; label: string }[] = [
+  { value: 'spam', label: 'Spam or scam' },
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'impersonation', label: 'Impersonation' },
+  { value: 'inappropriate_content', label: 'Inappropriate content' },
+  { value: 'unsafe_behavior', label: 'Unsafe behavior' },
+  { value: 'other', label: 'Something else' },
+];
 
 const styles = StyleSheet.create({
   topBar: { height: 44, paddingHorizontal: 20, justifyContent: 'center' },
@@ -310,7 +458,15 @@ const styles = StyleSheet.create({
   statValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
   statLabel: { fontFamily: 'Manrope_500Medium', fontSize: 11 },
   actionError: { alignSelf: 'stretch', fontFamily: 'Manrope_600SemiBold', fontSize: 12, textAlign: 'center' },
+  safetyActions: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 2 },
   respondRow: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'center', gap: 9 },
   requestStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 14 },
   requestStatusText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
+  modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.48)' },
+  reportSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 20, gap: 14 },
+  reportHint: { fontFamily: 'Manrope_400Regular', fontSize: 13, lineHeight: 19 },
+  reportReasons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  reportReason: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  reportReasonText: { fontFamily: 'Manrope_600SemiBold', fontSize: 12 },
+  reportInput: { minHeight: 92, maxHeight: 180, borderWidth: 1, borderRadius: 14, padding: 12, fontFamily: 'Manrope_400Regular', fontSize: 14 },
 });

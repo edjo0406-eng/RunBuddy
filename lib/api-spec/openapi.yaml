@@ -16,6 +16,8 @@ tags:
     description: Connection requests between runners
   - name: messages
     description: Direct messages between runners
+  - name: safety
+    description: Runner blocking and safety reports
   - name: stats
     description: App-wide statistics and summaries
   - name: Storage
@@ -314,6 +316,85 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Connection"
+    delete:
+      operationId: deleteConnection
+      tags: [connections]
+      summary: Remove a connection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Connection removed
+
+  /runner-blocks:
+    get:
+      operationId: listRunnerBlocks
+      tags: [safety]
+      summary: List runners blocked by the authenticated runner
+      responses:
+        "200":
+          description: Blocked runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunnerBlock"
+    post:
+      operationId: createRunnerBlock
+      tags: [safety]
+      summary: Block another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerBlockBody"
+      responses:
+        "201":
+          description: Runner blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerBlock"
+
+  /runner-blocks/{runnerId}:
+    delete:
+      operationId: deleteRunnerBlock
+      tags: [safety]
+      summary: Unblock a runner
+      parameters:
+        - name: runnerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Runner unblocked
+
+  /runner-reports:
+    post:
+      operationId: createRunnerReport
+      tags: [safety]
+      summary: Submit a report about another runner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunnerReportBody"
+      responses:
+        "201":
+          description: Report recorded for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunnerReportReceipt"
 
   /messages/inbox:
     get:
@@ -818,6 +899,55 @@ components:
           enum: [accepted, declined]
       required:
         - status
+
+    RunnerBlock:
+      type: object
+      properties:
+        id:
+          type: integer
+        blockedRunnerId:
+          type: integer
+        blockedRunner:
+          $ref: "#/components/schemas/Runner"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, blockedRunnerId, createdAt]
+
+    CreateRunnerBlockBody:
+      type: object
+      properties:
+        blockedRunnerId:
+          type: integer
+      required: [blockedRunnerId]
+
+    CreateRunnerReportBody:
+      type: object
+      properties:
+        reportedRunnerId:
+          type: integer
+        reason:
+          type: string
+          enum: [spam, harassment, impersonation, inappropriate_content, unsafe_behavior, other]
+        details:
+          type: string
+          maxLength: 2000
+          nullable: true
+      required: [reportedRunnerId, reason]
+
+    RunnerReportReceipt:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [pending]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, status, createdAt]
 
     StatsSummary:
       type: object

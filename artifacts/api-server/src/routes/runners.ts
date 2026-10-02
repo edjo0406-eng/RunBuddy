@@ -14,16 +14,19 @@ import {
   UpdateRunnerBody,
   UpdateRunnerParams,
 } from "@workspace/api-zod";
-import { eq, and, or, sql, desc } from "drizzle-orm";
+import { eq, and, or, sql, desc, notInArray } from "drizzle-orm";
 import {
   getAuthenticatedRunner,
+  getAuthenticatedUserId,
   publicRunnerSelection,
   discoverableRunnerSelection,
+  getOptionalAuthenticatedRunner,
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
 import { createRateLimiter } from "../middlewares/rateLimit";
 import { ObjectStorageService } from "../lib/objectStorage";
+import { getHiddenRunnerIds } from "../lib/safety";
 
 const router = Router();
 const objectStorageService = new ObjectStorageService();
@@ -53,7 +56,8 @@ function getOwnedAvatarObjectPath(
 }
 
 router.get("/runners", listRunnersRateLimit, async (req, res) => {
-  const signedIn = Boolean(getAuth(req).userId);
+  const signedIn = Boolean(getAuthenticatedUserId(req));
+  const currentRunner = await getOptionalAuthenticatedRunner(req);
 
   const parsed = ListRunnersQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -63,6 +67,12 @@ router.get("/runners", listRunnersRateLimit, async (req, res) => {
 
   const conditions = [];
   if (!signedIn) conditions.push(eq(runnersTable.publicListing, true));
+  if (currentRunner) {
+    const hiddenRunnerIds = await getHiddenRunnerIds(currentRunner.id);
+    if (hiddenRunnerIds.length > 0) {
+      conditions.push(notInArray(runnersTable.id, hiddenRunnerIds));
+    }
+  }
   if (mode && mode !== "both") {
     conditions.push(
       or(eq(runnersTable.lookingFor, mode), eq(runnersTable.lookingFor, "both"))
@@ -215,7 +225,14 @@ router.get("/runners/:id", async (req, res) => {
     return res.status(400).json({ error: parsed.error.issues });
   }
 
-  const signedIn = Boolean(getAuth(req).userId);
+  const signedIn = Boolean(getAuthenticatedUserId(req));
+  const currentRunner = await getOptionalAuthenticatedRunner(req);
+  if (
+    currentRunner &&
+    (await getHiddenRunnerIds(currentRunner.id)).includes(parsed.data.id)
+  ) {
+    return res.status(404).json({ error: "Runner not found" });
+  }
   const where = signedIn
     ? eq(runnersTable.id, parsed.data.id)
     : and(eq(runnersTable.id, parsed.data.id), eq(runnersTable.publicListing, true));

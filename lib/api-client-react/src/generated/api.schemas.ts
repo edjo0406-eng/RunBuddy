@@ -270,6 +270,49 @@ export interface UpdateConnectionBody {
   status: UpdateConnectionBodyStatus;
 }
 
+export interface RunnerBlock {
+  id: number;
+  blockedRunnerId: number;
+  blockedRunner?: Runner | null;
+  createdAt: string;
+}
+
+export interface CreateRunnerBlockBody {
+  blockedRunnerId: number;
+}
+
+export type CreateRunnerReportBodyReason = typeof CreateRunnerReportBodyReason[keyof typeof CreateRunnerReportBodyReason];
+
+
+export const CreateRunnerReportBodyReason = {
+  spam: 'spam',
+  harassment: 'harassment',
+  impersonation: 'impersonation',
+  inappropriate_content: 'inappropriate_content',
+  unsafe_behavior: 'unsafe_behavior',
+  other: 'other',
+} as const;
+
+export interface CreateRunnerReportBody {
+  reportedRunnerId: number;
+  reason: CreateRunnerReportBodyReason;
+  /** @maxLength 2000 */
+  details?: string | null;
+}
+
+export type RunnerReportReceiptStatus = typeof RunnerReportReceiptStatus[keyof typeof RunnerReportReceiptStatus];
+
+
+export const RunnerReportReceiptStatus = {
+  pending: 'pending',
+} as const;
+
+export interface RunnerReportReceipt {
+  id: number;
+  status: RunnerReportReceiptStatus;
+  createdAt: string;
+}
+
 export interface StatsSummary {
   totalRunners: number;
   dateRunners: number;

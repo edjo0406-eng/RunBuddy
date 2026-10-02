@@ -12,6 +12,8 @@ const clerkMocks = vi.hoisted(() => ({
 const dbMocks = vi.hoisted(() => ({
   insert: vi.fn(),
   select: vi.fn(),
+  delete: vi.fn(),
+  transaction: vi.fn(),
 }));
 
 vi.mock("@clerk/express", () => ({
@@ -34,11 +36,18 @@ vi.mock("./middlewares/clerkProxyMiddleware", () => ({
 vi.mock("@workspace/db", () => {
   const table = () => new Proxy({}, { get: (_target, property) => property });
   return {
-    db: { insert: dbMocks.insert, select: dbMocks.select },
+    db: {
+      insert: dbMocks.insert,
+      select: dbMocks.select,
+      delete: dbMocks.delete,
+      transaction: dbMocks.transaction,
+    },
     usersTable: table(),
     sessionsTable: table(),
     runnersTable: table(),
     connectionsTable: table(),
+    runnerBlocksTable: table(),
+    runnerReportsTable: table(),
     messagesTable: table(),
   };
 });
@@ -112,6 +121,20 @@ describe("Clerk account migration", () => {
       };
       return query;
     });
+    dbMocks.delete.mockImplementation(() => {
+      const query = {
+        where: vi.fn(() => query),
+        returning: vi.fn(async () => [{ id: 18 }]),
+        then: (
+          onFulfilled?: ((value: unknown[]) => unknown) | null,
+          onRejected?: ((reason: unknown) => unknown) | null,
+        ) => Promise.resolve([]).then(onFulfilled, onRejected),
+      };
+      return query;
+    });
+    dbMocks.transaction.mockImplementation(async (callback) =>
+      callback({ insert: dbMocks.insert, delete: dbMocks.delete }),
+    );
   });
 
   it("rejects requests without a Clerk session", async () => {
@@ -240,7 +263,7 @@ describe("Clerk account migration", () => {
   describe("requests between runners", () => {
     it("creates a connection from the session-resolved runner", async () => {
       authenticateAsRunner(14);
-      selectResults.push([{ id: 15 }]);
+      selectResults.push([{ id: 15 }], []);
       insertResult = [{
         id: 21,
         fromRunnerId: 14,
@@ -290,7 +313,7 @@ describe("Clerk account migration", () => {
 
     it("creates a message from the session-resolved runner", async () => {
       authenticateAsRunner(14);
-      selectResults.push([{ id: 15 }]);
+      selectResults.push([{ id: 15 }], []);
       insertResult = [{
         id: 34,
         fromRunnerId: 14,
@@ -320,6 +343,30 @@ describe("Clerk account migration", () => {
       }]);
     });
 
+    it("rejects connection requests to a runner who is blocked in either direction", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{ id: 15 }], [{ id: 8 }]);
+
+      const response = await request(app)
+        .post("/api/connections")
+        .send({ toRunnerId: 15, type: "buddy" });
+
+      expect(response.status).toBe(404);
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+
+    it("rejects messages to a runner who is blocked in either direction", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{ id: 15 }], [{ id: 8 }]);
+
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 15, content: "Hello" });
+
+      expect(response.status).toBe(404);
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+
     it("rejects a message with a forged sender", async () => {
       authenticateAsRunner(14);
 
@@ -337,6 +384,84 @@ describe("Clerk account migration", () => {
       });
       expect(dbMocks.insert).not.toHaveBeenCalled();
       expect(insertedValues).toEqual([]);
+    });
+
+    it("persists a block and removes the pair's connection records", async () => {
+      authenticateAsRunner(14);
+      const blockedRunner = { id: 15, name: "Runner", profileType: "individual" };
+      const createdBlock = {
+        id: 22,
+        blockerRunnerId: 14,
+        blockedRunnerId: 15,
+        createdAt: new Date("2026-09-30T12:00:00.000Z"),
+      };
+      selectResults.push([blockedRunner], [createdBlock]);
+
+      const response = await request(app)
+        .post("/api/runner-blocks")
+        .send({ blockedRunnerId: 15 });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: 22,
+        blockedRunnerId: 15,
+        blockedRunner: { id: 15, name: "Runner" },
+      });
+      expect(insertedValues).toEqual([{ blockerRunnerId: 14, blockedRunnerId: 15 }]);
+      expect(dbMocks.transaction).toHaveBeenCalledTimes(1);
+      expect(dbMocks.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it("unblocks only through the authenticated runner's own block record", async () => {
+      authenticateAsRunner(14);
+
+      const response = await request(app).delete("/api/runner-blocks/15");
+
+      expect(response.status).toBe(204);
+      expect(dbMocks.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it("records a report under the authenticated runner with pending review status", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{ id: 15 }]);
+      const createdAt = new Date("2026-09-30T12:00:00.000Z");
+      insertResult = [{ id: 41, status: "pending", createdAt }];
+
+      const response = await request(app)
+        .post("/api/runner-reports")
+        .send({
+          reportedRunnerId: 15,
+          reason: "harassment",
+          details: "Repeated unwanted messages.",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        id: 41,
+        status: "pending",
+        createdAt: createdAt.toISOString(),
+      });
+      expect(insertedValues).toEqual([{
+        reporterRunnerId: 14,
+        reportedRunnerId: 15,
+        reason: "harassment",
+        details: "Repeated unwanted messages.",
+      }]);
+    });
+
+    it("allows a connection participant to remove the connection", async () => {
+      authenticateAsRunner(14);
+      selectResults.push([{
+        id: 18,
+        fromRunnerId: 14,
+        toRunnerId: 15,
+        status: "accepted",
+      }]);
+
+      const response = await request(app).delete("/api/connections/18");
+
+      expect(response.status).toBe(204);
+      expect(dbMocks.delete).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -68,6 +68,31 @@ export async function getAuthenticatedRunner(
   return runner ?? null;
 }
 
+export function getAuthenticatedUserId(req: Request): string | null {
+  const auth = getAuth(req);
+  const sessionClaims = auth.sessionClaims as
+    | { userId?: unknown }
+    | null
+    | undefined;
+  const claimedUserId = sessionClaims?.userId;
+  const userId =
+    typeof claimedUserId === "string" ? claimedUserId : auth.userId;
+  return typeof userId === "string" ? userId : null;
+}
+
+export async function getOptionalAuthenticatedRunner(
+  req: Request,
+): Promise<Pick<Runner, "id"> | null> {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) return null;
+  const [runner] = await db
+    .select({ id: runnersTable.id })
+    .from(runnersTable)
+    .where(eq(runnersTable.authUserId, userId))
+    .limit(1);
+  return runner ?? null;
+}
+
 export async function requireAuthentication(
   req: Request,
   res: Response,
