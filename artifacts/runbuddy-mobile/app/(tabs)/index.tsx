@@ -12,8 +12,10 @@ import {
   getListRunnersQueryKey,
   useListRunners,
 } from '@workspace/api-client-react';
+import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import {
+  ActionButton,
   BrandHeader,
   EmptyState,
   ErrorState,
@@ -21,9 +23,12 @@ import {
   TextField,
 } from '@/components/ui';
 import { RunnerCard } from '@/components/RunnerCard';
+import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
 
 export default function DiscoverScreen() {
   const colors = useColors();
+  const router = useRouter();
+  const identity = useRunnerIdentity();
   const [cityInput, setCityInput] = useState('');
   const [city, setCity] = useState('');
 
@@ -61,6 +66,23 @@ export default function DiscoverScreen() {
           title="Find your next run."
           subtitle="Meet local runners who make every mile better."
         />
+
+        {identity.authLoaded && !identity.signedIn ? (
+          <View style={styles.authActions}>
+            <ActionButton
+              title="Sign in"
+              onPress={() => router.push('/(auth)/sign-in')}
+              icon="arrow-right"
+              testID="discover-sign-in"
+            />
+            <ActionButton
+              title="Create account"
+              onPress={() => router.push('/(auth)/sign-up')}
+              variant="outline"
+              testID="discover-create-account"
+            />
+          </View>
+        ) : null}
 
         <ImageBackground
           source={require('../../assets/images/hero-bg.png')}
@@ -132,6 +154,7 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 28, gap: 18 },
+  authActions: { gap: 9 },
   hero: { height: 188, borderRadius: 24, overflow: 'hidden', justifyContent: 'flex-end' },
   heroImage: { borderRadius: 24 },
   heroShade: {
