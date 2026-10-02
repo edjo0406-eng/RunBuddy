@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getAuth: vi.fn(),
   select: vi.fn(),
+  update: vi.fn(),
   rows: [] as Record<string, unknown>[],
   selections: [] as Record<string, unknown>[],
   filters: [] as unknown[],
@@ -17,7 +18,7 @@ vi.mock("@clerk/express", () => ({
 vi.mock("@workspace/db", () => {
   const columns = new Proxy({}, { get: (_target, name) => name });
   return {
-    db: { select: mocks.select },
+    db: { select: mocks.select, update: mocks.update },
     runnersTable: columns,
     connectionsTable: columns,
     usersTable: columns,
@@ -35,6 +36,7 @@ import runnersRouter from "./runners";
 import statsRouter from "./stats";
 
 const app = express();
+app.use(express.json());
 app.use("/api", runnersRouter, statsRouter);
 
 function matches(row: Record<string, unknown>, condition: unknown): boolean {
@@ -60,12 +62,22 @@ beforeEach(() => {
   mocks.selections = [];
   mocks.filters = [];
   mocks.getAuth.mockReturnValue({ userId: null });
-  mocks.select.mockImplementation((selection: Record<string, unknown>) => {
-    mocks.selections.push(selection);
+  mocks.select.mockImplementation((selection?: Record<string, unknown>) => {
+    if (selection) mocks.selections.push(selection);
     let filter: unknown;
-    const result = () => mocks.rows.filter((row) => matches(row, filter)).map((row) =>
-      Object.fromEntries(Object.entries(selection).map(([field, column]) => [field, row[String(column)]]))
-    );
+    const result = () =>
+      mocks.rows
+        .filter((row) => matches(row, filter))
+        .map((row) =>
+          selection
+            ? Object.fromEntries(
+                Object.entries(selection).map(([field, column]) => [
+                  field,
+                  row[String(column)],
+                ]),
+              )
+            : row,
+        );
     const query = {
       from: () => query,
       where: (condition: unknown) => {
@@ -79,6 +91,27 @@ beforeEach(() => {
     };
     return query;
   });
+  mocks.update.mockImplementation(() => {
+    let values: Record<string, unknown> = {};
+    let filter: unknown;
+    const query = {
+      set: (nextValues: Record<string, unknown>) => {
+        values = nextValues;
+        return query;
+      },
+      where: (condition: unknown) => {
+        filter = condition;
+        return query;
+      },
+      returning: async () => {
+        const row = mocks.rows.find((candidate) => matches(candidate, filter));
+        if (!row) return [];
+        Object.assign(row, values);
+        return [row];
+      },
+    };
+    return query;
+  });
 });
 
 describe("anonymous runner discovery", () => {
@@ -87,9 +120,140 @@ describe("anonymous runner discovery", () => {
     expect(response.status).toBe(200);
     expect(JSON.stringify(mocks.filters)).toContain('"column":"publicListing","value":true');
     expect(mocks.selections[0]).toHaveProperty("name");
-    for (const privateField of ["bio", "travelNote", "trackingApps", "authUserId", "lat", "lng", "age", "avatarUrl"]) {
+    expect(Object.keys(mocks.selections[0]).sort()).toEqual([
+      "city",
+      "clubName",
+      "country",
+      "createdAt",
+      "experience",
+      "id",
+      "lookingFor",
+      "name",
+      "profileType",
+      "updatedAt",
+    ]);
+    for (const privateField of [
+      "bio",
+      "travelNote",
+      "trackingApps",
+      "authUserId",
+      "lat",
+      "lng",
+      "age",
+      "avatarUrl",
+      "runningStats",
+      "travelCity",
+      "travelCountry",
+      "travelUntil",
+    ]) {
       expect(mocks.selections[0]).not.toHaveProperty(privateField);
     }
+  });
+
+  it("filters anonymous results by consent and the requested running mode", async () => {
+    const makeRunner = (
+      id: number,
+      publicListing: boolean,
+      lookingFor: string,
+    ) => ({
+      id,
+      name: `Runner ${id}`,
+      publicListing,
+      lookingFor,
+      city: "Bristol",
+      country: "United Kingdom",
+      profileType: "individual",
+      clubName: null,
+      experience: "intermediate",
+      createdAt: "2026-10-03T10:00:00.000Z",
+      updatedAt: "2026-10-03T10:00:00.000Z",
+      age: 32,
+      bio: "Private bio",
+      avatarUrl: "https://example.com/private-photo.jpg",
+      trackingApps: { stravaUrl: "https://example.com/runner" },
+      runningStats: { weeklyDistanceKm: 40 },
+      lat: 51.45,
+      lng: -2.59,
+      travelCity: "Tokyo",
+      travelCountry: "Japan",
+      travelUntil: "2026-10-10",
+      travelNote: "Private travel note",
+    });
+    mocks.rows = [
+      makeRunner(1, false, "buddy"),
+      makeRunner(2, true, "buddy"),
+      makeRunner(3, true, "date"),
+      makeRunner(4, true, "both"),
+    ];
+
+    const buddyResponse = await request(app).get("/api/runners?mode=buddy");
+    expect(
+      buddyResponse.body.map((runner: { id: number }) => runner.id),
+    ).toEqual([2, 4]);
+    expect(Object.keys(buddyResponse.body[0]).sort()).toEqual([
+      "city",
+      "clubName",
+      "country",
+      "createdAt",
+      "experience",
+      "id",
+      "lookingFor",
+      "name",
+      "profileType",
+      "updatedAt",
+    ]);
+
+    const dateResponse = await request(app).get("/api/runners?mode=date");
+    expect(
+      dateResponse.body.map((runner: { id: number }) => runner.id),
+    ).toEqual([3, 4]);
+  });
+
+  it("persists profile visibility updates before anonymous discovery reads", async () => {
+    const userId = "runner-user";
+    mocks.rows = [
+      { id: userId },
+      {
+        id: 12,
+        authUserId: userId,
+        name: "Runner",
+        publicListing: false,
+        lookingFor: "buddy",
+        city: "Bristol",
+        country: "United Kingdom",
+        profileType: "individual",
+        clubName: null,
+        experience: "intermediate",
+        createdAt: "2026-10-03T10:00:00.000Z",
+        updatedAt: "2026-10-03T10:00:00.000Z",
+      },
+    ];
+    mocks.getAuth.mockReturnValue({ userId });
+
+    const optIn = await request(app)
+      .put("/api/runners/12")
+      .send({ publicListing: true });
+    expect(optIn.status).toBe(200);
+    expect(mocks.rows.find((row) => row.id === 12)?.publicListing).toBe(true);
+
+    mocks.getAuth.mockReturnValue({ userId: null });
+    const discoverable = await request(app).get("/api/runners?mode=buddy");
+    expect(discoverable.body.map((runner: { id: number }) => runner.id)).toEqual([
+      12,
+    ]);
+
+    mocks.getAuth.mockReturnValue({ userId });
+    const optOut = await request(app)
+      .put("/api/runners/12")
+      .send({ publicListing: false });
+    expect(optOut.status).toBe(200);
+    expect(mocks.rows.find((row) => row.id === 12)?.publicListing).toBe(false);
+
+    mocks.getAuth.mockReturnValue({ userId: null });
+    const noLongerDiscoverable = await request(app).get(
+      "/api/runners?mode=buddy",
+    );
+    expect(noLongerDiscoverable.body).toEqual([]);
   });
 
   it("filters featured runners to opted-in profiles", async () => {
