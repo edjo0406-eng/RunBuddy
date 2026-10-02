@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { useCreateRunner, type TrackingApps } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
+import { CountryPickerField } from '@/components/CountryPickerField';
 import {
   ActionButton,
   BrandHeader,
@@ -126,7 +127,7 @@ export default function OnboardingScreen() {
               autoComplete="name"
               testID="profile-name"
             />
-            <View style={styles.twoColumns}>
+            <View style={styles.locationFields}>
               <TextField
                 label="City"
                 value={city}
@@ -135,12 +136,9 @@ export default function OnboardingScreen() {
                 autoCapitalize="words"
                 testID="profile-city"
               />
-              <TextField
-                label="Country"
+              <CountryPickerField
                 value={country}
-                onChangeText={setCountry}
-                placeholder="e.g. UK"
-                autoCapitalize="words"
+                onChange={setCountry}
                 testID="profile-country"
               />
             </View>
@@ -233,7 +231,7 @@ const styles = StyleSheet.create({
   gate: { flex: 1, paddingHorizontal: 20, justifyContent: 'center' },
   content: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 30, gap: 12 },
   formCard: { borderWidth: 1, borderRadius: 24, padding: 17, gap: 18 },
-  twoColumns: { flexDirection: 'row', gap: 11 },
+  locationFields: { gap: 14 },
   fieldGroup: { gap: 10 },
   label: { fontFamily: 'Manrope_700Bold', fontSize: 13 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
