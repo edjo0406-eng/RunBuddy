@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   value: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 15 },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(4, 10, 18, 0.52)',
   },
   sheet: {
