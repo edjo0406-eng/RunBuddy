@@ -55,6 +55,9 @@ export default function ProfileScreen() {
           title={identity.signedIn ? 'Your profile' : 'Your next chapter'}
           subtitle={identity.signedIn ? 'Keep your running details up to date.' : 'Find your people, one run at a time.'}
         />
+        {identity.signedIn ? (
+          <ActionButton title="Sign out" onPress={handleSignOut} variant="outline" icon="log-out" />
+        ) : null}
         {!identity.signedIn ? (
           <EmptyState
             icon="user"
@@ -117,7 +120,6 @@ export default function ProfileScreen() {
               </View>
             </View>
             <ActionButton title="Edit runner profile" onPress={() => router.push('/profile/edit')} icon="edit-3" />
-            <ActionButton title="Sign out" onPress={handleSignOut} variant="outline" icon="log-out" />
           </>
         )}
       </ScrollView>
