@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
-import { useSignIn, useSSO } from '@clerk/expo';
+import { useAuth, useSession, useSignIn, useSSO } from '@clerk/expo';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { Feather } from '@expo/vector-icons';
@@ -39,6 +39,8 @@ const isUnknownAccountError = (error: unknown) =>
 export default function SignInScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { isLoaded: sessionLoaded, session } = useSession();
   const { signIn, fetchStatus } = useSignIn();
   const { startSSOFlow } = useSSO();
   const [email, setEmail] = useState('');
@@ -60,6 +62,15 @@ export default function SignInScreen() {
       void WebBrowser.coolDownAsync();
     };
   }, []);
+
+  useEffect(() => {
+    if (!authLoaded || !sessionLoaded || !isSignedIn || needsCode || passwordResetStep) return;
+    if (session?.currentTask) {
+      setFeedback('Complete the security task in your Clerk account, then sign in again.');
+      return;
+    }
+    router.replace('/(tabs)/profile' as Href);
+  }, [authLoaded, sessionLoaded, isSignedIn, needsCode, passwordResetStep, router, session?.currentTask]);
 
   const finishSignIn = async () => {
     await signIn.finalize({
