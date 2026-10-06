@@ -25,6 +25,17 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 
 WebBrowser.maybeCompleteAuthSession();
 
+type PasswordResetStep = 'email' | 'code' | 'password';
+
+const resetCodeNotice =
+  "If an account exists for this email, we'll send a password reset code shortly.";
+
+const isUnknownAccountError = (error: unknown) =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  error.code === 'form_identifier_not_found';
+
 export default function SignInScreen() {
   const colors = useColors();
   const router = useRouter();
@@ -34,6 +45,10 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [needsCode, setNeedsCode] = useState(false);
+  const [passwordResetStep, setPasswordResetStep] = useState<PasswordResetStep | null>(null);
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [oauthBusy, setOauthBusy] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const busy = fetchStatus === 'fetching' || oauthBusy;
@@ -103,6 +118,123 @@ export default function SignInScreen() {
     }
   };
 
+  const openPasswordReset = () => {
+    void signIn.reset();
+    setPassword('');
+    setCode('');
+    setResetCode('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setFeedback(null);
+    setPasswordResetStep('email');
+  };
+
+  const returnToSignIn = () => {
+    void signIn.reset();
+    setPasswordResetStep(null);
+    setResetCode('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setFeedback(null);
+  };
+
+  const sendPasswordResetCode = async () => {
+    setFeedback(null);
+    try {
+      await signIn.reset();
+      const created = await signIn.create({ identifier: email.trim() });
+      if (created.error) {
+        if (isUnknownAccountError(created.error)) {
+          setPasswordResetStep('code');
+          setFeedback(resetCodeNotice);
+          return;
+        }
+        setFeedback(errorMessage(created.error, 'Could not start password reset. Check your email and try again.'));
+        return;
+      }
+
+      const sent = await signIn.resetPasswordEmailCode.sendCode();
+      if (sent.error) {
+        if (isUnknownAccountError(sent.error)) {
+          setPasswordResetStep('code');
+          setFeedback(resetCodeNotice);
+          return;
+        }
+        setFeedback(errorMessage(sent.error, 'Could not send a password reset code. Try again.'));
+        return;
+      }
+
+      setPasswordResetStep('code');
+      setFeedback(resetCodeNotice);
+    } catch (error) {
+      setFeedback(errorMessage(error, 'Could not send a password reset code. Try again.'));
+    }
+  };
+
+  const verifyPasswordResetCode = async () => {
+    setFeedback(null);
+    try {
+      const result = await signIn.resetPasswordEmailCode.verifyCode({
+        code: resetCode.trim(),
+      });
+      if (result.error) {
+        setFeedback(errorMessage(result.error, 'That code could not be verified. Check it and try again.'));
+        return;
+      }
+      if (signIn.status === 'needs_new_password') {
+        setPasswordResetStep('password');
+        return;
+      }
+      setFeedback('The reset could not continue. Request a new code and try again.');
+    } catch (error) {
+      setFeedback(errorMessage(error, 'That code could not be verified. Check it and try again.'));
+    }
+  };
+
+  const resendPasswordResetCode = async () => {
+    setFeedback(null);
+    try {
+      const result = await signIn.resetPasswordEmailCode.sendCode();
+      if (result.error && !isUnknownAccountError(result.error)) {
+        setFeedback(errorMessage(result.error, 'Could not send a new code. Try again.'));
+        return;
+      }
+      setFeedback(resetCodeNotice);
+    } catch (error) {
+      setFeedback(errorMessage(error, 'Could not send a new code. Try again.'));
+    }
+  };
+
+  const submitNewPassword = async () => {
+    setFeedback(null);
+    if (newPassword !== confirmNewPassword) {
+      setFeedback('Those passwords do not match.');
+      return;
+    }
+    try {
+      const result = await signIn.resetPasswordEmailCode.submitPassword({
+        password: newPassword,
+      });
+      if (result.error) {
+        setFeedback(errorMessage(result.error, 'Could not update your password. Try a different password.'));
+        return;
+      }
+      if (signIn.status !== 'complete') {
+        setFeedback('The password reset could not be completed. Request a new code and try again.');
+        return;
+      }
+      await signIn.reset();
+      setPasswordResetStep(null);
+      setPassword('');
+      setResetCode('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setFeedback('Your password has been reset. Sign in with your new password.');
+    } catch (error) {
+      setFeedback(errorMessage(error, 'Could not update your password. Try again.'));
+    }
+  };
+
   const signInWithGoogle = async () => {
     setFeedback(null);
     setOauthBusy(true);
@@ -145,12 +277,26 @@ export default function SignInScreen() {
         </View>
         <View style={styles.heading}>
           <Text style={[styles.title, { color: colors.foreground }]}>
-            {needsCode ? 'Check your inbox' : 'Welcome back'}
+            {needsCode
+              ? 'Check your inbox'
+              : passwordResetStep === 'email'
+                ? 'Reset your password'
+                : passwordResetStep === 'code'
+                  ? 'Check your inbox'
+                  : passwordResetStep === 'password'
+                    ? 'Choose a new password'
+                    : 'Welcome back'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
             {needsCode
               ? 'Enter the one-time code to continue.'
-              : 'Sign in and pick up where your next run begins.'}
+              : passwordResetStep === 'email'
+                ? 'Enter the email address on your RunBuddy account.'
+                : passwordResetStep === 'code'
+                  ? 'Enter the password reset code sent to your email.'
+                  : passwordResetStep === 'password'
+                    ? 'Choose a new password for your account.'
+                    : 'Sign in and pick up where your next run begins.'}
           </Text>
         </View>
         {needsCode ? (
@@ -196,6 +342,112 @@ export default function SignInScreen() {
               <Text style={[styles.link, { color: colors.foreground }]}>Use a different email</Text>
             </Pressable>
           </>
+        ) : passwordResetStep ? (
+          <>
+            {passwordResetStep === 'email' ? (
+              <>
+                <TextField
+                  label="Email address"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  testID="reset-password-email"
+                />
+                <ActionButton
+                  title="Send reset code"
+                  onPress={sendPasswordResetCode}
+                  loading={busy}
+                  disabled={!email.trim()}
+                  icon="arrow-right"
+                  testID="send-reset-password-code"
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={returnToSignIn}
+                  testID="reset-password-back-to-sign-in"
+                >
+                  <Text style={[styles.link, { color: colors.foreground }]}>Back to sign in</Text>
+                </Pressable>
+              </>
+            ) : null}
+            {passwordResetStep === 'code' ? (
+              <>
+                <TextField
+                  label="Password reset code"
+                  value={resetCode}
+                  onChangeText={setResetCode}
+                  placeholder="Enter the code"
+                  keyboardType="number-pad"
+                  autoComplete="one-time-code"
+                  testID="reset-password-code"
+                />
+                <ActionButton
+                  title="Verify code"
+                  onPress={verifyPasswordResetCode}
+                  loading={busy}
+                  disabled={!resetCode.trim()}
+                  icon="check"
+                  testID="verify-reset-password-code"
+                />
+                <ActionButton
+                  title="Send a new code"
+                  variant="outline"
+                  onPress={resendPasswordResetCode}
+                  loading={busy}
+                  icon="mail"
+                  testID="resend-reset-password-code"
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={openPasswordReset}
+                  testID="reset-password-change-email"
+                >
+                  <Text style={[styles.link, { color: colors.foreground }]}>Use a different email</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" onPress={returnToSignIn}>
+                  <Text style={[styles.link, { color: colors.foreground }]}>Back to sign in</Text>
+                </Pressable>
+              </>
+            ) : null}
+            {passwordResetStep === 'password' ? (
+              <>
+                <TextField
+                  label="New password"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Choose a new password"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  testID="reset-password-new"
+                />
+                <TextField
+                  label="Confirm new password"
+                  value={confirmNewPassword}
+                  onChangeText={setConfirmNewPassword}
+                  placeholder="Enter it again"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="new-password"
+                  textContentType="newPassword"
+                  testID="reset-password-confirm"
+                />
+                <ActionButton
+                  title="Update password"
+                  onPress={submitNewPassword}
+                  loading={busy}
+                  disabled={!newPassword || !confirmNewPassword}
+                  icon="check"
+                  testID="submit-reset-password"
+                />
+              </>
+            ) : null}
+          </>
         ) : (
           <>
             <TextField
@@ -220,6 +472,13 @@ export default function SignInScreen() {
               textContentType="password"
               testID="sign-in-password"
             />
+            <Pressable
+              accessibilityRole="button"
+              onPress={openPasswordReset}
+              testID="forgot-password"
+            >
+              <Text style={[styles.link, { color: colors.foreground }]}>Forgot password?</Text>
+            </Pressable>
             <ActionButton
               title="Sign in"
               onPress={submitPassword}
@@ -249,7 +508,7 @@ export default function SignInScreen() {
             <Text accessibilityRole="alert" style={[styles.feedbackText, { color: colors.foreground }]}>{feedback}</Text>
           </View>
         ) : null}
-        {!needsCode ? (
+        {!needsCode && !passwordResetStep ? (
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: colors.mutedForeground }]}>New to RunBuddy?</Text>
             <Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/sign-up')}>
