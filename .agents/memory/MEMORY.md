@@ -4,6 +4,7 @@
 - [PWA API navigation exclusions](pwa-api-navigation.md) — service-worker navigation fallback must exclude API paths or OAuth redirects render the SPA instead.
 - [Express auth-state caching](express-auth-state-caching.md) — no-store headers alone may still allow Express to turn conditional JSON responses into 304.
 - [Clerk identity bridge](clerk-identity-bridge.md) — use `sessionClaims.userId` for migrated local users; reserve `auth.userId` for Clerk API calls.
+- [Clerk browser testing](clerk-browser-testing.md) — Clerk’s development test email and OTP do not bypass its bot challenge; browser tests also need a testing token.
 - [Workspace override installs](pnpm-override-installs.md) — run a full pnpm install after changing workspace overrides so every package's installed tree matches the lockfile.
 - [Public runner discovery](public-runner-discovery.md) — public discovery is explicit opt-in and only the directory landing page is intended to rank.
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.
