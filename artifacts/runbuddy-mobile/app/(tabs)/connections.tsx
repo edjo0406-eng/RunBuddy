@@ -38,16 +38,21 @@ function RequestCard({
   connection,
   runnerId,
   onRespond,
+  onCancel,
   busy,
+  cancelling = false,
 }: {
   connection: Connection;
   runnerId: number;
   onRespond: (connectionId: number, status: 'accepted' | 'declined') => void;
+  onCancel?: (connectionId: number) => void;
   busy: boolean;
+  cancelling?: boolean;
 }) {
   const colors = useColors();
   const router = useRouter();
   const incoming = connection.toRunnerId === runnerId;
+  const outgoing = connection.fromRunnerId === runnerId;
   const runner = otherRunner(connection, runnerId);
   const title = runner?.profileType === 'individual' ? runner.name : runner?.clubName || runner?.name || 'RunBuddy runner';
 
@@ -93,9 +98,24 @@ function RequestCard({
           />
         </View>
       ) : (
-        <View style={[styles.statusLine, { backgroundColor: colors.muted }]}>
-          <Feather name="clock" size={14} color={colors.mutedForeground} />
-          <Text style={[styles.statusText, { color: colors.mutedForeground }]}>Waiting for a reply</Text>
+        <View style={styles.pendingActions}>
+          <View style={[styles.statusLine, { backgroundColor: colors.muted, flex: 1 }]}>
+            <Feather name="clock" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.statusText, { color: colors.mutedForeground }]} numberOfLines={1}>
+              Waiting for a reply
+            </Text>
+          </View>
+          {outgoing && onCancel ? (
+            <ActionButton
+              title="Cancel request"
+              variant="outline"
+              compact
+              icon="x"
+              onPress={() => onCancel(connection.id)}
+              loading={cancelling}
+              testID={`cancel-request-${connection.id}`}
+            />
+          ) : null}
         </View>
       )}
     </View>
@@ -196,6 +216,16 @@ export default function ConnectionsScreen() {
     }
   };
 
+  const removeConnection = async (id: number, fallback: string) => {
+    setActionError(null);
+    try {
+      await deleteConnection.mutateAsync({ id });
+      await queryClient.invalidateQueries();
+    } catch (error) {
+      setActionError(errorMessage(error, fallback));
+    }
+  };
+
   const unfriend = (id: number) => {
     Alert.alert(
       'Remove this connection?',
@@ -205,17 +235,23 @@ export default function ConnectionsScreen() {
         {
           text: 'Unfriend',
           style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setActionError(null);
-              try {
-                await deleteConnection.mutateAsync({ id });
-                await queryClient.invalidateQueries();
-              } catch (error) {
-                setActionError(errorMessage(error, 'This connection could not be removed.'));
-              }
-            })();
-          },
+          onPress: () => void removeConnection(id, 'This connection could not be removed.'),
+        },
+      ],
+    );
+  };
+
+  const cancelRequest = (id: number) => {
+    if (!outgoing.some((connection) => connection.id === id)) return;
+    Alert.alert(
+      'Cancel this request?',
+      'The recipient will no longer see this request in their incoming list.',
+      [
+        { text: 'Keep request', style: 'cancel' },
+        {
+          text: 'Cancel request',
+          style: 'destructive',
+          onPress: () => void removeConnection(id, 'Your request could not be cancelled.'),
         },
       ],
     );
@@ -347,7 +383,9 @@ export default function ConnectionsScreen() {
                     connection={connection}
                     runnerId={identity.runnerId!}
                     onRespond={respond}
+                    onCancel={cancelRequest}
                     busy={false}
+                    cancelling={deleteConnection.isPending}
                   />
                 ))}
               </View>
@@ -378,6 +416,7 @@ const styles = StyleSheet.create({
   runnerMeta: { fontFamily: 'Manrope_500Medium', fontSize: 12 },
   requestMessage: { fontFamily: 'Manrope_400Regular', fontSize: 12, lineHeight: 18, marginTop: 2 },
   respondRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 9 },
+  pendingActions: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 7, padding: 10, borderRadius: 13 },
   statusText: { fontFamily: 'Manrope_600SemiBold', fontSize: 12 },
   actionError: { fontFamily: 'Manrope_600SemiBold', fontSize: 13 },

@@ -12,6 +12,7 @@ import {
   useGetRunner,
   useListConnections,
   useUpdateConnection,
+  useDeleteConnection,
   type Connection,
 } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
@@ -66,6 +67,7 @@ export default function RunnerDetailScreen() {
   const createRunnerBlock = useCreateRunnerBlock();
   const createRunnerReport = useCreateRunnerReport();
   const updateConnection = useUpdateConnection();
+  const deleteConnection = useDeleteConnection();
   const [actionError, setActionError] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>('spam');
@@ -103,6 +105,40 @@ export default function RunnerDetailScreen() {
     } catch (error) {
       setActionError(errorMessage(error, 'That request could not be updated.'));
     }
+  };
+
+  const cancelRequest = () => {
+    if (
+      !connection ||
+      connection.status !== 'pending' ||
+      connection.fromRunnerId !== identity.runnerId
+    ) {
+      return;
+    }
+
+    const requestId = connection.id;
+    Alert.alert(
+      'Cancel this request?',
+      `Your request to ${displayName} will be removed from their incoming list.`,
+      [
+        { text: 'Keep request', style: 'cancel' },
+        {
+          text: 'Cancel request',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setActionError(null);
+              try {
+                await deleteConnection.mutateAsync({ id: requestId });
+                await queryClient.invalidateQueries();
+              } catch (error) {
+                setActionError(errorMessage(error, 'Your request could not be cancelled.'));
+              }
+            })();
+          },
+        },
+      ],
+    );
   };
 
   const performBlock = async () => {
@@ -201,9 +237,22 @@ export default function RunnerDetailScreen() {
     }
     if (connection.status === 'pending') {
       return (
-        <View style={[styles.requestStatus, { backgroundColor: colors.muted }]}>
-          <Feather name="clock" size={16} color={colors.mutedForeground} />
-          <Text style={[styles.requestStatusText, { color: colors.mutedForeground }]}>Buddy request sent</Text>
+        <View style={styles.pendingRequest}>
+          <View style={[styles.requestStatus, { backgroundColor: colors.muted }]}>
+            <Feather name="clock" size={16} color={colors.mutedForeground} />
+            <Text style={[styles.requestStatusText, { color: colors.mutedForeground }]}>Buddy request sent</Text>
+          </View>
+          {connection.fromRunnerId === identity.runnerId ? (
+            <ActionButton
+              title="Cancel request"
+              variant="outline"
+              icon="x"
+              compact
+              onPress={cancelRequest}
+              loading={deleteConnection.isPending}
+              testID={`cancel-request-${connection.id}`}
+            />
+          ) : null}
         </View>
       );
     }
@@ -503,6 +552,7 @@ const styles = StyleSheet.create({
   actionError: { alignSelf: 'stretch', fontFamily: 'Manrope_600SemiBold', fontSize: 12, textAlign: 'center' },
   safetyActions: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 2 },
   respondRow: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'center', gap: 9 },
+  pendingRequest: { alignSelf: 'stretch', gap: 9 },
   requestStatus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 14 },
   requestStatusText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.48)' },
