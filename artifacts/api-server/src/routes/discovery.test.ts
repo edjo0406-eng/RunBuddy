@@ -25,6 +25,7 @@ vi.mock("@workspace/db", () => {
     db: { select: mocks.select, update: mocks.update },
     runnersTable: columns,
     connectionsTable: columns,
+    runnerBlocksTable: columns,
     usersTable: columns,
   };
 });
@@ -118,7 +119,7 @@ beforeEach(() => {
   });
 });
 
-describe("anonymous runner discovery", () => {
+describe("runner discovery visibility", () => {
   it("filters the directory to opted-in profiles and selects only safe fields", async () => {
     const response = await request(app).get("/api/runners?mode=buddy");
     expect(response.status).toBe(200);
@@ -291,7 +292,7 @@ describe("anonymous runner discovery", () => {
     ).toEqual([3, 4]);
   });
 
-  it("persists profile visibility updates before anonymous discovery reads", async () => {
+  it("persists profile visibility updates for anonymous and signed-in discovery", async () => {
     const userId = "runner-user";
     mocks.rows = [
       { id: userId },
@@ -324,6 +325,14 @@ describe("anonymous runner discovery", () => {
       12,
     ]);
 
+    mocks.getAuth.mockReturnValue({ userId: "another-runner" });
+    const signedInDiscoverable = await request(app).get(
+      "/api/runners?mode=buddy",
+    );
+    expect(
+      signedInDiscoverable.body.map((runner: { id: number }) => runner.id),
+    ).toEqual([12]);
+
     mocks.getAuth.mockReturnValue({ userId });
     const optOut = await request(app)
       .put("/api/runners/12")
@@ -336,6 +345,12 @@ describe("anonymous runner discovery", () => {
       "/api/runners?mode=buddy",
     );
     expect(noLongerDiscoverable.body).toEqual([]);
+
+    mocks.getAuth.mockReturnValue({ userId: "another-runner" });
+    const signedInNoLongerDiscoverable = await request(app).get(
+      "/api/runners?mode=buddy",
+    );
+    expect(signedInNoLongerDiscoverable.body).toEqual([]);
   });
 
   it("filters featured runners to opted-in profiles", async () => {
@@ -376,6 +391,36 @@ describe("anonymous runner discovery", () => {
     expect(JSON.stringify(mocks.filters)).toContain('"column":"publicListing","value":true');
   });
 
+  it("hides private profiles from other signed-in runners but keeps owner access", async () => {
+    mocks.rows = [
+      {
+        id: 11,
+        authUserId: "another-runner",
+        publicListing: true,
+        name: "Another runner",
+      },
+      {
+        id: 12,
+        authUserId: "profile-owner",
+        publicListing: false,
+        name: "Private runner",
+      },
+    ];
+
+    mocks.getAuth.mockReturnValue({ userId: "another-runner" });
+    const otherRunnerResponse = await request(app).get("/api/runners/12");
+    expect(otherRunnerResponse.status).toBe(404);
+
+    mocks.getAuth.mockReturnValue({ userId: "profile-owner" });
+    const ownerResponse = await request(app).get("/api/runners/12");
+    expect(ownerResponse.status).toBe(200);
+    expect(ownerResponse.body).toMatchObject({
+      id: 12,
+      publicListing: false,
+      name: "Private runner",
+    });
+  });
+
   it("does not expose running app links on anonymous profile details", async () => {
     mocks.rows = [{
       id: 12,
@@ -391,18 +436,29 @@ describe("anonymous runner discovery", () => {
     expect(mocks.selections[0]).not.toHaveProperty("trackingApps");
   });
 
-  it("preserves the authenticated profile view", async () => {
+  it("keeps rich signed-in profile fields while filtering out private runners", async () => {
     mocks.getAuth.mockReturnValue({ userId: "signed-in" });
+    mocks.rows = [
+      { id: 12, publicListing: false, name: "Private runner", bio: "Hidden" },
+      { id: 13, publicListing: true, name: "Listed runner", bio: "Visible" },
+    ];
     const response = await request(app).get("/api/runners");
     expect(response.status).toBe(200);
+    expect(response.body.map((runner: { id: number }) => runner.id)).toEqual([
+      13,
+    ]);
     expect(mocks.selections.some((selection) => "bio" in selection)).toBe(true);
-    expect(mocks.filters.at(-1)).toBeUndefined();
+    expect(JSON.stringify(mocks.filters)).toContain(
+      '"column":"publicListing","value":true',
+    );
   });
 
   it("includes linked running accounts in signed-in profile details", async () => {
     const trackingApps = { stravaUrl: "https://strava.example/runner" };
     mocks.getAuth.mockReturnValue({ userId: "signed-in" });
-    mocks.rows = [{ id: 14, name: "Runner", trackingApps }];
+    mocks.rows = [
+      { id: 14, name: "Runner", publicListing: true, trackingApps },
+    ];
 
     const response = await request(app).get("/api/runners/14");
 

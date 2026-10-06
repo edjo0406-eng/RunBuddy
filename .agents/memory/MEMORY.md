@@ -6,7 +6,7 @@
 - [Clerk identity bridge](clerk-identity-bridge.md) — use `sessionClaims.userId` for migrated local users; reserve `auth.userId` for Clerk API calls.
 - [Clerk browser testing](clerk-browser-testing.md) — Clerk’s development test email and OTP do not bypass its bot challenge; browser tests also need a testing token.
 - [Workspace override installs](pnpm-override-installs.md) — run a full pnpm install after changing workspace overrides so every package's installed tree matches the lockfile.
-- [Public runner discovery](public-runner-discovery.md) — public discovery is explicit opt-in and only the directory landing page is intended to rank.
+- [Public runner discovery](public-runner-discovery.md) — visibility is opt-in for all other runners, whether signed in or not; only the directory landing page should rank.
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.
 - [RunBuddy Android tabs](runbuddy-android-tabs.md) — keep Android tab-bar sizing and bottom safe-area padding explicit; the user confirmed all four tabs appeared after refresh.
 - [Mobile profile edit verification](runbuddy-mobile-profile-edit-testing.md) — confirm a runner profile field appears in the signed-in app after saving, not only in API logs.

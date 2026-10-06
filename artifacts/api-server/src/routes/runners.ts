@@ -66,7 +66,7 @@ router.get("/runners", listRunnersRateLimit, async (req, res) => {
   const { mode, country, city, experience } = parsed.data;
 
   const conditions = [];
-  if (!signedIn) conditions.push(eq(runnersTable.publicListing, true));
+  conditions.push(eq(runnersTable.publicListing, true));
   if (currentRunner) {
     const hiddenRunnerIds = await getHiddenRunnerIds(currentRunner.id);
     if (hiddenRunnerIds.length > 0) {
@@ -227,15 +227,19 @@ router.get("/runners/:id", async (req, res) => {
 
   const signedIn = Boolean(getAuthenticatedUserId(req));
   const currentRunner = await getOptionalAuthenticatedRunner(req);
+  const isOwner = currentRunner?.id === parsed.data.id;
   if (
     currentRunner &&
     (await getHiddenRunnerIds(currentRunner.id)).includes(parsed.data.id)
   ) {
     return res.status(404).json({ error: "Runner not found" });
   }
-  const where = signedIn
+  const where = isOwner
     ? eq(runnersTable.id, parsed.data.id)
-    : and(eq(runnersTable.id, parsed.data.id), eq(runnersTable.publicListing, true));
+    : and(
+        eq(runnersTable.id, parsed.data.id),
+        eq(runnersTable.publicListing, true),
+      );
   const [runner] = signedIn
     ? await db.select(publicRunnerSelection).from(runnersTable).where(where)
     : await db.select(discoverableRunnerSelection).from(runnersTable).where(where);

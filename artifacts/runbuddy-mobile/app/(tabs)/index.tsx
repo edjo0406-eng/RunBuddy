@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ImageBackground,
   Platform,
@@ -12,7 +12,7 @@ import {
   getListRunnersQueryKey,
   useListRunners,
 } from '@workspace/api-client-react';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import {
   ActionButton,
@@ -44,6 +44,16 @@ export default function DiscoverScreen() {
       staleTime: 45_000,
     },
   });
+  const hasFocusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (hasFocusedOnce.current) {
+        void runnersQuery.refetch();
+      } else {
+        hasFocusedOnce.current = true;
+      }
+    }, [runnersQuery.refetch]),
+  );
   const runners = runnersQuery.data ?? [];
 
   return (
