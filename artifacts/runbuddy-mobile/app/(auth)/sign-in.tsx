@@ -477,7 +477,7 @@ export default function SignInScreen() {
               onPress={openPasswordReset}
               testID="forgot-password"
             >
-              <Text style={[styles.link, { color: colors.foreground }]}>Forgot password?</Text>
+              <Text style={[styles.link, { color: colors.foreground }]}>Reset password</Text>
             </Pressable>
             <ActionButton
               title="Sign in"
