@@ -20,6 +20,8 @@ import {
 import { useColors } from '@/hooks/useColors';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
 import { CountryPickerField } from '@/components/CountryPickerField';
+import { RunnerCard } from '@/components/RunnerCard';
+import { createAnonymousRunnerPreview } from '@/lib/anonymousRunnerPreview';
 import {
   RunningDetailsFields,
   runningDetailsFromStats,
@@ -93,6 +95,7 @@ function EditProfileForm({ runner }: { runner: Runner }) {
     runningDetailsFromStats(runner.runningStats),
   );
   const [publicListing, setPublicListing] = useState(Boolean(runner.publicListing));
+  const [publicPreviewVisible, setPublicPreviewVisible] = useState(false);
   const [tracker, setTracker] = useState<TrackerKey>(() =>
     getInitialTracker(runner.trackingApps),
   );
@@ -112,6 +115,12 @@ function EditProfileForm({ runner }: { runner: Runner }) {
     !trackerLink.trim() ||
     tracker === 'wahooPlan' ||
     /^https?:\/\/\S+/i.test(trackerLink.trim());
+  const anonymousPreview = createAnonymousRunnerPreview(runner, {
+    name,
+    city,
+    country,
+    experience,
+  });
 
   const save = async () => {
     setFeedback(null);
@@ -449,6 +458,65 @@ function EditProfileForm({ runner }: { runner: Runner }) {
             </Text>
           </View>
         </Pressable>
+        <View
+          style={[
+            styles.anonymousPreviewPanel,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+          ]}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              publicPreviewVisible
+                ? 'Hide anonymous visitor preview'
+                : 'Show anonymous visitor preview'
+            }
+            accessibilityState={{ expanded: publicPreviewVisible }}
+            testID="edit-anonymous-preview-toggle"
+            onPress={() => setPublicPreviewVisible((visible) => !visible)}
+            style={({ pressed }) => ({ opacity: pressed ? 0.78 : 1 })}
+          >
+            <View style={styles.anonymousPreviewHeader}>
+              <View
+                style={[
+                  styles.anonymousPreviewIcon,
+                  { backgroundColor: colors.accent },
+                ]}
+              >
+                <Feather name="eye" size={16} color={colors.accentForeground} />
+              </View>
+              <View style={styles.privacyCopy}>
+                <Text style={[styles.label, { color: colors.foreground }]}>
+                  Anonymous preview
+                </Text>
+                <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+                  See what appears if you enable public discovery.
+                </Text>
+              </View>
+              <Feather
+                name={publicPreviewVisible ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={colors.mutedForeground}
+              />
+            </View>
+          </Pressable>
+          {publicPreviewVisible ? (
+            <View
+              testID="edit-anonymous-preview-content"
+              style={styles.anonymousPreviewBody}
+            >
+              <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+                This card updates from your current edits. It does not include your
+                photo, bio, running stats, tracker links, or travel details.
+              </Text>
+              <RunnerCard
+                runner={anonymousPreview}
+                preview
+                testID="edit-anonymous-preview-card"
+              />
+            </View>
+          ) : null}
+        </View>
         {feedback ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.destructive }]}>{feedback}</Text> : null}
         <ActionButton
           title="Save changes"
@@ -649,6 +717,10 @@ const styles = StyleSheet.create({
   label: { fontFamily: 'Manrope_700Bold', fontSize: 13 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   privacyCard: { borderWidth: 1, borderRadius: 17, padding: 13, flexDirection: 'row', alignItems: 'flex-start', gap: 11 },
+  anonymousPreviewPanel: { borderWidth: 1, borderRadius: 17, padding: 13, gap: 12 },
+  anonymousPreviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  anonymousPreviewIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  anonymousPreviewBody: { gap: 10 },
   checkBox: { width: 22, height: 22, borderWidth: 1.5, borderRadius: 7, justifyContent: 'center', alignItems: 'center' },
   privacyCopy: { flex: 1, gap: 4 },
   helper: { fontFamily: 'Manrope_400Regular', fontSize: 12, lineHeight: 17 },

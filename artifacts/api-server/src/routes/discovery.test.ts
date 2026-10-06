@@ -1,6 +1,10 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ANONYMOUS_RUNNER_PUBLIC_FIELDS,
+  createAnonymousRunnerPreview,
+} from "../../../runbuddy-mobile/lib/anonymousRunnerPreview";
 
 const mocks = vi.hoisted(() => ({
   getAuth: vi.fn(),
@@ -132,6 +136,9 @@ describe("anonymous runner discovery", () => {
       "profileType",
       "updatedAt",
     ]);
+    expect([...ANONYMOUS_RUNNER_PUBLIC_FIELDS].sort()).toEqual(
+      Object.keys(mocks.selections[0]).sort(),
+    );
     for (const privateField of [
       "bio",
       "travelNote",
@@ -147,6 +154,81 @@ describe("anonymous runner discovery", () => {
       "travelUntil",
     ]) {
       expect(mocks.selections[0]).not.toHaveProperty(privateField);
+    }
+  });
+
+  it("projects the mobile preview from draft values and only anonymous public fields", () => {
+    const sourceRunner = {
+      id: 41,
+      publicListing: true,
+      name: "Saved runner",
+      age: 35,
+      bio: "PRIVATE_BIO",
+      avatarUrl: "https://example.com/PRIVATE_PHOTO",
+      city: "Saved city",
+      country: "Saved country",
+      gender: "PRIVATE_GENDER",
+      profileType: "individual",
+      clubName: "Public club",
+      clubDescription: "PRIVATE_CLUB_DESCRIPTION",
+      clubWebsite: "https://example.com/PRIVATE_CLUB_WEBSITE",
+      clubSocialUrl: "https://example.com/PRIVATE_CLUB_SOCIAL",
+      clubAssociation: "PRIVATE_CLUB_ASSOCIATION",
+      lookingFor: "buddy",
+      experience: "beginner",
+      trackingApps: { privateLink: "PRIVATE_TRACKER_LINK" },
+      runningStats: { privateMileage: 999 },
+      lat: 51.5,
+      lng: -0.1,
+      travelCity: "PRIVATE_TRAVEL_CITY",
+      travelCountry: "PRIVATE_TRAVEL_COUNTRY",
+      travelUntil: "PRIVATE_TRAVEL_DATE",
+      travelNote: "PRIVATE_TRAVEL_NOTE",
+      createdAt: "2026-10-03T10:00:00.000Z",
+      updatedAt: "2026-10-03T10:00:00.000Z",
+    } as Parameters<typeof createAnonymousRunnerPreview>[0];
+    const preview = createAnonymousRunnerPreview(sourceRunner, {
+      name: "  Draft name  ",
+      city: "  Bristol  ",
+      country: "  United Kingdom  ",
+      experience: "advanced",
+    });
+
+    expect(Object.keys(preview).sort()).toEqual(
+      [...ANONYMOUS_RUNNER_PUBLIC_FIELDS].sort(),
+    );
+    expect(preview).toEqual({
+      id: 41,
+      name: "Draft name",
+      city: "Bristol",
+      country: "United Kingdom",
+      profileType: "individual",
+      clubName: "Public club",
+      lookingFor: "buddy",
+      experience: "advanced",
+      createdAt: "2026-10-03T10:00:00.000Z",
+      updatedAt: "2026-10-03T10:00:00.000Z",
+    });
+    for (const privateField of [
+      "publicListing",
+      "age",
+      "bio",
+      "avatarUrl",
+      "gender",
+      "clubDescription",
+      "clubWebsite",
+      "clubSocialUrl",
+      "clubAssociation",
+      "trackingApps",
+      "runningStats",
+      "lat",
+      "lng",
+      "travelCity",
+      "travelCountry",
+      "travelUntil",
+      "travelNote",
+    ]) {
+      expect(preview).not.toHaveProperty(privateField);
     }
   });
 
