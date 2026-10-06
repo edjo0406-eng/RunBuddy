@@ -9,7 +9,7 @@ When Clerk reports an existing active session on the sign-in route, send the use
 
 Render **Sign out** for every signed-in profile state, not only after runner profile data loads successfully.
 
-**Why:** Clear action wording makes recovery easier to find. An active Clerk session can make a password sign-in attempt return “already signed in,” so the screen must offer a path back into RunBuddy. Android Expo Go testing confirmed that the active-session path returns to the RunBuddy profile after reload. A user then could not find sign-out while trying to verify the reset, revealing that the control must not depend on profile data loading.
+**Why:** Clear action wording makes recovery easier to find. An active Clerk session can make a password sign-in attempt return “already signed in,” so the screen must offer a path back into RunBuddy. Android Expo Go testing confirmed the active-session redirect returns to the RunBuddy profile after reload and that signing out, then signing in with the new password, succeeds. A user then could not find sign-out while trying to verify the reset, revealing that the control must not depend on profile data loading.
 
 RunBuddy has a runner-details screen and a separate account Profile tab. A user may call the runner-details screen “my profile,” but account actions such as sign-out belong on the Profile tab.
 
