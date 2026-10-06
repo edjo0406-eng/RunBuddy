@@ -50,21 +50,35 @@ function ClassicTabLayout() {
   const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
+  const isAndroid = Platform.OS === 'android';
   const isWeb = Platform.OS === 'web';
+  const androidTabBarBottomPadding = Math.max(insets.bottom, 8);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarShowLabel: true,
+        tabBarHideOnKeyboard: false,
         headerShown: false,
         tabBarStyle: {
+          display: 'flex',
           backgroundColor: isIOS ? 'transparent' : colors.background,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          elevation: 0,
-          paddingBottom: isWeb ? 0 : insets.bottom,
-          height: isWeb ? 84 : undefined,
+          elevation: isAndroid ? 8 : 0,
+          paddingTop: isAndroid ? 8 : 0,
+          paddingBottom: isWeb
+            ? 0
+            : isAndroid
+              ? androidTabBarBottomPadding
+              : insets.bottom,
+          height: isWeb
+            ? 84
+            : isAndroid
+              ? 64 + androidTabBarBottomPadding
+              : undefined,
         },
         tabBarBackground: () =>
           isIOS ? (
