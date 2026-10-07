@@ -2,18 +2,30 @@ import { Link, useLocation } from "wouter";
 import { useAuth, useClerk } from "@clerk/react";
 import { ArrowUpRight, MessageSquare, Users } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
-import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
+import {
+  getGetCurrentRunnerQueryKey,
+  getGetUnreadCountQueryKey,
+  useGetCurrentRunner,
+  useGetUnreadCount,
+} from "@workspace/api-client-react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { getArtifactRootPath } from "@/lib/auth-paths";
 
 export function Navbar() {
   const [location] = useLocation();
   const { myRunnerId } = useIdentity();
-  const { isLoaded, isSignedIn } = useAuth({
+  const { isLoaded, isSignedIn, userId } = useAuth({
     treatPendingAsSignedOut: false,
   });
   const { signOut } = useClerk();
   const isAuthResolved = isLoaded && isSignedIn !== null;
+  const { data: authenticatedRunner } = useGetCurrentRunner({
+    query: {
+      enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
+      queryKey: [...getGetCurrentRunnerQueryKey(), userId],
+    },
+  });
+  const ownRunnerId = authenticatedRunner?.runnerId ?? null;
 
   const { data: unread } = useGetUnreadCount(
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
@@ -80,12 +92,33 @@ export function Navbar() {
               </span>
             )}
           </Link>
-          {isAuthResolved && (
-            <Link href={isSignedIn === true ? "/create-profile" : "/sign-up"} data-testid="link-nav-join" className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex">
-              Join the club
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          )}
+          {isAuthResolved &&
+            (isSignedIn === false || ownRunnerId !== null || authenticatedRunner?.runnerId === null) && (
+              <Link
+                href={
+                  isSignedIn === false
+                    ? "/sign-up"
+                    : ownRunnerId !== null
+                      ? `/runner/${ownRunnerId}`
+                      : "/create-profile"
+                }
+                data-testid={
+                  isSignedIn === false
+                    ? "link-nav-join"
+                    : ownRunnerId !== null
+                      ? "link-nav-my-profile"
+                      : "link-nav-create-profile"
+                }
+                className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_hsl(var(--foreground))] sm:flex"
+              >
+                {isSignedIn === false
+                  ? "Join the club"
+                  : ownRunnerId !== null
+                    ? "My profile"
+                    : "Create profile"}
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            )}
         </div>
       </div>
     </header>

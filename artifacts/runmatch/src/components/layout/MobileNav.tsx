@@ -1,18 +1,30 @@
 import { Link, useLocation } from "wouter";
 import { useAuth, useClerk } from "@clerk/react";
-import { Home, Users, MessageSquare, UserPlus, LogOut } from "lucide-react";
+import { Home, Users, MessageSquare, UserPlus, UserRound, LogOut } from "lucide-react";
 import { useIdentity } from "@/hooks/use-identity";
-import { useGetUnreadCount, getGetUnreadCountQueryKey } from "@workspace/api-client-react";
+import {
+  getGetCurrentRunnerQueryKey,
+  getGetUnreadCountQueryKey,
+  useGetCurrentRunner,
+  useGetUnreadCount,
+} from "@workspace/api-client-react";
 import { getArtifactRootPath } from "@/lib/auth-paths";
 
 export function MobileNav() {
   const [location] = useLocation();
   const { myRunnerId } = useIdentity();
-  const { isLoaded, isSignedIn } = useAuth({
+  const { isLoaded, isSignedIn, userId } = useAuth({
     treatPendingAsSignedOut: false,
   });
   const { signOut } = useClerk();
   const isAuthResolved = isLoaded && isSignedIn !== null;
+  const { data: authenticatedRunner } = useGetCurrentRunner({
+    query: {
+      enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
+      queryKey: [...getGetCurrentRunnerQueryKey(), userId],
+    },
+  });
+  const ownRunnerId = authenticatedRunner?.runnerId ?? null;
 
   const { data: unread } = useGetUnreadCount(
     { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
@@ -20,20 +32,38 @@ export function MobileNav() {
   const unreadCount = unread?.count ?? 0;
 
   const items = [
-    { href: "/", icon: Home, label: "Home", active: location === "/" },
-    { href: "/run-buddy", icon: Users, label: "RunBuddy", active: location.startsWith("/run-buddy"), primary: true },
-    { href: "/inbox", icon: MessageSquare, label: "Inbox", active: location.startsWith("/inbox") || location.startsWith("/messages"), badge: unreadCount },
-    { href: "/create-profile", icon: UserPlus, label: "Join", active: location.startsWith("/create-profile") },
+    { href: "/", icon: Home, label: "Home", testId: "link-mobile-home", active: location === "/" },
+    { href: "/run-buddy", icon: Users, label: "RunBuddy", testId: "link-mobile-runbuddy", active: location.startsWith("/run-buddy"), primary: true },
+    { href: "/inbox", icon: MessageSquare, label: "Inbox", testId: "link-mobile-inbox", active: location.startsWith("/inbox") || location.startsWith("/messages"), badge: unreadCount },
+    ...(isAuthResolved && isSignedIn === true
+      ? authenticatedRunner
+        ? [{
+            href: ownRunnerId !== null ? `/runner/${ownRunnerId}` : "/create-profile",
+            icon: ownRunnerId !== null ? UserRound : UserPlus,
+            label: ownRunnerId !== null ? "My profile" : "Create profile",
+            testId: ownRunnerId !== null ? "link-mobile-my-profile" : "link-mobile-create-profile",
+            active: ownRunnerId !== null
+              ? location === `/runner/${ownRunnerId}`
+              : location.startsWith("/create-profile"),
+          }]
+        : []
+      : [{
+          href: "/create-profile",
+          icon: UserPlus,
+          label: "Join",
+          testId: "link-mobile-join",
+          active: location.startsWith("/create-profile"),
+        }]),
   ];
 
   return (
     <nav aria-label="Mobile navigation" className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/95 backdrop-blur-xl md:hidden supports-[backdrop-filter]:bg-background/80">
       <div className="safe-area-inset-bottom flex h-[4.5rem] items-center justify-around px-1">
-        {items.map(({ href, icon: Icon, label, active, badge, primary }) => (
+        {items.map(({ href, icon: Icon, label, testId, active, badge, primary }) => (
           <Link
             key={href}
             href={href}
-            data-testid={`link-mobile-${label.toLowerCase()}`}
+            data-testid={testId}
             className={`relative flex min-w-[56px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 transition-all ${primary ? "min-w-[78px]" : ""} ${active ? (primary ? "bg-foreground text-primary" : "text-foreground") : "text-muted-foreground hover:text-foreground"}`}
           >
             <div className="relative">
