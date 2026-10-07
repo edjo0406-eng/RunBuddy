@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   currentRunnerId: 20,
   rows: [] as Record<string, unknown>[],
+  runnerRows: [] as Record<string, unknown>[],
   select: vi.fn(),
   update: vi.fn(),
   getAuthenticatedRunner: vi.fn(),
@@ -27,7 +28,10 @@ vi.mock("drizzle-orm", () => ({
   eq: (column: unknown, value: unknown) => ({ column, value }),
   and: (...conditions: unknown[]) => ({ and: conditions }),
   or: (...conditions: unknown[]) => ({ or: conditions }),
-  desc: (column: unknown) => column,
+  desc: (column: unknown) => ({ direction: "desc", column }),
+  inArray: (column: unknown, values: unknown[]) => ({
+    inArray: { column: String(column), values },
+  }),
   sql: () => null,
   notInArray: (column: unknown, values: unknown[]) => ({ column, values }),
 }));
@@ -55,6 +59,7 @@ type Predicate = {
   value?: unknown;
   and?: unknown[];
   or?: unknown[];
+  inArray?: { column: string; values: unknown[] };
 };
 
 function matches(row: Record<string, unknown>, condition: unknown): boolean {
@@ -62,6 +67,9 @@ function matches(row: Record<string, unknown>, condition: unknown): boolean {
   const predicate = condition as Predicate;
   if (predicate.and) return predicate.and.every((part) => matches(row, part));
   if (predicate.or) return predicate.or.some((part) => matches(row, part));
+  if (predicate.inArray) {
+    return predicate.inArray.values.includes(row[predicate.inArray.column]);
+  }
   return row[predicate.column!] === predicate.value;
 }
 
@@ -118,6 +126,10 @@ beforeEach(() => {
       createdAt: "2026-10-01T10:05:00.000Z",
     },
   ];
+  mocks.runnerRows = [
+    { id: 10, name: "Runner Ten" },
+    { id: 30, name: "Runner Thirty" },
+  ];
 
   mocks.getAuthenticatedRunner.mockImplementation(async () => ({
     id: mocks.currentRunnerId,
@@ -127,25 +139,42 @@ beforeEach(() => {
   mocks.areRunnersBlocked.mockResolvedValue(false);
   mocks.getHiddenRunnerIds.mockResolvedValue([]);
 
-  mocks.select.mockImplementation(() => {
+  mocks.select.mockImplementation((projection?: unknown) => {
     let condition: unknown;
+    const selectsRunners =
+      projection !== null &&
+      typeof projection === "object" &&
+      Object.prototype.hasOwnProperty.call(projection, "id");
+    const sourceRows = selectsRunners
+      ? mocks.runnerRows
+      : mocks.rows;
+    const getRows = () => sourceRows.filter((row) => matches(row, condition));
     const query = {
       from: () => query,
       where: (nextCondition: unknown) => {
         condition = nextCondition;
         return query;
       },
-      orderBy: (column: unknown) => {
-        const rows = mocks.rows.filter((row) => matches(row, condition));
-        if (typeof column === "string") {
+      orderBy: (order: unknown) => {
+        const rows = getRows();
+        const sort = order as { direction?: string; column?: unknown };
+        const column = typeof order === "string" ? order : String(sort.column);
+        if (column) {
           rows.sort(
-            (left, right) =>
-              new Date(String(left[column])).getTime() -
-              new Date(String(right[column])).getTime(),
+            (left, right) => {
+              const difference =
+                new Date(String(left[column])).getTime() -
+                new Date(String(right[column])).getTime();
+              return sort.direction === "desc" ? -difference : difference;
+            },
           );
         }
         return Promise.resolve(rows);
       },
+      then: (
+        resolve: (rows: Record<string, unknown>[]) => unknown,
+        reject?: (reason: unknown) => unknown,
+      ) => Promise.resolve(getRows()).then(resolve, reject),
     };
     return query;
   });
@@ -164,6 +193,27 @@ beforeEach(() => {
       },
     };
     return query;
+  });
+});
+
+describe("runner inbox", () => {
+  it("returns conversations with each partner and the correct unread count", async () => {
+    const response = await request(app).get("/api/messages/inbox");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+    expect(response.body[0]).toMatchObject({
+      otherId: 30,
+      otherRunner: { id: 30, name: "Runner Thirty" },
+      latestMessage: { id: 202 },
+      unreadCount: 1,
+    });
+    expect(response.body[1]).toMatchObject({
+      otherId: 10,
+      otherRunner: { id: 10, name: "Runner Ten" },
+      latestMessage: { id: 104 },
+      unreadCount: 2,
+    });
   });
 });
 

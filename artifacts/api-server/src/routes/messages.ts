@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, messagesTable, runnersTable } from "@workspace/db";
-import { eq, or, and, desc, sql, notInArray } from "drizzle-orm";
+import { eq, or, and, desc, sql, notInArray, inArray } from "drizzle-orm";
 import {
   GetConversationQueryParams,
   SendMessageBody,
@@ -68,7 +68,7 @@ router.get("/messages/inbox", async (req, res) => {
   const others = await db
     .select(publicRunnerSelection)
     .from(runnersTable)
-    .where(sql`${runnersTable.id} = ANY(${otherIds})`);
+    .where(inArray(runnersTable.id, otherIds));
 
   const otherMap = new Map(others.map((r) => [r.id, r]));
 

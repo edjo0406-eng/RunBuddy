@@ -1,6 +1,7 @@
 - [RunBuddy product direction](runbuddy-first.md) — RunBuddy is the sole product experience and public entry point.
 - [RunBuddy running details](runbuddy-running-details.md) — collect and display running stats across profile setup and signed-in profile views.
 - [Orval and Zod compatibility](orval-zod-compatibility.md) — generated clients must stay Zod 3-compatible until the workspace upgrades Zod.
+- [Drizzle array predicates](drizzle-array-predicates.md) — use `inArray` for PostgreSQL lists; raw `ANY(${ids})` interpolation can bind a scalar and fail.
 - [PWA API navigation exclusions](pwa-api-navigation.md) — service-worker navigation fallback must exclude API paths or OAuth redirects render the SPA instead.
 - [Express auth-state caching](express-auth-state-caching.md) — no-store headers alone may still allow Express to turn conditional JSON responses into 304.
 - [Clerk identity bridge](clerk-identity-bridge.md) — use `sessionClaims.userId` for migrated local users; reserve `auth.userId` for Clerk API calls.
