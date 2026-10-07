@@ -3,8 +3,7 @@ import { Runner } from "@workspace/api-client-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Activity, Timer, Plane } from "lucide-react";
-import defaultAvatarM from "@/assets/images/avatar-m.png";
-import defaultAvatarF from "@/assets/images/avatar-f.png";
+import { defaultRunnerImages, runnerCardImageSizes } from "@/lib/public-images";
 import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface RunnerCardProps {
@@ -13,7 +12,8 @@ interface RunnerCardProps {
 
 export function RunnerCard({ runner }: RunnerCardProps) {
   const isFemale = runner.gender?.toLowerCase() === 'female';
-  const defaultAvatar = isFemale ? defaultAvatarF : defaultAvatarM;
+  const defaultAvatar = isFemale ? defaultRunnerImages.female : defaultRunnerImages.male;
+  const avatarUrl = resolveAvatarUrl(runner.avatarUrl);
   const isTravelling = !!(runner.travelCity && runner.travelCountry);
   const isClub = runner.profileType !== "individual";
   const displayName = isClub ? runner.clubName || runner.name : runner.name;
@@ -22,11 +22,22 @@ export function RunnerCard({ runner }: RunnerCardProps) {
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30 flex flex-col">
       <div className="relative aspect-square overflow-hidden bg-muted">
-        <img
-          src={resolveAvatarUrl(runner.avatarUrl) || defaultAvatar}
-          alt={displayName}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-        />
+        <picture>
+          {!avatarUrl && (
+            <source type="image/webp" srcSet={defaultAvatar.webp} sizes={runnerCardImageSizes} />
+          )}
+          <img
+            src={avatarUrl || defaultAvatar.src}
+            srcSet={avatarUrl ? undefined : defaultAvatar.jpeg}
+            sizes={avatarUrl ? undefined : runnerCardImageSizes}
+            width={960}
+            height={960}
+            loading="lazy"
+            decoding="async"
+            alt={displayName}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
 
         {isTravelling && (

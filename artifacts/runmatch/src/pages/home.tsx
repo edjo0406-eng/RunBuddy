@@ -12,7 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { RunnerCard } from "@/components/ui/runner-card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import heroBg from "@/assets/images/hero-bg.png";
+import { HeroImage } from "@/components/ui/hero-image";
 
 export default function Home() {
   const { data: stats, isLoading: statsLoading } = useGetStatsSummary({
@@ -29,7 +29,7 @@ export default function Home() {
       <main className="flex-grow">
         <section className="relative overflow-hidden bg-foreground text-background">
           <div className="absolute inset-0 opacity-20">
-            <img src={heroBg} alt="" className="h-full w-full object-cover mix-blend-screen" />
+            <HeroImage decorative className="h-full w-full object-cover mix-blend-screen" />
           </div>
           <div className="absolute -right-32 top-[-20%] h-[30rem] w-[30rem] rounded-full border border-primary/30" />
           <div className="absolute -right-16 top-[-12%] h-[23rem] w-[23rem] rounded-full border border-primary/20" />
@@ -80,7 +80,7 @@ export default function Home() {
               </div>
               <div className="relative aspect-[.84] overflow-hidden border border-background/20 bg-background/10 p-3 shadow-2xl">
                 <div className="relative h-full overflow-hidden bg-secondary">
-                  <img src={heroBg} alt="Runners moving together at dawn" className="h-full w-full object-cover opacity-90 mix-blend-multiply" />
+                  <HeroImage className="h-full w-full object-cover opacity-90 mix-blend-multiply" />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-transparent to-transparent" />
                   <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 500" fill="none" aria-hidden="true">
                     <path className="route-dash" d="M-20 388C80 360 65 256 164 284C254 310 202 170 430 126" stroke="hsl(var(--primary))" strokeWidth="3" />

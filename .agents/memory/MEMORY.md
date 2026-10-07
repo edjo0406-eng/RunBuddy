@@ -17,3 +17,4 @@
 - [RunBuddy safety controls](runbuddy-safety-controls.md) — blocks hide signed-in access without deleting messages; unblocking never restores connections.
 - [RunBuddy password recovery](runbuddy-password-recovery.md) — use explicit reset wording, route active sessions home, and keep sign-out available.
 - [GitHub private required checks](github-required-checks.md) — private-repo branch protection is plan-gated; workflow-file access needs explicit permission evidence before retrying.
+- [Vite image verification](vite-image-verification.md) — development image import wrappers are not image transfers; check rendered currentSrc and image requests.
