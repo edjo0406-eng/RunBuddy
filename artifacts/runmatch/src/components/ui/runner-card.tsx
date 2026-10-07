@@ -54,7 +54,7 @@ export function RunnerCard({ runner }: RunnerCardProps) {
             {displayName} {!isClub && runner.age && <span className="font-sans font-normal text-muted-foreground text-lg">{runner.age}</span>}
           </h3>
           {profileTypeLabel && (
-            <Badge className="mt-1 rounded-full bg-primary/15 text-primary hover:bg-primary/15">
+            <Badge className="mt-1 rounded-full bg-primary text-primary-foreground hover:bg-primary">
               {profileTypeLabel}
             </Badge>
           )}
@@ -84,7 +84,7 @@ export function RunnerCard({ runner }: RunnerCardProps) {
             </Badge>
           )}
           {runner.runningStats?.avgPacePerKm && (
-            <Badge variant="outline" className="text-xs font-medium border-primary/20 text-primary">
+            <Badge variant="outline" className="text-xs font-medium border-primary/20 text-card-foreground">
               <Timer className="w-3 h-3 mr-1" />
               {runner.runningStats.avgPacePerKm}/km
             </Badge>
@@ -95,7 +95,7 @@ export function RunnerCard({ runner }: RunnerCardProps) {
       <CardFooter className="p-4 pt-0">
         <Link
           href={`/runner/${runner.id}`}
-          className="w-full rounded-lg bg-primary/10 py-2 text-center text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="w-full rounded-lg bg-primary/10 py-2 text-center text-sm font-medium text-card-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
         >
           View Profile
         </Link>
