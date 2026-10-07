@@ -19,3 +19,4 @@
 - [RunBuddy password recovery](runbuddy-password-recovery.md) — use explicit reset wording, route active sessions home, and keep sign-out available.
 - [GitHub private required checks](github-required-checks.md) — private-repo branch protection is plan-gated; workflow-file access needs explicit permission evidence before retrying.
 - [Vite image verification](vite-image-verification.md) — development image import wrappers are not image transfers; check rendered currentSrc and image requests.
+- [Website account-switch tests](runbuddy-website-account-switch-testing.md) — hold the next account’s response pending and assert old user-scoped links are absent before and after it resolves.

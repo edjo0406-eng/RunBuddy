@@ -6,19 +6,25 @@ import type { Page } from "@playwright/test";
 const basePath = "/runmatch";
 const testEmail = `runbuddy+clerk_test_${randomUUID()}@example.com`;
 const testPassword = `RunBuddy-${randomUUID()}!7a`;
+const profileSwitchEmails = [
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
+] as const;
+const profileSwitchPassword = `RunBuddy-${randomUUID()}!7a`;
 
 type ClerkApiUser = {
   id: string;
 };
 
-async function deleteTemporaryClerkUsers() {
+async function deleteTemporaryClerkUsers(email = testEmail) {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) {
     throw new Error("CLERK_SECRET_KEY must be available for E2E user cleanup.");
   }
 
   const query = new URLSearchParams({
-    email_address: testEmail,
+    email_address: email,
     limit: "10",
   });
   const usersResponse = await fetch(
@@ -50,6 +56,56 @@ async function deleteTemporaryClerkUsers() {
       );
     }
   }
+}
+
+async function signUpTemporaryUser(page: Page, email: string, password: string) {
+  await setupClerkTestingToken({ page });
+  await page.goto(`${basePath}/sign-up`);
+  await page.locator(".cl-signUp-root").waitFor({ state: "attached" });
+
+  await fillOptionalField(page, 'input[name="firstName"]', "RunBuddy");
+  await fillOptionalField(page, 'input[name="lastName"]', "Switch Test");
+  await fillOptionalField(
+    page,
+    'input[name="username"]',
+    `rb${randomUUID().replaceAll("-", "").slice(0, 10)}`,
+  );
+  await page
+    .locator('input[name="emailAddress"], input[type="email"]')
+    .first()
+    .fill(email);
+
+  const passwordField = page.locator('input[name="password"]');
+  if (!(await passwordField.isVisible().catch(() => false))) {
+    await page.getByRole("button", { name: /continue/i }).last().click();
+    await passwordField.waitFor({ state: "visible" });
+  }
+  await passwordField.fill(password);
+
+  const legalAcceptance = page.locator('input[name="legalAccepted"]');
+  if (await legalAcceptance.isVisible().catch(() => false)) {
+    await legalAcceptance.check();
+  }
+  await page.getByRole("button", { name: /continue/i }).last().click();
+
+  const verificationCode = page.getByRole("textbox", {
+    name: /enter verification code/i,
+  });
+  try {
+    await verificationCode.waitFor({ state: "visible", timeout: 15_000 });
+    await verificationCode.pressSequentially("424242");
+  } catch {
+    // Some development instances complete sign-up without email verification.
+  }
+
+  await page.goto(`${basePath}/`);
+  await expect(page).toHaveURL(/\/runmatch\/run-buddy\/?$/);
+  await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+}
+
+async function logOutTemporaryUser(page: Page) {
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 }
 
 async function fillOptionalField(page: Page, selector: string, value: string) {
@@ -152,5 +208,111 @@ test("Clerk sign-in and sign-out stay inside the non-root RunBuddy path", async 
     );
   } finally {
     await deleteTemporaryClerkUsers();
+  }
+});
+
+test("website profile navigation follows real Clerk account switches", async ({
+  page,
+}) => {
+  let activeRunnerId: number | null = 14;
+  let holdNoProfileResponse = false;
+  let resolveNoProfileRequestStarted!: () => void;
+  let releaseNoProfileResponse!: () => void;
+  const noProfileRequestStarted = new Promise<void>((resolve) => {
+    resolveNoProfileRequestStarted = resolve;
+  });
+  const noProfileResponseGate = new Promise<void>((resolve) => {
+    releaseNoProfileResponse = resolve;
+  });
+
+  try {
+    await page.route("**/api/runners/me", async (route) => {
+      if (activeRunnerId === null && holdNoProfileResponse) {
+        resolveNoProfileRequestStarted();
+        await noProfileResponseGate;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: activeRunnerId }),
+      });
+    });
+
+    await signUpTemporaryUser(
+      page,
+      profileSwitchEmails[0],
+      profileSwitchPassword,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/14`,
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/14`,
+    );
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await logOutTemporaryUser(page);
+    activeRunnerId = 28;
+    await signUpTemporaryUser(
+      page,
+      profileSwitchEmails[1],
+      profileSwitchPassword,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).not.toHaveAttribute(
+      "href",
+      `${basePath}/runner/14`,
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+    await expect(
+      page.getByTestId("link-mobile-my-profile"),
+    ).not.toHaveAttribute("href", `${basePath}/runner/14`);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await logOutTemporaryUser(page);
+    activeRunnerId = null;
+    holdNoProfileResponse = true;
+    await signUpTemporaryUser(
+      page,
+      profileSwitchEmails[2],
+      profileSwitchPassword,
+    );
+    await noProfileRequestStarted;
+
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveCount(0);
+    await expect(page.getByTestId("link-nav-create-profile")).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveCount(0);
+    await expect(page.getByTestId("link-mobile-create-profile")).toHaveCount(0);
+
+    releaseNoProfileResponse();
+    await expect(page.getByTestId("link-mobile-create-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/create-profile`,
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(page.getByTestId("link-nav-create-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/create-profile`,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveCount(0);
+  } finally {
+    releaseNoProfileResponse();
+    for (const email of profileSwitchEmails) {
+      await deleteTemporaryClerkUsers(email);
+    }
   }
 });
