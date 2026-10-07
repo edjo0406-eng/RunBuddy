@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, runnersTable, connectionsTable } from "@workspace/db";
-import { sql, desc, eq, notInArray } from "drizzle-orm";
+import { sql, desc, eq, and, notInArray } from "drizzle-orm";
 import {
   getAuthenticatedRunner,
   getOptionalAuthenticatedRunner,
@@ -64,7 +64,14 @@ router.get("/stats/featured", async (req, res) => {
     const runners = await db
       .select(publicRunnerSelection)
       .from(runnersTable)
-      .where(hiddenRunnerIds.length ? notInArray(runnersTable.id, hiddenRunnerIds) : undefined)
+      .where(
+        and(
+          eq(runnersTable.publicListing, true),
+          hiddenRunnerIds.length
+            ? notInArray(runnersTable.id, hiddenRunnerIds)
+            : undefined,
+        ),
+      )
       .orderBy(desc(runnersTable.createdAt))
       .limit(12);
     return res.json(runners);

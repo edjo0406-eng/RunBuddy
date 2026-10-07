@@ -33,6 +33,7 @@ vi.mock("drizzle-orm", () => ({
   eq: (column: unknown, value: unknown) => ({ column, value }),
   and: (...conditions: unknown[]) => ({ and: conditions }),
   or: (...conditions: unknown[]) => ({ or: conditions }),
+  notInArray: (column: unknown, values: unknown[]) => ({ column, values, notInArray: true }),
   desc: (column: unknown) => column,
   sql: Object.assign((_parts: TemplateStringsArray, column: string, value: string) => ({ column, value, caseInsensitive: true }), { raw: () => null }),
 }));
@@ -52,9 +53,12 @@ function matches(row: Record<string, unknown>, condition: unknown): boolean {
     caseInsensitive?: boolean;
     and?: unknown[];
     or?: unknown[];
+    values?: unknown[];
+    notInArray?: boolean;
   };
   if (predicate.and) return predicate.and.every((part) => matches(row, part));
   if (predicate.or) return predicate.or.some((part) => matches(row, part));
+  if (predicate.notInArray) return !predicate.values!.includes(row[predicate.column!]);
   if (predicate.caseInsensitive) {
     return String(row[predicate.column!] ?? "").toLowerCase() === String(predicate.value).toLowerCase();
   }
@@ -358,6 +362,28 @@ describe("runner discovery visibility", () => {
     expect(response.status).toBe(200);
     expect(mocks.filters).toContainEqual({ column: "publicListing", value: true });
     expect(mocks.selections[0]).not.toHaveProperty("bio");
+  });
+
+  it("filters signed-in featured runners to opted-in profiles without a runner profile", async () => {
+    mocks.getAuth.mockReturnValue({ userId: "signed-in" });
+    mocks.rows = [
+      { id: 12, publicListing: false, name: "Private runner", bio: "Hidden" },
+      { id: 13, publicListing: true, name: "Listed runner", bio: "Visible" },
+    ];
+
+    const response = await request(app).get("/api/stats/featured");
+
+    expect(response.status).toBe(200);
+    expect(response.body.map((runner: { id: number }) => runner.id)).toEqual([
+      13,
+    ]);
+    expect(response.body[0]).toMatchObject({
+      name: "Listed runner",
+      bio: "Visible",
+    });
+    expect(JSON.stringify(mocks.filters)).toContain(
+      '"column":"publicListing","value":true',
+    );
   });
 
   it("does not reveal travel destinations through anonymous city or country searches", async () => {
