@@ -16,3 +16,9 @@ GitHub may run a `pull_request` workflow from the PR branch that introduces the 
 **Why:** The workflow-bootstrap PR in this repository produced a passing Actions run on its head branch. Removing the required check before confirming whether that run could satisfy the rule created an avoidable protection gap.
 
 **How to apply:** When bootstrapping a workflow under an existing required-check rule, first let the PR check start and inspect its status. Only temporarily remove the exact required context if GitHub blocks the merge for a missing check, and restore it immediately.
+
+The connected GitHub app can read repositories, pull requests, Actions runs, and Git objects while Git write requests may still return a generic 404 even when repository metadata reports push access.
+
+**Why:** On 2026-10-07, a temporary CI-verification branch could not be created: Git tree writes returned 404 through both the connector proxy and GitHub SDK, before any branch or pull request was created.
+
+**How to apply:** Before planning a live CI proof, confirm the workflow change is present on the remote base branch. If both supported write paths return 404, stop and ask the user to push or create the test branch through their normal GitHub workflow; do not retry random write endpoints or alter `main` or branch protection.
