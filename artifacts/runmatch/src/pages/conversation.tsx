@@ -8,8 +8,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIdentity } from "@/hooks/use-identity";
-import { useListRunners, useGetInbox } from "@workspace/api-client-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Send, MapPin } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
@@ -28,13 +26,27 @@ function formatTime(dateStr: string) {
 export default function ConversationPage() {
   const params = useParams();
   const otherId = Number(params.otherId);
-  const { myRunnerId, setMyRunnerId } = useIdentity();
+  const {
+    myRunnerId,
+    isLoading: loadingIdentity,
+    isError: identityError,
+  } = useIdentity();
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: allRunners, isLoading: loadingRunners } = useListRunners({});
-  const { data: otherRunner } = useGetRunner(otherId, { query: { enabled: !!otherId, queryKey: getGetRunnerQueryKey(otherId) } });
+  const { data: myRunner } = useGetRunner(myRunnerId ?? 0, {
+    query: {
+      enabled: myRunnerId !== null,
+      queryKey: getGetRunnerQueryKey(myRunnerId ?? 0),
+    },
+  });
+  const { data: otherRunner } = useGetRunner(otherId, {
+    query: {
+      enabled: myRunnerId !== null && !!otherId,
+      queryKey: getGetRunnerQueryKey(otherId),
+    },
+  });
 
   const { data: messages, isLoading: loadingMessages } = useGetConversation(
     { otherId },
@@ -45,6 +57,8 @@ export default function ConversationPage() {
 
   const isFemale = otherRunner?.gender?.toLowerCase() === "female";
   const otherAvatar = resolveAvatarUrl(otherRunner?.avatarUrl) || (isFemale ? defaultAvatarF : defaultAvatarM);
+  const myIsFemale = myRunner?.gender?.toLowerCase() === "female";
+  const myAvatar = resolveAvatarUrl(myRunner?.avatarUrl) || (myIsFemale ? defaultAvatarF : defaultAvatarM);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,29 +81,40 @@ export default function ConversationPage() {
     );
   };
 
-  if (!myRunnerId) {
+  if (myRunnerId === null) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-4">
-            <h2 className="text-2xl font-display font-bold mb-3">Who are you?</h2>
-            <p className="text-muted-foreground mb-6">Select your profile to send and receive messages.</p>
-            {loadingRunners ? (
+            <h2 className="text-2xl font-display font-bold mb-3">
+              {loadingIdentity
+                ? "Checking your runner profile"
+                : identityError
+                  ? "We couldn’t check your runner profile"
+                  : "Create a runner profile to message runners"}
+            </h2>
+            {loadingIdentity ? (
               <Skeleton className="h-10 w-full" />
+            ) : identityError ? (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-primary font-medium hover:underline"
+              >
+                Try again
+              </button>
             ) : (
-              <Select onValueChange={(val) => setMyRunnerId(Number(val))}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="I am…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allRunners?.map((r) => (
-                    <SelectItem key={r.id} value={String(r.id)}>
-                      {r.name} — {r.city}, {r.country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <p className="mb-6 text-muted-foreground">
+                  Create your runner profile before sending or receiving messages.
+                </p>
+                <Link href="/create-profile">
+                  <button className="rounded-full bg-primary px-5 py-3 font-bold text-primary-foreground hover:bg-primary/90">
+                    Create your runner profile
+                  </button>
+                </Link>
+              </>
             )}
           </div>
         </main>
@@ -97,10 +122,6 @@ export default function ConversationPage() {
       </div>
     );
   }
-
-  const myRunner = allRunners?.find((r) => r.id === myRunnerId);
-  const myIsFemale = myRunner?.gender?.toLowerCase() === "female";
-  const myAvatar = resolveAvatarUrl(myRunner?.avatarUrl) || (myIsFemale ? defaultAvatarF : defaultAvatarM);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

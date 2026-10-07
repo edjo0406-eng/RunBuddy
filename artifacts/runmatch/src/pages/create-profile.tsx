@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCreateRunner, CreateRunnerBodyLookingFor, CreateRunnerBodyExperience, CreateRunnerBodyProfileType } from "@workspace/api-client-react";
+import {
+  CreateRunnerBodyExperience,
+  CreateRunnerBodyLookingFor,
+  CreateRunnerBodyProfileType,
+  getGetCurrentRunnerQueryKey,
+  useCreateRunner,
+} from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useIdentity } from "@/hooks/use-identity";
 
 const RUN_TYPES = ["road", "trail", "track", "treadmill", "ultra"] as const;
 const TIME_PATTERN = /^(?:\d{1,2}:)?\d{1,2}:[0-5]\d$/;
@@ -89,7 +95,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CreateProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { setMyRunnerId } = useIdentity();
+  const queryClient = useQueryClient();
   const createRunner = useCreateRunner();
 
   const form = useForm<FormValues>({
@@ -163,7 +169,9 @@ export default function CreateProfile() {
       }
     }, {
       onSuccess: (runner) => {
-        setMyRunnerId(runner.id);
+        void queryClient.invalidateQueries({
+          queryKey: getGetCurrentRunnerQueryKey(),
+        });
         trackEvent("profile_created");
         toast({
           title: "Profile Created!",

@@ -1,13 +1,16 @@
-import { useState } from "react";
 import { Link } from "wouter";
-import { useGetInbox, useListRunners, getGetInboxQueryKey } from "@workspace/api-client-react";
+import {
+  getGetInboxQueryKey,
+  getGetRunnerQueryKey,
+  useGetInbox,
+  useGetRunner,
+} from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIdentity } from "@/hooks/use-identity";
-import { MessageSquare, User } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { resolveAvatarUrl } from "@/lib/avatar";
@@ -23,14 +26,22 @@ function formatTime(dateStr: string) {
 }
 
 export default function Inbox() {
-  const { myRunnerId, setMyRunnerId } = useIdentity();
-
-  const { data: allRunners, isLoading: loadingRunners } = useListRunners({});
+  const {
+    myRunnerId,
+    isLoading: loadingIdentity,
+    isError: identityError,
+  } = useIdentity();
+  const { data: myRunner } = useGetRunner(myRunnerId ?? 0, {
+    query: {
+      enabled: myRunnerId !== null,
+      queryKey: getGetRunnerQueryKey(myRunnerId ?? 0),
+    },
+  });
   const { data: conversations, isLoading: loadingInbox } = useGetInbox(
     { query: { enabled: !!myRunnerId, refetchInterval: 10_000, queryKey: getGetInboxQueryKey() } }
   );
 
-  if (!myRunnerId) {
+  if (myRunnerId === null) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
@@ -38,24 +49,35 @@ export default function Inbox() {
           <div className="text-center max-w-md mx-auto px-4">
             <MessageSquare className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
             <h1 className="text-3xl font-display font-bold mb-3">Your Inbox</h1>
-            <p className="text-muted-foreground mb-8">
-              Select your runner profile to view your messages.
-            </p>
-            {loadingRunners ? (
-              <Skeleton className="h-10 w-full rounded-md" />
+            {loadingIdentity ? (
+              <>
+                <p className="text-muted-foreground mb-4">Checking your runner profile…</p>
+                <Skeleton className="h-10 w-full rounded-md" />
+              </>
+            ) : identityError ? (
+              <>
+                <p className="text-muted-foreground mb-4">
+                  We couldn’t check your runner profile. Please try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="text-primary font-medium hover:underline"
+                >
+                  Try again
+                </button>
+              </>
             ) : (
-              <Select onValueChange={(val) => setMyRunnerId(Number(val))}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="I am…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allRunners?.map((r) => (
-                    <SelectItem key={r.id} value={String(r.id)}>
-                      {r.name} — {r.city}, {r.country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <p className="text-muted-foreground mb-8">
+                  Create a runner profile to view and send messages.
+                </p>
+                <Link href="/create-profile">
+                  <button className="rounded-full bg-primary px-5 py-3 font-bold text-primary-foreground hover:bg-primary/90">
+                    Create your runner profile
+                  </button>
+                </Link>
+              </>
             )}
           </div>
         </main>
@@ -63,8 +85,6 @@ export default function Inbox() {
       </div>
     );
   }
-
-  const me = allRunners?.find((r) => r.id === myRunnerId);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -75,15 +95,9 @@ export default function Inbox() {
             <div>
               <h1 className="text-3xl font-display font-bold mb-1">Inbox</h1>
               <p className="text-muted-foreground text-sm">
-                Viewing as <span className="font-semibold text-foreground">{me?.name ?? "…"}</span>
+                Viewing as <span className="font-semibold text-foreground">{myRunner?.name ?? "…"}</span>
               </p>
             </div>
-            <button
-              onClick={() => setMyRunnerId(null)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
-            >
-              Switch profile
-            </button>
           </div>
         </section>
 
