@@ -13,7 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['app/**/*.test.tsx'],
+    include: ['__tests__/**/*.test.tsx'],
     clearMocks: true,
     setupFiles: ['./vitest.setup.ts'],
   },

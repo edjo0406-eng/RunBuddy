@@ -7,8 +7,8 @@ import {
 } from 'react-test-renderer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import ConnectionsScreen from './(tabs)/connections';
-import RunnerDetailScreen from './runner/[id]';
+import ConnectionsScreen from '../app/(tabs)/connections';
+import RunnerDetailScreen from '../app/runner/[id]';
 
 const fixtures = vi.hoisted(() => ({
   runnerId: 20,
