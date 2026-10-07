@@ -27,6 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
+      - name: Run API server tests
+        run: pnpm --filter @workspace/api-server run test
       - name: Run workspace typecheck
         run: pnpm run typecheck
