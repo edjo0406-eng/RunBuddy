@@ -11,6 +11,7 @@
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.
 - [RunBuddy Android tabs](runbuddy-android-tabs.md) — keep Android tab-bar sizing and bottom safe-area padding explicit; the user confirmed all four tabs appeared after refresh.
 - [Mobile profile edit verification](runbuddy-mobile-profile-edit-testing.md) — confirm a runner profile field appears in the signed-in app after saving, not only in API logs.
+- [RunBuddy mobile screen tests](runbuddy-mobile-testing.md) — use Vitest with React Test Renderer and focused mocks unless React Native’s source transform is configured.
 - [Apple Health profile label](apple-health-profile-label.md) — Apple Health is a self-reported profile label, not a HealthKit connection or workout sync.
 - [RunBuddy profile photos](runbuddy-profile-photos.md) — support photo editing on both surfaces and disclose that anyone with a link can view uploads.
 - [RunBuddy safety controls](runbuddy-safety-controls.md) — blocks hide signed-in access without deleting messages; unblocking never restores connections.

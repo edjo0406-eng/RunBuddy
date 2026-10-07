@@ -53,6 +53,7 @@ function RequestCard({
   const router = useRouter();
   const incoming = connection.toRunnerId === runnerId;
   const outgoing = connection.fromRunnerId === runnerId;
+  const canRespond = connection.status === 'pending' && incoming;
   const runner = otherRunner(connection, runnerId);
   const title = runner?.profileType === 'individual' ? runner.name : runner?.clubName || runner?.name || 'RunBuddy runner';
 
@@ -77,7 +78,7 @@ function RequestCard({
         </View>
         <Feather name="arrow-up-right" size={17} color={colors.mutedForeground} />
       </Pressable>
-      {incoming ? (
+      {canRespond ? (
         <View style={styles.respondRow}>
           <ActionButton
             title="Decline"
@@ -97,7 +98,7 @@ function RequestCard({
             testID={`accept-request-${connection.id}`}
           />
         </View>
-      ) : (
+      ) : connection.status === 'pending' && outgoing ? (
         <View style={styles.pendingActions}>
           <View style={[styles.statusLine, { backgroundColor: colors.muted, flex: 1 }]}>
             <Feather name="clock" size={14} color={colors.mutedForeground} />
@@ -117,7 +118,7 @@ function RequestCard({
             />
           ) : null}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -207,6 +208,8 @@ export default function ConnectionsScreen() {
   const outgoing = pending.filter((connection) => connection.fromRunnerId === identity.runnerId);
 
   const respond = async (id: number, status: 'accepted' | 'declined') => {
+    const request = pending.find((connection) => connection.id === id);
+    if (!request || request.toRunnerId !== identity.runnerId) return;
     setActionError(null);
     try {
       await updateConnection.mutateAsync({ id, data: { status } });

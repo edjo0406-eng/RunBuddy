@@ -97,7 +97,15 @@ export default function RunnerDetailScreen() {
   };
 
   const respond = async (status: 'accepted' | 'declined') => {
-    if (!connection) return;
+    if (
+      !connection ||
+      !runner ||
+      connection.status !== 'pending' ||
+      connection.toRunnerId !== identity.runnerId ||
+      connection.fromRunnerId !== runner.id
+    ) {
+      return;
+    }
     setActionError(null);
     try {
       await updateConnection.mutateAsync({ id: connection.id, data: { status } });
@@ -227,20 +235,43 @@ export default function RunnerDetailScreen() {
         />
       );
     }
-    if (connection.status === 'pending' && connection.toRunnerId === identity.runnerId) {
+    if (
+      connection.status === 'pending' &&
+      connection.toRunnerId === identity.runnerId &&
+      connection.fromRunnerId === runner.id
+    ) {
       return (
         <View style={styles.respondRow}>
-          <ActionButton title="Decline" variant="outline" icon="x" compact onPress={() => respond('declined')} loading={updateConnection.isPending} />
-          <ActionButton title="Accept request" icon="check" compact onPress={() => respond('accepted')} loading={updateConnection.isPending} />
+          <ActionButton
+            title="Decline"
+            variant="outline"
+            icon="x"
+            compact
+            onPress={() => respond('declined')}
+            loading={updateConnection.isPending}
+            testID={`decline-request-${connection.id}`}
+          />
+          <ActionButton
+            title="Accept request"
+            icon="check"
+            compact
+            onPress={() => respond('accepted')}
+            loading={updateConnection.isPending}
+            testID={`accept-request-${connection.id}`}
+          />
         </View>
       );
     }
-    if (connection.status === 'pending') {
+    if (
+      connection.status === 'pending' &&
+      connection.fromRunnerId === identity.runnerId &&
+      connection.toRunnerId === runner.id
+    ) {
       return (
         <View style={styles.pendingRequest}>
           <View style={[styles.requestStatus, { backgroundColor: colors.muted }]}>
             <Feather name="clock" size={16} color={colors.mutedForeground} />
-            <Text style={[styles.requestStatusText, { color: colors.mutedForeground }]}>Buddy request sent</Text>
+            <Text testID={`waiting-for-reply-${connection.id}`} style={[styles.requestStatusText, { color: colors.mutedForeground }]}>Buddy request sent</Text>
           </View>
           {connection.fromRunnerId === identity.runnerId ? (
             <ActionButton
