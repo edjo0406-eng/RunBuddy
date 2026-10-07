@@ -33,7 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Activity, Timer, Medal, Users, ExternalLink, MessageSquare, Plane, Flag, ShieldBan, UserMinus } from "lucide-react";
+import { MapPin, Activity, Timer, Medal, Users, ExternalLink, MessageSquare, Plane, Flag, ShieldBan, UserMinus, Pencil } from "lucide-react";
 import defaultAvatarM from "@/assets/images/avatar-m.png";
 import defaultAvatarF from "@/assets/images/avatar-f.png";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,16 @@ function isSupportedProfilePhotoType(
   value: string,
 ): value is UploadUrlRequestContentType {
   return value === "image/jpeg" || value === "image/png" || value === "image/webp";
+}
+
+function isSafeExternalUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 export default function RunnerProfile() {
@@ -489,6 +499,16 @@ export default function RunnerProfile() {
                       <p role="status" className="text-sm text-muted-foreground">
                         This is your profile. Open another runner’s profile to connect or message them.
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        data-testid="button-edit-profile"
+                        onClick={() => navigate(`/edit-profile/${id}`)}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit profile details
+                      </Button>
                       <div className="flex items-start gap-3 rounded-lg border bg-background p-4">
                         <Checkbox id="public-listing" checked={runner.publicListing === true} disabled={updateRunner.isPending} onCheckedChange={(checked) => changePublicListing(checked === true)} />
                         <div>
@@ -650,23 +670,48 @@ export default function RunnerProfile() {
                   <CardTitle className="font-display">Tracking Apps</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {runner.trackingApps?.stravaUrl && (
+                  {isSafeExternalUrl(runner.trackingApps?.stravaUrl) && (
                     <a href={runner.trackingApps.stravaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                       <span className="font-medium text-[#FC4C02]">Strava</span>
                       <ExternalLink className="w-4 h-4 text-muted-foreground" />
                     </a>
                   )}
-                  {runner.trackingApps?.garminUrl && (
-                    <a href={runner.trackingApps.garminUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  {isSafeExternalUrl(runner.trackingApps?.garminUrl ?? runner.trackingApps?.garminConnectUrl) && (
+                    <a href={runner.trackingApps?.garminUrl ?? runner.trackingApps?.garminConnectUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                       <span className="font-medium text-[#007CC3]">Garmin</span>
                       <ExternalLink className="w-4 h-4 text-muted-foreground" />
                     </a>
                   )}
-                  {runner.trackingApps?.nikeRunClubUrl && (
+                  {isSafeExternalUrl(runner.trackingApps?.nikeRunClubUrl) && (
                     <a href={runner.trackingApps.nikeRunClubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                       <span className="font-medium text-foreground">Nike Run Club</span>
                       <ExternalLink className="w-4 h-4 text-muted-foreground" />
                     </a>
+                  )}
+                  {isSafeExternalUrl(runner.trackingApps?.polarUrl) && (
+                    <a href={runner.trackingApps.polarUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                      <span className="font-medium text-foreground">Polar</span>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {isSafeExternalUrl(runner.trackingApps?.suuntoUrl) && (
+                    <a href={runner.trackingApps.suuntoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                      <span className="font-medium text-foreground">Suunto</span>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                    </a>
+                  )}
+                  {runner.trackingApps?.wahooPlan && (
+                    isSafeExternalUrl(runner.trackingApps.wahooPlan) ? (
+                      <a href={runner.trackingApps.wahooPlan} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                        <span className="font-medium text-foreground">Wahoo</span>
+                        <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                      </a>
+                    ) : (
+                      <div className="rounded-lg border p-3">
+                        <span className="block font-medium text-foreground">Wahoo</span>
+                        <span className="mt-1 block text-sm text-muted-foreground">{runner.trackingApps.wahooPlan}</span>
+                      </div>
+                    )
                   )}
                   {runner.trackingApps?.appleHealthConnected && (
                     <div className="rounded-lg border p-3">
@@ -674,7 +719,14 @@ export default function RunnerProfile() {
                       <span className="mt-1 block text-xs text-muted-foreground">Runner-reported profile label; no workout data is synced.</span>
                     </div>
                   )}
-                  {!runner.trackingApps?.stravaUrl && !runner.trackingApps?.garminUrl && !runner.trackingApps?.nikeRunClubUrl && !runner.trackingApps?.appleHealthConnected && (
+                  {!runner.trackingApps?.stravaUrl &&
+                    !runner.trackingApps?.garminUrl &&
+                    !runner.trackingApps?.garminConnectUrl &&
+                    !runner.trackingApps?.nikeRunClubUrl &&
+                    !runner.trackingApps?.polarUrl &&
+                    !runner.trackingApps?.suuntoUrl &&
+                    !runner.trackingApps?.wahooPlan &&
+                    !runner.trackingApps?.appleHealthConnected && (
                     <p className="text-sm text-muted-foreground">No tracking apps linked.</p>
                   )}
                 </CardContent>

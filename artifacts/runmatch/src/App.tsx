@@ -30,6 +30,7 @@ import {
 } from "@/lib/seo";
 import ConversationPage from "@/pages/conversation";
 import CreateProfile from "@/pages/create-profile";
+import EditRunnerProfile from "@/pages/edit-runner-profile";
 import Home from "@/pages/home";
 import Inbox from "@/pages/inbox";
 import NotFound from "@/pages/not-found";
@@ -172,6 +173,11 @@ function Router() {
       <Route path="/sign-up/*?" component={SignUpPage} />
       <Route path="/run-buddy" component={RunBuddy} />
       <Route path="/run-date" component={RunDate} />
+      <Route path="/edit-profile/:id">
+        <AuthGate basePath={basePath}>
+          <EditRunnerProfile />
+        </AuthGate>
+      </Route>
       <Route path="/runner/:id" component={RunnerProfile} />
       <Route path="/create-profile">
         <AuthGate basePath={basePath}>

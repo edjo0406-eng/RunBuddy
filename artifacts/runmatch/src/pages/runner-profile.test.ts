@@ -110,6 +110,8 @@ describe("runner profile actions", () => {
     expect(markup).not.toContain("Connect for Buddy");
     expect(markup).not.toContain("Send Message");
     expect(markup).toContain("This is your profile.");
+    expect(markup).toContain("Edit profile details");
+    expect(markup).toContain('data-testid="button-edit-profile"');
   });
 
   it("shows connect and message actions for another runner looking for a buddy", () => {
@@ -120,6 +122,7 @@ describe("runner profile actions", () => {
 
     expect(markup).toContain("Connect for Buddy");
     expect(markup).toContain("Send Message");
+    expect(markup).not.toContain("Edit profile details");
   });
 
   it("keeps messaging available when another runner is not looking for a buddy", () => {
@@ -166,6 +169,24 @@ describe("runner profile actions", () => {
     expect(markup).not.toContain("Running Details");
     expect(markup).not.toContain("Personal Bests");
     expect(markup).not.toContain("--:--");
+  });
+
+  it("shows supported tracking accounts saved from the profile editor", () => {
+    profileMocks.runner = {
+      ...makeRunner(14, "both"),
+      trackingApps: {
+        polarUrl: "https://flow.polar.com/",
+        suuntoUrl: "https://www.suunto.com/",
+        wahooPlan: "https://www.wahoo.com/",
+      },
+    };
+
+    const markup = renderProfile();
+
+    expect(markup).toContain("Polar");
+    expect(markup).toContain("Suunto");
+    expect(markup).toContain("Wahoo");
+    expect(markup).toContain("https://www.wahoo.com/");
   });
 
   it("offers unfriend for an accepted connection", () => {
