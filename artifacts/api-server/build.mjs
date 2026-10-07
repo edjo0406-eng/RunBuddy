@@ -3,7 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { copyFile, rm } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -13,6 +14,16 @@ const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
+
+  // Make the crawl-visible shell self-contained in the API build, independent
+  // of artifact build ordering and static-service files at runtime.
+  if (process.env.NODE_ENV === "production") {
+    execFileSync("pnpm", ["--filter", "@workspace/runmatch", "run", "build"], {
+      cwd: path.resolve(artifactDir, "../.."),
+      env: { ...process.env, PORT: "20894", BASE_PATH: "/" },
+      stdio: "inherit",
+    });
+  }
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
@@ -118,6 +129,12 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+  if (process.env.NODE_ENV === "production") {
+    await copyFile(
+      path.resolve(artifactDir, "../runmatch/dist/public/index.html"),
+      path.join(distDir, "public-shell.html"),
+    );
+  }
 }
 
 buildAll().catch((err) => {

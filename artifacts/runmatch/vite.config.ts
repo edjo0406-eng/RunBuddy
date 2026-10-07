@@ -141,7 +141,6 @@ const routeMetadataPlugin = {
   async closeBundle() {
     const homeHtml = await readFile(path.join(outputDirectory, "index.html"), "utf8");
     const pages = [
-      ["run-buddy", PUBLIC_PAGE_METADATA.runBuddy, PUBLIC_PAGE_CONTENT.runBuddy],
       ["run-date", PUBLIC_PAGE_METADATA.runDate, PUBLIC_PAGE_CONTENT.runDate],
     ] as const;
 
@@ -169,7 +168,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icon-192.svg", "icon-512.svg"],
       workbox: {
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/runner(?:\/|$)/, /^\/run-buddy(?:\/|$)/, /^\/sitemap\.xml$/],
       },
       manifest: {
         name: "RunBuddy",

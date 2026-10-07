@@ -1,4 +1,5 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { applyPageMetadata, getPublicPageMetadata, getRunnerPageMetadata } from "@/lib/seo";
 import { trackEvent } from "@/lib/analytics";
 import { resolveAvatarUrl } from "@/lib/avatar";
 import { useParams, useLocation } from "wouter";
@@ -55,6 +56,12 @@ export default function RunnerProfile() {
   const queryClient = useQueryClient();
   
   const { data: runner, isLoading } = useGetRunner(id, { query: { enabled: !!id, queryKey: getGetRunnerQueryKey(id) } });
+  useEffect(() => {
+    const fallback = getPublicPageMetadata(`/runner/${id}`)!;
+    applyPageMetadata(runner
+      ? getRunnerPageMetadata(runner, isSignedIn !== false)
+      : { ...fallback, title: isLoading ? fallback.title : "Runner profile unavailable | RunBuddy" });
+  }, [id, runner, isLoading, isSignedIn]);
   const {
     data: currentRunner,
     isError: isCurrentRunnerError,
