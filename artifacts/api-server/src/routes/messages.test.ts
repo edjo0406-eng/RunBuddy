@@ -3,28 +3,88 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { once } from "node:events";
 import {
+  createInboxMessageEventBus,
   publishUnreadCountUpdate,
   subscribeToUnreadCountUpdates,
+  UNREAD_COUNT_EVENT_CHANNEL,
+  type InboxMessageEventPool,
 } from "../lib/inbox-message-events";
 
-const mocks = vi.hoisted(() => ({
-  currentRunnerId: 20,
-  rows: [] as Record<string, unknown>[],
-  runnerRows: [] as Record<string, unknown>[],
-  select: vi.fn(),
-  insert: vi.fn(),
-  update: vi.fn(),
-  getAuthenticatedRunner: vi.fn(),
-  requireAuthentication: vi.fn(),
-  requireRunner: vi.fn(),
-  areRunnersBlocked: vi.fn(),
-  getHiddenRunnerIds: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  type Notification = { channel: string; payload: string };
+  type NotificationListener = (notification: Notification) => void;
+  type ErrorListener = (error: Error) => void;
+  const pgClients = new Set<{
+    channels: Set<string>;
+    notificationListeners: Set<NotificationListener>;
+  }>();
+
+  const pool = {
+    connect: vi.fn(async () => {
+      const state = {
+        channels: new Set<string>(),
+        notificationListeners: new Set<NotificationListener>(),
+      };
+      pgClients.add(state);
+
+      const client = {
+        on: (
+          event: "notification" | "error",
+          listener: NotificationListener | ErrorListener,
+        ) => {
+          if (event === "notification") {
+            state.notificationListeners.add(listener as NotificationListener);
+          }
+          return client;
+        },
+        query: async (statement: string) => {
+          const channel = /^LISTEN\s+([a-z_]+)$/i.exec(statement)?.[1];
+          if (channel) state.channels.add(channel);
+          return { rows: [] };
+        },
+        release: () => {
+          pgClients.delete(state);
+        },
+      };
+
+      return client;
+    }),
+    query: vi.fn(async (_statement: string, values?: string[]) => {
+      const [rawChannel, rawPayload] = values ?? [];
+      const channel = String(rawChannel);
+      const payload = String(rawPayload);
+      for (const client of pgClients) {
+        if (!client.channels.has(channel)) continue;
+        for (const listener of client.notificationListeners) {
+          listener({ channel, payload });
+        }
+      }
+      return { rows: [] };
+    }),
+  };
+
+  return {
+    currentRunnerId: 20,
+    rows: [] as Record<string, unknown>[],
+    runnerRows: [] as Record<string, unknown>[],
+    select: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    getAuthenticatedRunner: vi.fn(),
+    requireAuthentication: vi.fn(),
+    requireRunner: vi.fn(),
+    areRunnersBlocked: vi.fn(),
+    getHiddenRunnerIds: vi.fn(),
+    pgClients,
+    pool,
+  };
+});
 
 vi.mock("@workspace/db", () => {
   const columns = new Proxy({}, { get: (_target, name) => String(name) });
   return {
     db: { select: mocks.select, insert: mocks.insert, update: mocks.update },
+    pool: mocks.pool,
     messagesTable: columns,
     runnersTable: columns,
   };
@@ -273,7 +333,10 @@ describe("opening a message conversation", () => {
 describe("inbox update events", () => {
   it("notifies the recipient after a message is stored", async () => {
     const recipientListener = vi.fn();
-    const unsubscribe = subscribeToUnreadCountUpdates(30, recipientListener);
+    const unsubscribe = await subscribeToUnreadCountUpdates(
+      30,
+      recipientListener,
+    );
 
     try {
       const response = await request(app)
@@ -282,6 +345,70 @@ describe("inbox update events", () => {
 
       expect(response.status, response.text).toBe(201);
       expect(recipientListener).toHaveBeenCalledTimes(1);
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  it("delivers a message event to a recipient stream on another API process", async () => {
+    const recipientProcess = createInboxMessageEventBus(
+      mocks.pool as unknown as InboxMessageEventPool,
+      { warn: vi.fn() },
+      "recipient-api-process",
+    );
+    const recipientUpdate = vi.fn();
+    const unrelatedRunnerUpdate = vi.fn();
+    const unsubscribeRecipient =
+      await recipientProcess.subscribeToUnreadCountUpdates(30, recipientUpdate);
+    const unsubscribeUnrelated =
+      await recipientProcess.subscribeToUnreadCountUpdates(
+        31,
+        unrelatedRunnerUpdate,
+      );
+
+    try {
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 30, content: "Meet at the park at 6." });
+
+      expect(response.status).toBe(201);
+      expect(recipientUpdate).toHaveBeenCalledTimes(1);
+      expect(unrelatedRunnerUpdate).not.toHaveBeenCalled();
+
+      const notifyCall = mocks.pool.query.mock.calls.find(([statement]) =>
+        statement.includes("pg_notify"),
+      );
+      expect(notifyCall).toBeDefined();
+      const notificationPayload = JSON.parse(notifyCall?.[1]?.[1] ?? "{}");
+      expect(notificationPayload).toMatchObject({
+        runnerId: 30,
+        sourceId: expect.any(String),
+      });
+      expect(notificationPayload).not.toHaveProperty("content");
+      expect(notifyCall?.[1]?.[0]).toBe(UNREAD_COUNT_EVENT_CHANNEL);
+    } finally {
+      unsubscribeRecipient();
+      unsubscribeUnrelated();
+    }
+  });
+
+  it("still saves a message when cross-process event publishing fails", async () => {
+    const localRecipientUpdate = vi.fn();
+    const unsubscribe = await subscribeToUnreadCountUpdates(
+      30,
+      localRecipientUpdate,
+    );
+    mocks.pool.query.mockRejectedValueOnce(
+      new Error("Temporary notification failure"),
+    );
+
+    try {
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 30, content: "See you soon." });
+
+      expect(response.status).toBe(201);
+      expect(localRecipientUpdate).toHaveBeenCalledTimes(1);
     } finally {
       unsubscribe();
     }

@@ -42,6 +42,10 @@ vi.mock("@workspace/db", () => {
       delete: dbMocks.delete,
       transaction: dbMocks.transaction,
     },
+    pool: {
+      connect: vi.fn(),
+      query: vi.fn(async () => ({ rows: [] })),
+    },
     usersTable: table(),
     sessionsTable: table(),
     runnersTable: table(),

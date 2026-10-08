@@ -183,7 +183,7 @@ router.get("/messages/events", async (req, res) => {
     if (res.destroyed || res.writableEnded) return;
     res.write("event: unread-count\ndata: {}\n\n");
   };
-  const unsubscribe = subscribeToUnreadCountUpdates(
+  const unsubscribe = await subscribeToUnreadCountUpdates(
     currentRunner.id,
     sendUnreadCountUpdate,
   );
@@ -243,7 +243,7 @@ router.post("/messages", sendMessageRateLimit, async (req, res) => {
     .values({ fromRunnerId, toRunnerId, content })
     .returning();
 
-  publishUnreadCountUpdate(toRunnerId);
+  await publishUnreadCountUpdate(toRunnerId);
   return res.status(201).json(msg);
 });
 
