@@ -23,4 +23,5 @@
 - [Vite image verification](vite-image-verification.md) — development image import wrappers are not image transfers; check rendered currentSrc and image requests.
 - [Website account-switch tests](runbuddy-website-account-switch-testing.md) — hold the next account’s response pending and assert old user-scoped links are absent before and after it resolves.
 - [RunBuddy browser visibility testing](runbuddy-browser-visibility-testing.md) — simulate hidden/visible state in headless tests; opening another page may not hide the first.
+- [RunBuddy unread-query race tests](runbuddy-unread-query-races.md) — same-key polling coalesces in-flight fetches; cancel the old query when testing a late stale result.
 - [Patched dependency audits](pnpm-patched-dependency-audits.md) — pnpm audit ignores local patch contents; verify source backports with focused tests and avoid mutating ignore flags.

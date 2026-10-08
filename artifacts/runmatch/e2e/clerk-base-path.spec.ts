@@ -822,7 +822,6 @@ test("desktop and mobile inbox badges recover after a temporary unread-count fai
     await deleteTemporaryClerkUsers(email);
   }
 });
-
 test("desktop and mobile inbox badges refresh when a background tab resumes", async ({
   page,
 }) => {

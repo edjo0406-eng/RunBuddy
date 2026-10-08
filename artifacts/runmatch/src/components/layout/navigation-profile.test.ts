@@ -37,7 +37,14 @@ vi.mock("@workspace/api-client-react", () => ({
       ),
     };
   },
-  useGetUnreadCount: () => ({ data: { count: 0 } }),
+  useGetUnreadCount: (options: { query: { queryKey: unknown[] } }) => {
+    const queryClient = useQueryClient();
+    return {
+      data:
+        queryClient.getQueryData<{ count: number }>(options.query.queryKey) ??
+        { count: 0 },
+    };
+  },
 }));
 
 vi.mock("@/hooks/use-identity", () => ({
@@ -86,6 +93,80 @@ describe("signed-in profile navigation", () => {
     navigationMocks.userId = "clerk-user-1";
     navigationMocks.currentRunnerQueryKeys = [];
     navigationMocks.failedRunnerLookups.clear();
+  });
+
+  it("keeps both inbox badges on the newest count when an older refresh settles late", async () => {
+    const queryClient = createNavigationQueryClient();
+    const unreadQueryKey = ["unread-count", navigationMocks.userId];
+    queryClient.setQueryData(unreadQueryKey, { count: 1 });
+
+    const renderUnreadBadges = () =>
+      renderNavigation(
+        createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+        queryClient,
+      );
+    const initialMarkup = renderUnreadBadges();
+    expect(initialMarkup).toMatch(
+      /data-testid="badge-unread-count"[^>]*>1<\/span>/,
+    );
+    expect(initialMarkup).toMatch(
+      /data-testid="badge-mobile-unread-count"[^>]*>1<\/span>/,
+    );
+
+    let resolveOlderResponse!: (value: { count: number }) => void;
+    let notifyOlderRequestStarted!: () => void;
+    const olderRequestStarted = new Promise<void>((resolve) => {
+      notifyOlderRequestStarted = resolve;
+    });
+    const olderResponse = new Promise<{ count: number }>((resolve) => {
+      resolveOlderResponse = resolve;
+    });
+    const olderRefresh = queryClient.fetchQuery({
+      queryKey: unreadQueryKey,
+      staleTime: 0,
+      queryFn: ({ signal }) => {
+        // This transport ignores abort and completes only after the newer refresh.
+        void signal;
+        notifyOlderRequestStarted();
+        return olderResponse;
+      },
+    });
+    const olderRefreshResult = olderRefresh.then(
+      () => null,
+      (error: unknown) => error,
+    );
+    await olderRequestStarted;
+
+    await queryClient.cancelQueries({
+      queryKey: unreadQueryKey,
+      exact: true,
+    });
+    await expect(
+      queryClient.fetchQuery({
+        queryKey: unreadQueryKey,
+        staleTime: 0,
+        queryFn: async () => ({ count: 2 }),
+      }),
+    ).resolves.toEqual({ count: 2 });
+    const newerMarkup = renderUnreadBadges();
+    expect(newerMarkup).toMatch(
+      /data-testid="badge-unread-count"[^>]*>2<\/span>/,
+    );
+    expect(newerMarkup).toMatch(
+      /data-testid="badge-mobile-unread-count"[^>]*>2<\/span>/,
+    );
+
+    resolveOlderResponse({ count: 1 });
+    await expect(olderResponse).resolves.toEqual({ count: 1 });
+    await olderRefreshResult;
+    expect(queryClient.getQueryData(unreadQueryKey)).toEqual({ count: 2 });
+    const finalMarkup = renderUnreadBadges();
+    expect(finalMarkup).toMatch(
+      /data-testid="badge-unread-count"[^>]*>2<\/span>/,
+    );
+    expect(finalMarkup).toMatch(
+      /data-testid="badge-mobile-unread-count"[^>]*>2<\/span>/,
+    );
   });
 
   it("links desktop navigation to the server-authenticated runner, not a cached profile ID", () => {
