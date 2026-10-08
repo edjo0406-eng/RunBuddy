@@ -939,3 +939,83 @@ test("desktop and mobile inbox badges refresh when a background tab resumes", as
     await deleteTemporaryClerkUsers(email);
   }
 });
+
+test("desktop and mobile inbox badges update promptly when a message event arrives", async ({
+  page,
+}) => {
+  const email = `runbuddy+clerk_test_${randomUUID()}@example.com`;
+  const password = `RunBuddy-${randomUUID()}!7a`;
+  let unreadCount = 1;
+  let unreadCountTwoResponseCount = 0;
+  let resolveEventStreamStarted!: () => void;
+  let releaseUnreadEvent!: () => void;
+  let firstEventStreamRequest = true;
+  const eventStreamStarted = new Promise<void>((resolve) => {
+    resolveEventStreamStarted = resolve;
+  });
+  const unreadEventGate = new Promise<void>((resolve) => {
+    releaseUnreadEvent = resolve;
+  });
+
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.context().route("**/api/runners/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: 14 }),
+      });
+    });
+    await page.context().route("**/api/messages/unread-count", async (route) => {
+      if (unreadCount === 2) unreadCountTwoResponseCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ count: unreadCount }),
+      });
+    });
+    await page.context().route("**/api/messages/events", async (route) => {
+      if (firstEventStreamRequest) {
+        firstEventStreamRequest = false;
+        resolveEventStreamStarted();
+        await unreadEventGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          headers: { "Cache-Control": "no-cache" },
+          body: "event: unread-count\ndata: {}\n\n",
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: "",
+      });
+    });
+
+    await signUpTemporaryUser(page, email, password);
+    const desktopBadge = page.getByTestId("badge-unread-count");
+    const mobileBadge = page.getByTestId("badge-mobile-unread-count");
+    await expect(desktopBadge).toBeVisible();
+    await expect(desktopBadge).toHaveText("1");
+    await eventStreamStarted;
+
+    unreadCount = 2;
+    releaseUnreadEvent();
+    await expect
+      .poll(() => unreadCountTwoResponseCount, { timeout: 6_000 })
+      .toBeGreaterThan(0);
+    await expect(desktopBadge).toHaveText("2");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(mobileBadge).toBeVisible();
+    await expect(mobileBadge).toHaveText("2");
+  } finally {
+    releaseUnreadEvent();
+    await deleteTemporaryClerkUsers(email);
+  }
+});

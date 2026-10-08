@@ -1,12 +1,18 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { once } from "node:events";
+import {
+  publishUnreadCountUpdate,
+  subscribeToUnreadCountUpdates,
+} from "../lib/inbox-message-events";
 
 const mocks = vi.hoisted(() => ({
   currentRunnerId: 20,
   rows: [] as Record<string, unknown>[],
   runnerRows: [] as Record<string, unknown>[],
   select: vi.fn(),
+  insert: vi.fn(),
   update: vi.fn(),
   getAuthenticatedRunner: vi.fn(),
   requireAuthentication: vi.fn(),
@@ -18,7 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@workspace/db", () => {
   const columns = new Proxy({}, { get: (_target, name) => String(name) });
   return {
-    db: { select: mocks.select, update: mocks.update },
+    db: { select: mocks.select, insert: mocks.insert, update: mocks.update },
     messagesTable: columns,
     runnersTable: columns,
   };
@@ -46,6 +52,11 @@ vi.mock("../lib/authorization", () => ({
 vi.mock("../lib/safety", () => ({
   areRunnersBlocked: mocks.areRunnersBlocked,
   getHiddenRunnerIds: mocks.getHiddenRunnerIds,
+}));
+
+vi.mock("../middlewares/rateLimit", () => ({
+  createRateLimiter: () => (_req: unknown, _res: unknown, next: () => void) =>
+    next(),
 }));
 
 import messagesRouter from "./messages";
@@ -194,6 +205,25 @@ beforeEach(() => {
     };
     return query;
   });
+
+  mocks.insert.mockImplementation(() => {
+    let insertedValues: Record<string, unknown> = {};
+    return {
+      values: (values: Record<string, unknown>) => {
+        insertedValues = values;
+        return {
+          returning: async () => [
+            {
+              id: 301,
+              ...insertedValues,
+              isRead: false,
+              createdAt: "2026-10-01T10:06:00.000Z",
+            },
+          ],
+        };
+      },
+    };
+  });
 });
 
 describe("runner inbox", () => {
@@ -238,4 +268,64 @@ describe("opening a message conversation", () => {
     expect(isReadById.get(201)).toBe(false);
     expect(isReadById.get(202)).toBe(false);
   });
+});
+
+describe("inbox update events", () => {
+  it("notifies the recipient after a message is stored", async () => {
+    const recipientListener = vi.fn();
+    const unsubscribe = subscribeToUnreadCountUpdates(30, recipientListener);
+
+    try {
+      const response = await request(app)
+        .post("/api/messages")
+        .send({ toRunnerId: 30, content: "See you on the next run." });
+
+      expect(response.status, response.text).toBe(201);
+      expect(recipientListener).toHaveBeenCalledTimes(1);
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  it("streams an authenticated runner's unread-count update signal", async () => {
+    const server = app.listen(0);
+    const controller = new AbortController();
+
+    try {
+      await once(server, "listening");
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        throw new Error("The test server did not bind to a TCP port.");
+      }
+
+      const response = await fetch(
+        `http://127.0.0.1:${address.port}/api/messages/events`,
+        { signal: controller.signal },
+      );
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("text/event-stream");
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("The event stream has no response body.");
+
+      let streamText = "";
+      const decoder = new TextDecoder();
+      const eventReceived = (async () => {
+        while (!streamText.includes("event: unread-count")) {
+          const { done, value } = await reader.read();
+          if (done) throw new Error("The event stream closed before the update.");
+          streamText += decoder.decode(value, { stream: true });
+        }
+        return streamText;
+      })();
+
+      publishUnreadCountUpdate(mocks.currentRunnerId);
+
+      await expect(eventReceived).resolves.toContain("data: {}");
+      await reader.cancel();
+    } finally {
+      controller.abort();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  }, 10_000);
 });

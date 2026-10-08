@@ -987,6 +987,13 @@ export const GetUnreadCountResponse = zod.object({
 
 
 /**
+ * Emits an unread-count event when a new message is received. Event data contains no message content.
+ * @summary Stream inbox update signals for a runner
+ */
+export const StreamInboxEventsResponse = zod.unknown()
+
+
+/**
  * @summary Send a message to another runner
  */
 export const sendMessageBodyContentMax = 4000;

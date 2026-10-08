@@ -11,6 +11,10 @@ import {
   requireAuthentication,
   requireRunner,
 } from "../lib/authorization";
+import {
+  publishUnreadCountUpdate,
+  subscribeToUnreadCountUpdates,
+} from "../lib/inbox-message-events";
 import { createRateLimiter } from "../middlewares/rateLimit";
 import { areRunnersBlocked, getHiddenRunnerIds } from "../lib/safety";
 
@@ -163,6 +167,44 @@ router.get("/messages/unread-count", async (req, res) => {
   return res.json({ count: row?.count ?? 0 });
 });
 
+router.get("/messages/events", async (req, res) => {
+  if (!(await requireAuthentication(req, res))) return;
+  const currentRunner = await getAuthenticatedRunner(req);
+  if (!requireRunner(currentRunner, res)) return;
+
+  res.status(200).set({
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  const sendUnreadCountUpdate = () => {
+    if (res.destroyed || res.writableEnded) return;
+    res.write("event: unread-count\ndata: {}\n\n");
+  };
+  const unsubscribe = subscribeToUnreadCountUpdates(
+    currentRunner.id,
+    sendUnreadCountUpdate,
+  );
+  const heartbeat = setInterval(() => {
+    if (res.destroyed || res.writableEnded) return;
+    res.write(": keep-alive\n\n");
+  }, 25_000);
+  let isClosed = false;
+  const cleanup = () => {
+    if (isClosed) return;
+    isClosed = true;
+    clearInterval(heartbeat);
+    unsubscribe();
+  };
+
+  res.once("close", cleanup);
+  req.once("aborted", cleanup);
+  res.flushHeaders();
+  res.write(": connected\n\n");
+});
+
 router.post("/messages", sendMessageRateLimit, async (req, res) => {
   if (!(await requireAuthentication(req, res))) return;
   const currentRunner = await getAuthenticatedRunner(req);
@@ -201,6 +243,7 @@ router.post("/messages", sendMessageRateLimit, async (req, res) => {
     .values({ fromRunnerId, toRunnerId, content })
     .returning();
 
+  publishUnreadCountUpdate(toRunnerId);
   return res.status(201).json(msg);
 });
 

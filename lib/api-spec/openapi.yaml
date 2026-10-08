@@ -445,6 +445,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/UnreadCount"
 
+  /messages/events:
+    get:
+      operationId: streamInboxEvents
+      tags: [messages]
+      summary: Stream inbox update signals for a runner
+      description: Emits an unread-count event when a new message is received. Event data contains no message content.
+      responses:
+        "200":
+          description: Server-sent inbox update events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
   /messages:
     post:
       operationId: sendMessage

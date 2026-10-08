@@ -28,6 +28,8 @@ import {
   applyPageMetadata,
   getPublicPageMetadata,
 } from "@/lib/seo";
+import { useIdentity } from "@/hooks/use-identity";
+import { useUnreadMessageUpdates } from "@/hooks/use-unread-message-updates";
 import ConversationPage from "@/pages/conversation";
 import CreateProfile from "@/pages/create-profile";
 import EditRunnerProfile from "@/pages/edit-runner-profile";
@@ -203,8 +205,17 @@ function Router() {
 
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
+  const { isLoaded, isSignedIn, userId } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
+  const { myRunnerId } = useIdentity();
   const queryClient = useQueryClient();
   const previousUserId = useRef<string | null | undefined>(undefined);
+
+  useUnreadMessageUpdates(
+    userId,
+    isLoaded && isSignedIn === true && myRunnerId !== null,
+  );
 
   useEffect(() => {
     const authStateChannel =

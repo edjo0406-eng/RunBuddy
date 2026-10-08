@@ -1582,6 +1582,84 @@ export function useGetUnreadCount<TData = Awaited<ReturnType<typeof getUnreadCou
 
 
 
+export const getStreamInboxEventsUrl = () => {
+
+
+
+
+  return `/api/messages/events`
+}
+
+/**
+ * Emits an unread-count event when a new message is received. Event data contains no message content.
+ * @summary Stream inbox update signals for a runner
+ */
+export const streamInboxEvents = async ( options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getStreamInboxEventsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getStreamInboxEventsQueryKey = () => {
+    return [
+    `/api/messages/events`
+    ] as const;
+    }
+
+
+export const getStreamInboxEventsQueryOptions = <TData = Awaited<ReturnType<typeof streamInboxEvents>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof streamInboxEvents>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getStreamInboxEventsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof streamInboxEvents>>> = ({ signal }) => streamInboxEvents({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof streamInboxEvents>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type StreamInboxEventsQueryResult = NonNullable<Awaited<ReturnType<typeof streamInboxEvents>>>
+export type StreamInboxEventsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Stream inbox update signals for a runner
+ */
+
+export function useStreamInboxEvents<TData = Awaited<ReturnType<typeof streamInboxEvents>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof streamInboxEvents>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getStreamInboxEventsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getSendMessageUrl = () => {
 
 
