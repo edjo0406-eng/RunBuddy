@@ -27,12 +27,6 @@ export const PUBLIC_PAGE_METADATA = {
       "Search RunBuddy by city, country, and experience level to find compatible running partners for local routes, travel runs, and regular training.",
     canonicalPath: "/run-buddy",
   },
-  runDate: {
-    title: "Find Running Companions and Partners | RunBuddy",
-    description:
-      "RunDate is now part of RunBuddy. Discover runners by city, pace, and experience, then connect for local routes, travel runs, and shared training.",
-    canonicalPath: "/run-date",
-  },
 } satisfies Record<string, PageMetadata>;
 
 export function getPublicPageMetadata(pathname: string): PageMetadata | undefined {
@@ -44,10 +38,6 @@ export function getPublicPageMetadata(pathname: string): PageMetadata | undefine
 
   if (normalizedPath === "/run-buddy") {
     return PUBLIC_PAGE_METADATA.runBuddy;
-  }
-
-  if (normalizedPath === "/run-date") {
-    return PUBLIC_PAGE_METADATA.runDate;
   }
 
   if (normalizedPath.startsWith("/runner/")) {

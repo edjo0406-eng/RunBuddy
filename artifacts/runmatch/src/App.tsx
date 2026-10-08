@@ -37,7 +37,6 @@ import Home from "@/pages/home";
 import Inbox from "@/pages/inbox";
 import NotFound from "@/pages/not-found";
 import RunBuddy from "@/pages/run-buddy";
-import RunDate from "@/pages/run-date";
 import RunnerProfile from "@/pages/runner-profile";
 
 const basePath = normalizeArtifactBasePath(import.meta.env.BASE_URL);
@@ -176,7 +175,6 @@ function Router() {
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
       <Route path="/run-buddy" component={RunBuddy} />
-      <Route path="/run-date" component={RunDate} />
       <Route path="/edit-profile/:id">
         <AuthGate basePath={basePath}>
           <EditRunnerProfile />

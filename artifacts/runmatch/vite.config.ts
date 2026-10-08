@@ -4,11 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { VitePWA } from "vite-plugin-pwa";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import {
   getCanonicalUrl,
   getPublicPageMetadata,
-  PUBLIC_PAGE_METADATA,
   SITE_NAME,
   SOCIAL_IMAGE_URL,
   type PageMetadata,
@@ -70,19 +68,6 @@ const PUBLIC_PAGE_CONTENT = {
         <p><a href="/">Learn how RunBuddy connects runners worldwide</a></p>
       </main>
       <footer><a href="/">RunBuddy</a></footer>`,
-  runDate: `
-      <header>
-        <nav aria-label="Primary navigation">
-          <a href="/">RunBuddy home</a>
-          <a href="/run-buddy">Find a RunBuddy</a>
-        </nav>
-      </header>
-      <main>
-        <h1>RunDate is now part of RunBuddy</h1>
-        <p>Discover runners by city, pace, and experience for local routes, travel runs, and shared training in one worldwide running community.</p>
-        <p><a href="/run-buddy">Find a running companion with RunBuddy</a></p>
-      </main>
-      <footer><a href="/">RunBuddy</a></footer>`,
 } as const;
 
 function replaceAttributeContent(
@@ -133,27 +118,8 @@ const routeMetadataPlugin = {
     const content =
       pathname.replace(/\/+$/, "") === "/run-buddy"
         ? PUBLIC_PAGE_CONTENT.runBuddy
-        : pathname.replace(/\/+$/, "") === "/run-date"
-          ? PUBLIC_PAGE_CONTENT.runDate
-          : PUBLIC_PAGE_CONTENT.home;
+        : PUBLIC_PAGE_CONTENT.home;
     return metadata ? applyPublicPage(html, metadata, content) : html;
-  },
-  async closeBundle() {
-    const homeHtml = await readFile(path.join(outputDirectory, "index.html"), "utf8");
-    const pages = [
-      ["run-date", PUBLIC_PAGE_METADATA.runDate, PUBLIC_PAGE_CONTENT.runDate],
-    ] as const;
-
-    await Promise.all(
-      pages.map(async ([route, metadata, content]) => {
-        const directory = path.join(outputDirectory, route);
-        await mkdir(directory, { recursive: true });
-        await writeFile(
-          path.join(directory, "index.html"),
-          applyPublicPage(homeHtml, metadata, content),
-        );
-      }),
-    );
   },
 };
 

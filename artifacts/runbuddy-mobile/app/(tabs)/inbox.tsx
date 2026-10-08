@@ -9,6 +9,7 @@ import {
   useGetUnreadCount,
 } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
+import { useInboxMessageUpdates } from '@/hooks/useInboxMessageUpdates';
 import { useRunnerIdentity } from '@/hooks/useRunnerIdentity';
 import {
   ActionButton,
@@ -21,16 +22,33 @@ import {
   messageTime,
 } from '@/components/ui';
 
+const INBOX_RECOVERY_REFETCH_INTERVAL_MS = 15_000;
+
 export default function InboxScreen() {
   const colors = useColors();
   const router = useRouter();
   const identity = useRunnerIdentity();
-  const enabled = Boolean(identity.signedIn && identity.runnerId);
+  const enabled = Boolean(identity.signedIn && identity.userId && identity.runnerId);
+  const inboxQueryKey = [...getGetInboxQueryKey(), identity.userId ?? null];
+  const unreadQueryKey = [...getGetUnreadCountQueryKey(), identity.userId ?? null];
   const inboxQuery = useGetInbox({
-    query: { queryKey: getGetInboxQueryKey(), enabled },
+    query: {
+      queryKey: inboxQueryKey,
+      enabled,
+      refetchInterval: enabled ? INBOX_RECOVERY_REFETCH_INTERVAL_MS : false,
+    },
   });
   const unreadQuery = useGetUnreadCount({
-    query: { queryKey: getGetUnreadCountQueryKey(), enabled },
+    query: {
+      queryKey: unreadQueryKey,
+      enabled,
+      refetchInterval: enabled ? INBOX_RECOVERY_REFETCH_INTERVAL_MS : false,
+    },
+  });
+  useInboxMessageUpdates({
+    enabled,
+    runnerId: identity.runnerId,
+    userId: identity.userId,
   });
   const conversations = inboxQuery.data ?? [];
 
@@ -41,7 +59,13 @@ export default function InboxScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           Platform.OS === 'web' ? undefined : (
-            <RefreshControl refreshing={inboxQuery.isRefetching} onRefresh={() => void inboxQuery.refetch()} tintColor={colors.primary} />
+            <RefreshControl
+              refreshing={inboxQuery.isRefetching || unreadQuery.isRefetching}
+              onRefresh={() => {
+                void Promise.all([inboxQuery.refetch(), unreadQuery.refetch()]);
+              }}
+              tintColor={colors.primary}
+            />
           )
         }
       >
