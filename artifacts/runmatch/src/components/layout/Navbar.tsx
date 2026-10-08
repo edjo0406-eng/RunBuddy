@@ -22,6 +22,8 @@ export function Navbar() {
   const {
     data: authenticatedRunner,
     isError: isRunnerLookupError,
+    isFetching: isRunnerLookupFetching,
+    refetch: refetchCurrentRunner,
   } = useGetCurrentRunner({
     query: {
       enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
@@ -99,6 +101,26 @@ export function Navbar() {
             >
               Sign in
             </Link>
+          ) : null}
+          {isAuthResolved && isSignedIn === true && isRunnerLookupError ? (
+            <div
+              role="alert"
+              data-testid="status-nav-profile-navigation-error"
+              className="hidden items-center gap-2 text-sm md:flex"
+            >
+              <span className="text-muted-foreground">
+                Profile navigation couldn’t be loaded.
+              </span>
+              <button
+                type="button"
+                data-testid="button-nav-retry-profile"
+                onClick={() => void refetchCurrentRunner()}
+                disabled={isRunnerLookupFetching}
+                className="rounded-full px-2 py-1 font-semibold text-foreground underline decoration-foreground/40 underline-offset-2 hover:decoration-foreground disabled:cursor-wait disabled:opacity-60"
+              >
+                {isRunnerLookupFetching ? "Retrying…" : "Try again"}
+              </button>
+            </div>
           ) : null}
           <Link
             href="/inbox"

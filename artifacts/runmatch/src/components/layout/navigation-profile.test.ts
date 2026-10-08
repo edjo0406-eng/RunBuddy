@@ -205,6 +205,19 @@ describe("signed-in profile navigation", () => {
     expect(failedLookupMarkup).not.toContain('data-testid="link-mobile-my-profile"');
     expect(failedLookupMarkup).not.toContain('data-testid="link-nav-create-profile"');
     expect(failedLookupMarkup).not.toContain('data-testid="link-mobile-create-profile"');
+    expect(failedLookupMarkup).toContain(
+      'data-testid="status-nav-profile-navigation-error"',
+    );
+    expect(failedLookupMarkup).toContain(
+      'data-testid="status-mobile-profile-navigation-error"',
+    );
+    expect(failedLookupMarkup).toContain('data-testid="button-nav-retry-profile"');
+    expect(failedLookupMarkup).toContain(
+      'data-testid="button-mobile-retry-profile"',
+    );
+    expect(failedLookupMarkup).toContain(
+      "Profile navigation couldn’t be loaded.",
+    );
 
     navigationMocks.failedRunnerLookups.delete("clerk-user-2");
     const recoveredMarkup = renderNavigation(

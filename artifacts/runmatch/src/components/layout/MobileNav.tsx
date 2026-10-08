@@ -21,6 +21,8 @@ export function MobileNav() {
   const {
     data: authenticatedRunner,
     isError: isRunnerLookupError,
+    isFetching: isRunnerLookupFetching,
+    refetch: refetchCurrentRunner,
   } = useGetCurrentRunner({
     query: {
       enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
@@ -71,6 +73,26 @@ export function MobileNav() {
 
   return (
     <nav aria-label="Mobile navigation" className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground/10 bg-background/95 backdrop-blur-xl md:hidden supports-[backdrop-filter]:bg-background/80">
+      {isAuthResolved && isSignedIn === true && isRunnerLookupError ? (
+        <div
+          role="alert"
+          data-testid="status-mobile-profile-navigation-error"
+          className="absolute bottom-full left-0 right-0 flex items-center justify-between gap-3 border-t border-foreground/10 bg-background/95 px-4 py-2 text-xs shadow-lg"
+        >
+          <span className="text-muted-foreground">
+            Profile navigation couldn’t be loaded.
+          </span>
+          <button
+            type="button"
+            data-testid="button-mobile-retry-profile"
+            onClick={() => void refetchCurrentRunner()}
+            disabled={isRunnerLookupFetching}
+            className="shrink-0 rounded-full px-2 py-1 font-bold text-foreground underline decoration-foreground/40 underline-offset-2 hover:decoration-foreground disabled:cursor-wait disabled:opacity-60"
+          >
+            {isRunnerLookupFetching ? "Retrying…" : "Try again"}
+          </button>
+        </div>
+      ) : null}
       <div className="safe-area-inset-bottom flex h-[4.5rem] items-center justify-around px-1">
         {items.map(({ href, icon: Icon, label, testId, active, badge, primary }) => (
           <Link
