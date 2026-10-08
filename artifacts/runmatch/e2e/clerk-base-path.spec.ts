@@ -517,9 +517,23 @@ test("open conversations hide previous account messages after a cross-tab accoun
   const secondTab = await page.context().newPage();
   const password = `RunBuddy-${randomUUID()}!7a`;
   let activeRunnerId = 14;
+  let holdLateFirstAccountConversation = false;
+  let lateFirstAccountConversationStarted = false;
+  let resolveLateFirstAccountConversationStarted!: () => void;
+  let releaseLateFirstAccountConversation!: () => void;
+  let resolveLateFirstAccountConversationCompleted!: () => void;
   let holdSecondAccountConversation = false;
   let resolveSecondAccountConversationStarted!: () => void;
   let releaseSecondAccountConversation!: () => void;
+  const lateFirstAccountConversationStartedPromise = new Promise<void>((resolve) => {
+    resolveLateFirstAccountConversationStarted = resolve;
+  });
+  const lateFirstAccountConversationGate = new Promise<void>((resolve) => {
+    releaseLateFirstAccountConversation = resolve;
+  });
+  const lateFirstAccountConversationCompleted = new Promise<void>((resolve) => {
+    resolveLateFirstAccountConversationCompleted = resolve;
+  });
   const secondAccountConversationStarted = new Promise<void>((resolve) => {
     resolveSecondAccountConversationStarted = resolve;
   });
@@ -545,36 +559,66 @@ test("open conversations hide previous account messages after a cross-tab accoun
         return;
       }
 
-      if (activeRunnerId === 28 && holdSecondAccountConversation) {
+      const requestRunnerId = activeRunnerId;
+      const isLateFirstAccountConversation =
+        requestRunnerId === 14 && holdLateFirstAccountConversation;
+      if (isLateFirstAccountConversation) {
+        holdLateFirstAccountConversation = false;
+        lateFirstAccountConversationStarted = true;
+        resolveLateFirstAccountConversationStarted();
+        await lateFirstAccountConversationGate;
+      }
+
+      if (requestRunnerId === 28 && holdSecondAccountConversation) {
         resolveSecondAccountConversationStarted();
         await secondAccountConversationGate;
       }
 
       const message =
-        activeRunnerId === 14
+        requestRunnerId === 14
           ? firstAccountMessage
           : secondAccountMessage;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        headers: { "Cache-Control": "no-store" },
-        body: JSON.stringify([
-          {
-            id: activeRunnerId,
-            fromRunnerId: activeRunnerId,
-            toRunnerId: 15,
-            content: message,
-            isRead: false,
-            createdAt: new Date().toISOString(),
-          },
-        ]),
-      });
+      try {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Cache-Control": "no-store" },
+          body: JSON.stringify([
+            {
+              id: requestRunnerId,
+              fromRunnerId: requestRunnerId,
+              toRunnerId: 15,
+              content: message,
+              isRead: false,
+              createdAt: new Date().toISOString(),
+            },
+          ]),
+        });
+      } catch (error) {
+        const errorText = error instanceof Error ? error.message : String(error);
+        const requestFailure =
+          route.request().failure()?.toLowerCase() ?? "";
+        const wasAborted =
+          /abort|cancel/i.test(errorText) || /abort|cancel/i.test(requestFailure);
+        if (!isLateFirstAccountConversation || !wasAborted) {
+          throw error;
+        }
+      } finally {
+        if (isLateFirstAccountConversation) {
+          resolveLateFirstAccountConversationCompleted();
+        }
+      }
     });
 
     await signUpTemporaryUser(page, accountEmails[0], password);
     await setupClerkTestingToken({ page: secondTab });
     await secondTab.goto(`${basePath}/messages/15`);
     await expect(secondTab.getByText(firstAccountMessage)).toBeVisible();
+
+    holdLateFirstAccountConversation = true;
+    await secondTab.reload();
+    await lateFirstAccountConversationStartedPromise;
+    await expect(secondTab.getByText(firstAccountMessage)).toHaveCount(0);
 
     await logOutTemporaryUser(page);
     await expect(secondTab.getByRole("link", { name: "Sign in" })).toBeVisible();
@@ -589,8 +633,17 @@ test("open conversations hide previous account messages after a cross-tab accoun
     releaseSecondAccountConversation();
     await expect(secondTab.getByText(secondAccountMessage)).toBeVisible();
     await expect(secondTab.getByText(firstAccountMessage)).toHaveCount(0);
+
+    releaseLateFirstAccountConversation();
+    await lateFirstAccountConversationCompleted;
+    await expect(secondTab.getByText(secondAccountMessage)).toBeVisible();
+    await expect(secondTab.getByText(firstAccountMessage)).toHaveCount(0);
   } finally {
+    releaseLateFirstAccountConversation();
     releaseSecondAccountConversation();
+    if (lateFirstAccountConversationStarted) {
+      await lateFirstAccountConversationCompleted;
+    }
     await secondTab.close();
     for (const email of accountEmails) {
       await deleteTemporaryClerkUsers(email);
