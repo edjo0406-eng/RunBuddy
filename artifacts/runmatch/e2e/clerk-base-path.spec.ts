@@ -741,12 +741,14 @@ test("inbox badges show only the active account unread count during account swit
   }
 });
 
-test("desktop and mobile inbox badges update when a new unread message arrives", async ({
+test("desktop and mobile inbox badges recover after a temporary unread-count failure", async ({
   page,
 }) => {
   const email = `runbuddy+clerk_test_${randomUUID()}@example.com`;
   const password = `RunBuddy-${randomUUID()}!7a`;
   let unreadCount = 1;
+  let failNextUnreadCountRequest = false;
+  let failedUnreadCountResponseCount = 0;
   let unreadCountTwoResponseCount = 0;
 
   try {
@@ -762,6 +764,18 @@ test("desktop and mobile inbox badges update when a new unread message arrives",
     await page
       .context()
       .route("**/api/messages/unread-count", async (route) => {
+        if (failNextUnreadCountRequest) {
+          failNextUnreadCountRequest = false;
+          failedUnreadCountResponseCount += 1;
+          await route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            headers: { "Cache-Control": "no-store" },
+            body: JSON.stringify({ error: "Temporary unread-count outage" }),
+          });
+          return;
+        }
+
         if (unreadCount === 2) {
           unreadCountTwoResponseCount += 1;
         }
@@ -788,6 +802,10 @@ test("desktop and mobile inbox badges update when a new unread message arrives",
 
     await page.setViewportSize({ width: 1280, height: 900 });
     unreadCount = 2;
+    failNextUnreadCountRequest = true;
+    await expect
+      .poll(() => failedUnreadCountResponseCount, { timeout: 20_000 })
+      .toBe(1);
     await expect
       .poll(() => unreadCountTwoResponseCount, { timeout: 20_000 })
       .toBeGreaterThan(0);
