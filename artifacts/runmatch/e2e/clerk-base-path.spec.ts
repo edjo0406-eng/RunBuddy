@@ -822,3 +822,121 @@ test("desktop and mobile inbox badges recover after a temporary unread-count fai
     await deleteTemporaryClerkUsers(email);
   }
 });
+
+test("desktop and mobile inbox badges refresh when a background tab resumes", async ({
+  page,
+}) => {
+  const email = `runbuddy+clerk_test_${randomUUID()}@example.com`;
+  const password = `RunBuddy-${randomUUID()}!7a`;
+  let unreadCount = 1;
+  let unreadCountTwoResponseCount = 0;
+  let restorePageVisibility: (() => Promise<void>) | undefined;
+  const setDocumentVisibility = async (
+    visibilityState: "hidden" | "visible",
+  ) => {
+    await page.evaluate((nextVisibilityState) => {
+      const testDocument = document as Document & {
+        __runbuddyTestVisibilityState?: "hidden" | "visible";
+      };
+      Object.defineProperty(testDocument, "__runbuddyTestVisibilityState", {
+        configurable: true,
+        writable: true,
+        value: nextVisibilityState,
+      });
+      Object.defineProperty(testDocument, "visibilityState", {
+        configurable: true,
+        get: () => testDocument.__runbuddyTestVisibilityState ?? "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    }, visibilityState);
+  };
+
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.context().route("**/api/runners/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: 14 }),
+      });
+    });
+    await page.context().route("**/api/messages/unread-count", async (route) => {
+      const responseCount = unreadCount;
+      if (responseCount === 2) {
+        unreadCountTwoResponseCount += 1;
+        await page.waitForFunction(
+          () => document.visibilityState === "visible",
+          undefined,
+          { timeout: 25_000 },
+        );
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ count: responseCount }),
+      });
+    });
+
+    await signUpTemporaryUser(page, email, password);
+    const desktopBadge = page.getByTestId("badge-unread-count");
+    const mobileBadge = page.getByTestId("badge-mobile-unread-count");
+    await expect(desktopBadge).toBeVisible();
+    await expect(desktopBadge).toHaveText("1");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(mobileBadge).toBeVisible();
+    await expect(mobileBadge).toHaveText("1");
+    const documentTimeOrigin = await page.evaluate(
+      () => performance.timeOrigin,
+    );
+
+    restorePageVisibility = async () => {
+      try {
+        await setDocumentVisibility("visible");
+        await page.evaluate(() => {
+          Reflect.deleteProperty(document, "visibilityState");
+          Reflect.deleteProperty(document, "__runbuddyTestVisibilityState");
+        });
+      } catch {
+        // The page may already be closing during test cleanup.
+      }
+    };
+    await setDocumentVisibility("hidden");
+    await expect
+      .poll(() => page.evaluate(() => document.visibilityState), {
+        timeout: 10_000,
+      })
+      .toBe("hidden");
+
+    unreadCount = 2;
+    await page.waitForTimeout(16_000);
+    await setDocumentVisibility("visible");
+    await expect
+      .poll(() => page.evaluate(() => document.visibilityState), {
+        timeout: 10_000,
+      })
+      .toBe("visible");
+    await expect
+      .poll(() => unreadCountTwoResponseCount, { timeout: 20_000 })
+      .toBeGreaterThan(0);
+    await expect(mobileBadge).toBeVisible();
+    await expect(mobileBadge).toHaveText("2");
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(desktopBadge).toBeVisible();
+    await expect(desktopBadge).toHaveText("2");
+    await expect
+      .poll(() => page.evaluate(() => performance.timeOrigin))
+      .toBe(documentTimeOrigin);
+    await restorePageVisibility();
+    restorePageVisibility = undefined;
+  } finally {
+    if (restorePageVisibility) {
+      await restorePageVisibility().catch(() => {});
+    }
+    await deleteTemporaryClerkUsers(email);
+  }
+});

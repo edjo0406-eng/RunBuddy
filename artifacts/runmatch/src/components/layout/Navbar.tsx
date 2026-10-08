@@ -43,6 +43,7 @@ export function Navbar() {
           Boolean(userId) &&
           Boolean(myRunnerId),
         refetchInterval: 15_000,
+        refetchOnWindowFocus: true,
         queryKey: [...getGetUnreadCountQueryKey(), userId],
       },
     },
