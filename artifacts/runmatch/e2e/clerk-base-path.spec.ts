@@ -316,3 +316,73 @@ test("website profile navigation follows real Clerk account switches", async ({
     }
   }
 });
+
+test("inbox badges show only the active account unread count during account switches", async ({
+  page,
+}) => {
+  const accountEmails = [
+    `runbuddy+clerk_test_${randomUUID()}@example.com`,
+    `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  ];
+  const password = `RunBuddy-${randomUUID()}!7a`;
+  let activeUnreadCount = 7;
+  let holdUnreadResponse = false;
+  let resolveUnreadRequestStarted!: () => void;
+  let releaseUnreadResponse!: () => void;
+  const unreadRequestStarted = new Promise<void>((resolve) => {
+    resolveUnreadRequestStarted = resolve;
+  });
+  const unreadResponseGate = new Promise<void>((resolve) => {
+    releaseUnreadResponse = resolve;
+  });
+
+  try {
+    await page.route("**/api/runners/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: 14 }),
+      });
+    });
+    await page.route("**/api/messages/unread-count", async (route) => {
+      if (holdUnreadResponse) {
+        resolveUnreadRequestStarted();
+        await unreadResponseGate;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ count: activeUnreadCount }),
+      });
+    });
+
+    await signUpTemporaryUser(page, accountEmails[0], password);
+    await expect(page.getByTestId("badge-unread-count")).toHaveText("7");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveText("7");
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await logOutTemporaryUser(page);
+    activeUnreadCount = 2;
+    holdUnreadResponse = true;
+    await signUpTemporaryUser(page, accountEmails[1], password);
+    await unreadRequestStarted;
+
+    await expect(page.getByTestId("badge-unread-count")).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveCount(0);
+
+    holdUnreadResponse = false;
+    releaseUnreadResponse();
+    await expect(page.getByTestId("badge-unread-count")).toHaveText("2");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveText("2");
+  } finally {
+    releaseUnreadResponse();
+    for (const email of accountEmails) {
+      await deleteTemporaryClerkUsers(email);
+    }
+  }
+});

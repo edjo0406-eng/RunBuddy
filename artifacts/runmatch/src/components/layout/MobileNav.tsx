@@ -27,7 +27,17 @@ export function MobileNav() {
   const ownRunnerId = authenticatedRunner?.runnerId ?? null;
 
   const { data: unread } = useGetUnreadCount(
-    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
+    {
+      query: {
+        enabled:
+          isAuthResolved &&
+          isSignedIn === true &&
+          Boolean(userId) &&
+          Boolean(myRunnerId),
+        refetchInterval: 15_000,
+        queryKey: [...getGetUnreadCountQueryKey(), userId],
+      },
+    },
   );
   const unreadCount = unread?.count ?? 0;
 

@@ -28,11 +28,27 @@ export function Navbar() {
   const ownRunnerId = authenticatedRunner?.runnerId ?? null;
 
   const { data: unread } = useGetUnreadCount(
-    { query: { enabled: !!myRunnerId, refetchInterval: 15_000, queryKey: getGetUnreadCountQueryKey() } }
+    {
+      query: {
+        enabled:
+          isAuthResolved &&
+          isSignedIn === true &&
+          Boolean(userId) &&
+          Boolean(myRunnerId),
+        refetchInterval: 15_000,
+        queryKey: [...getGetUnreadCountQueryKey(), userId],
+      },
+    },
   );
   const unreadCount = unread?.count ?? 0;
 
-  useNotifications(unread?.count, !!myRunnerId);
+  useNotifications(
+    unread?.count,
+    isAuthResolved &&
+      isSignedIn === true &&
+      Boolean(userId) &&
+      Boolean(myRunnerId),
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-foreground/10 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75">
