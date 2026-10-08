@@ -71,16 +71,37 @@ catalogs:
       version: 3.25.76
 
 overrides:
-  qs: 6.16.0
-  fast-uri: 3.1.8
-  js-yaml: 4.3.2
-  postcss: 8.5.23
-  browserslist: 4.28.7
-  linkify-it: 5.0.2
-  nanoid: 3.3.18
-  markdown-it: 14.3.1
   '@babel/core': 7.29.6
+  '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
+  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-linux-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32': '-'
+  '@expo/ngrok-bin>@expo/ngrok-bin-win32-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-android-arm64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-arm64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-freebsd-x64': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm-gnueabihf': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-gnu': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc': '-'
+  '@tailwindcss/oxide>@tailwindcss/oxide-win32-x64-msvc': '-'
   body-parser: 2.3.0
+  brace-expansion@<3: 2.1.7
+  brace-expansion@>=3: 5.0.12
+  browserslist: 4.28.7
+  esbuild: 0.28.1
+  esbuild>@esbuild/aix-ppc64: '-'
+  esbuild>@esbuild/android-arm: '-'
+  esbuild>@esbuild/android-arm64: '-'
+  esbuild>@esbuild/android-x64: '-'
   esbuild>@esbuild/darwin-arm64: '-'
   esbuild>@esbuild/darwin-x64: '-'
   esbuild>@esbuild/freebsd-arm64: '-'
@@ -97,15 +118,13 @@ overrides:
   esbuild>@esbuild/netbsd-x64: '-'
   esbuild>@esbuild/openbsd-arm64: '-'
   esbuild>@esbuild/openbsd-x64: '-'
+  esbuild>@esbuild/openharmony-arm64: '-'
   esbuild>@esbuild/sunos-x64: '-'
   esbuild>@esbuild/win32-arm64: '-'
   esbuild>@esbuild/win32-ia32: '-'
   esbuild>@esbuild/win32-x64: '-'
-  esbuild>@esbuild/aix-ppc64: '-'
-  esbuild>@esbuild/android-arm: '-'
-  esbuild>@esbuild/android-arm64: '-'
-  esbuild>@esbuild/android-x64: '-'
-  esbuild>@esbuild/openharmony-arm64: '-'
+  fast-uri: 3.1.8
+  js-yaml: 4.3.2
   lightningcss>lightningcss-android-arm64: '-'
   lightningcss>lightningcss-darwin-arm64: '-'
   lightningcss>lightningcss-darwin-x64: '-'
@@ -116,16 +135,15 @@ overrides:
   lightningcss>lightningcss-linux-x64-musl: '-'
   lightningcss>lightningcss-win32-arm64-msvc: '-'
   lightningcss>lightningcss-win32-x64-msvc: '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-android-arm64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-arm64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-darwin-x64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-freebsd-x64': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm-gnueabihf': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-gnu': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-arm64-musl': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-win32-arm64-msvc': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-win32-x64-msvc': '-'
-  '@tailwindcss/oxide>@tailwindcss/oxide-linux-x64-musl': '-'
+  linkify-it: 5.0.2
+  lodash@<=4.17.23: 4.18.1
+  markdown-it: 14.3.1
+  nanoid: 3.3.18
+  path-to-regexp@>=8.0.0 <8.4.0: 8.4.2
+  picomatch@<2.3.2: 2.3.2
+  picomatch@>=4.0.0 <4.0.4: 4.0.4
+  postcss: 8.5.23
+  qs: 6.16.0
   rollup>@rollup/rollup-android-arm-eabi: '-'
   rollup>@rollup/rollup-android-arm64: '-'
   rollup>@rollup/rollup-darwin-arm64: '-'
@@ -150,25 +168,21 @@ overrides:
   rollup>@rollup/rollup-win32-ia32-msvc: '-'
   rollup>@rollup/rollup-win32-x64-gnu: '-'
   rollup>@rollup/rollup-win32-x64-msvc: '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-arm64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-darwin-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-freebsd-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-arm': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-linux-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32': '-'
-  '@expo/ngrok-bin>@expo/ngrok-bin-win32-x64': '-'
-  '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
-  esbuild: 0.28.1
-  picomatch@<2.3.2: 2.3.2
-  picomatch@>=4.0.0 <4.0.4: 4.0.4
-  path-to-regexp@>=8.0.0 <8.4.0: 8.4.2
-  lodash@<=4.17.23: 4.18.1
   yaml@<2.8.3: 2.8.3
-  brace-expansion@<3: 2.1.7
-  brace-expansion@>=3: 5.0.12
+  decode-uri-component@<0.5.0: 0.5.0
+  fast-copy@>=4.0.0 <4.1.0: 4.1.2
+  postcss-selector-parser@<7.1.6: 7.1.6
+  proxy-addr@<2.0.8: 2.0.8
+  source-map-js@<1.2.2: 1.2.2
+  uuid@<11.1.1: 11.1.1
+
+patchedDependencies:
+  braces@3.0.3:
+    hash: 083a0c2566bf3d303c5f95306ac56198b0807bdd7c50d58731b7cc2f831e87d7
+    path: patches/braces@3.0.3.patch
+  node-forge@1.4.0:
+    hash: 46a0f14e313bd2eea34090342b7c6291965959dec172229cd7f47ce1ea7b4ad1
+    path: patches/node-forge@1.4.0.patch
 
 importers:
 
@@ -827,7 +841,7 @@ importers:
     devDependencies:
       orval:
         specifier: 8.22.0
-        version: 8.22.0(prettier@3.8.1)(typescript@5.9.3)
+        version: 8.22.0(prettier@3.8.1)(typescript@6.0.3)
 
   lib/api-zod:
     dependencies:
@@ -4373,9 +4387,9 @@ packages:
   decimal.js-light@2.5.1:
     resolution: {integrity: sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==}
 
-  decode-uri-component@0.2.2:
-    resolution: {integrity: sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==}
-    engines: {node: '>=0.10'}
+  decode-uri-component@0.5.0:
+    resolution: {integrity: sha512-1BiQVoK8C9gUbQU6NzAtO/tkz2qOFpEObMWpcFvhx4fYnj4Oc5yzaJN/LD36ihkVUdXyh5ZekzX+yM+ty/SrPg==}
+    engines: {node: '>=14.16'}
 
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
@@ -4939,8 +4953,8 @@ packages:
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
-  fast-copy@4.0.2:
-    resolution: {integrity: sha512-ybA6PDXIXOXivLJK/z9e+Otk7ve13I4ckBvGO5I2RRmBU1gMHLVDJYEuJYhGwez7YNlYji2M2DvVU+a9mSFDlw==}
+  fast-copy@4.1.2:
+    resolution: {integrity: sha512-DUHggaYcouhy5I1LacDJ+JDSqGlumVJP2EAi5Nwt1pWPeLpSvIjkrY+x4fsoI1/+GlTyq+DM9zdgWCFSfqNODA==}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -6250,8 +6264,8 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postcss-selector-parser@6.0.10:
-    resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
+  postcss-selector-parser@7.1.6:
+    resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
     engines: {node: '>=4'}
 
   postcss-value-parser@4.2.0:
@@ -6333,8 +6347,8 @@ packages:
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
-  proxy-addr@2.0.7:
-    resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
+  proxy-addr@2.0.8:
+    resolution: {integrity: sha512-5nnx0yGyVUcY6t9RnWcARWtwT9F1D8O9rt08htPvnd49W1IgZtmLkhu9WfMzQj1cFxjHIO6connUNVW5k7AVyQ==}
     engines: {node: '>= 0.10'}
 
   pump@3.0.4:
@@ -6869,8 +6883,8 @@ packages:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
 
-  source-map-js@1.2.1:
-    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
+  source-map-js@1.2.2:
+    resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
   source-map-support@0.5.21:
@@ -7297,14 +7311,8 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
-  uuid@7.0.3:
-    resolution: {integrity: sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-    hasBin: true
-
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   validate-npm-package-name@5.0.1:
@@ -8879,7 +8887,7 @@ snapshots:
       glob: 13.0.6
       lan-network: 0.2.1
       multitars: 1.0.2
-      node-forge: 1.4.0
+      node-forge: 1.4.0(patch_hash=46a0f14e313bd2eea34090342b7c6291965959dec172229cd7f47ce1ea7b4ad1)
       npm-package-arg: 11.0.3
       ora: 3.4.0
       picomatch: 4.0.4
@@ -8915,7 +8923,7 @@ snapshots:
 
   '@expo/code-signing-certificates@0.0.6':
     dependencies:
-      node-forge: 1.4.0
+      node-forge: 1.4.0(patch_hash=46a0f14e313bd2eea34090342b7c6291965959dec172229cd7f47ce1ea7b4ad1)
 
   '@expo/config-plugins@57.0.10(typescript@6.0.3)':
     dependencies:
@@ -9394,23 +9402,23 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@orval/angular@8.22.0(typescript@5.9.3)':
+  '@orval/angular@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/axios@8.22.0(typescript@5.9.3)':
+  '@orval/axios@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/core@8.22.0(typescript@5.9.3)':
+  '@orval/core@8.22.0(typescript@6.0.3)':
     dependencies:
       '@scalar/openapi-types': 0.8.0
       acorn: 8.16.0
@@ -9423,88 +9431,88 @@ snapshots:
       jsesc: 3.1.0
       remeda: 2.33.6
       tinyglobby: 0.2.17
-      typedoc: 0.28.20(typescript@5.9.3)
+      typedoc: 0.28.20(typescript@6.0.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@orval/effect@8.22.0(typescript@5.9.3)':
+  '@orval/effect@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
       remeda: 2.33.6
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/fetch@8.22.0(typescript@5.9.3)':
+  '@orval/fetch@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/hono@8.22.0(typescript@5.9.3)':
+  '@orval/hono@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
-      '@orval/zod': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
+      '@orval/zod': 8.22.0(typescript@6.0.3)
       fs-extra: 11.3.4
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
 
-  '@orval/mcp@8.22.0(typescript@5.9.3)':
+  '@orval/mcp@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
-      '@orval/fetch': 8.22.0(typescript@5.9.3)
-      '@orval/zod': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
+      '@orval/fetch': 8.22.0(typescript@6.0.3)
+      '@orval/zod': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/mock@8.22.0(typescript@5.9.3)':
+  '@orval/mock@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
       remeda: 2.33.6
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/query@8.22.0(typescript@5.9.3)':
+  '@orval/query@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
-      '@orval/fetch': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
+      '@orval/fetch': 8.22.0(typescript@6.0.3)
       remeda: 2.33.6
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/solid-start@8.22.0(typescript@5.9.3)':
+  '@orval/solid-start@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/swr@8.22.0(typescript@5.9.3)':
+  '@orval/swr@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
-      '@orval/fetch': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
+      '@orval/fetch': 8.22.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@faker-js/faker'
       - supports-color
       - typescript
 
-  '@orval/zod@8.22.0(typescript@5.9.3)':
+  '@orval/zod@8.22.0(typescript@6.0.3)':
     dependencies:
-      '@orval/core': 8.22.0(typescript@5.9.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
       jsesc: 3.1.0
       remeda: 2.33.6
     transitivePeerDependencies:
@@ -11317,7 +11325,7 @@ snapshots:
       jiti: 2.6.1
       lightningcss: 1.31.1
       magic-string: 0.30.21
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
       tailwindcss: 4.2.1
 
   '@tailwindcss/oxide-linux-x64-gnu@4.2.1':
@@ -11333,7 +11341,7 @@ snapshots:
 
   '@tailwindcss/typography@0.5.19(tailwindcss@4.2.1)':
     dependencies:
-      postcss-selector-parser: 6.0.10
+      postcss-selector-parser: 7.1.6
       tailwindcss: 4.2.1
 
   '@tailwindcss/vite@4.2.1(vite@7.3.6(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.3))':
@@ -11895,7 +11903,7 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
-  braces@3.0.3:
+  braces@3.0.3(patch_hash=083a0c2566bf3d303c5f95306ac56198b0807bdd7c50d58731b7cc2f831e87d7):
     dependencies:
       fill-range: 7.1.1
 
@@ -12252,7 +12260,7 @@ snapshots:
 
   decimal.js-light@2.5.1: {}
 
-  decode-uri-component@0.2.2: {}
+  decode-uri-component@0.5.0: {}
 
   deepmerge@4.3.1: {}
 
@@ -12839,7 +12847,7 @@ snapshots:
       on-finished: 2.4.1
       once: 1.4.0
       parseurl: 1.3.3
-      proxy-addr: 2.0.7
+      proxy-addr: 2.0.8
       qs: 6.16.0
       range-parser: 1.2.1
       router: 2.2.0
@@ -12853,7 +12861,7 @@ snapshots:
 
   extend@3.0.2: {}
 
-  fast-copy@4.0.2: {}
+  fast-copy@4.1.2: {}
 
   fast-deep-equal@3.1.3: {}
 
@@ -13054,7 +13062,7 @@ snapshots:
       https-proxy-agent: 7.0.6
       is-stream: 2.0.1
       node-fetch: 2.7.0
-      uuid: 9.0.1
+      uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -14020,7 +14028,7 @@ snapshots:
 
   micromatch@4.0.8:
     dependencies:
-      braces: 3.0.3
+      braces: 3.0.3(patch_hash=083a0c2566bf3d303c5f95306ac56198b0807bdd7c50d58731b7cc2f831e87d7)
       picomatch: 2.3.2
 
   mime-db@1.52.0: {}
@@ -14098,7 +14106,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.4.0: {}
+  node-forge@1.4.0(patch_hash=46a0f14e313bd2eea34090342b7c6291965959dec172229cd7f47ce1ea7b4ad1): {}
 
   node-int64@0.4.0: {}
 
@@ -14181,21 +14189,21 @@ snapshots:
       strip-ansi: 5.2.0
       wcwidth: 1.0.1
 
-  orval@8.22.0(prettier@3.8.1)(typescript@5.9.3):
+  orval@8.22.0(prettier@3.8.1)(typescript@6.0.3):
     dependencies:
       '@commander-js/extra-typings': 15.0.0(commander@15.0.0)
-      '@orval/angular': 8.22.0(typescript@5.9.3)
-      '@orval/axios': 8.22.0(typescript@5.9.3)
-      '@orval/core': 8.22.0(typescript@5.9.3)
-      '@orval/effect': 8.22.0(typescript@5.9.3)
-      '@orval/fetch': 8.22.0(typescript@5.9.3)
-      '@orval/hono': 8.22.0(typescript@5.9.3)
-      '@orval/mcp': 8.22.0(typescript@5.9.3)
-      '@orval/mock': 8.22.0(typescript@5.9.3)
-      '@orval/query': 8.22.0(typescript@5.9.3)
-      '@orval/solid-start': 8.22.0(typescript@5.9.3)
-      '@orval/swr': 8.22.0(typescript@5.9.3)
-      '@orval/zod': 8.22.0(typescript@5.9.3)
+      '@orval/angular': 8.22.0(typescript@6.0.3)
+      '@orval/axios': 8.22.0(typescript@6.0.3)
+      '@orval/core': 8.22.0(typescript@6.0.3)
+      '@orval/effect': 8.22.0(typescript@6.0.3)
+      '@orval/fetch': 8.22.0(typescript@6.0.3)
+      '@orval/hono': 8.22.0(typescript@6.0.3)
+      '@orval/mcp': 8.22.0(typescript@6.0.3)
+      '@orval/mock': 8.22.0(typescript@6.0.3)
+      '@orval/query': 8.22.0(typescript@6.0.3)
+      '@orval/solid-start': 8.22.0(typescript@6.0.3)
+      '@orval/swr': 8.22.0(typescript@6.0.3)
+      '@orval/zod': 8.22.0(typescript@6.0.3)
       '@scalar/json-magic': 0.12.20
       '@scalar/openapi-parser': 0.28.16
       '@scalar/openapi-types': 0.8.0
@@ -14209,9 +14217,9 @@ snapshots:
       js-yaml: 4.3.2
       remeda: 2.33.6
       string-argv: 0.3.2
-      typedoc: 0.28.20(typescript@5.9.3)
-      typedoc-plugin-coverage: 4.0.2(typedoc@0.28.20(typescript@5.9.3))
-      typedoc-plugin-markdown: 4.10.0(typedoc@0.28.20(typescript@5.9.3))
+      typedoc: 0.28.20(typescript@6.0.3)
+      typedoc-plugin-coverage: 4.0.2(typedoc@0.28.20(typescript@6.0.3))
+      typedoc-plugin-markdown: 4.10.0(typedoc@0.28.20(typescript@6.0.3))
     optionalDependencies:
       prettier: 3.8.1
     transitivePeerDependencies:
@@ -14365,7 +14373,7 @@ snapshots:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
-      fast-copy: 4.0.2
+      fast-copy: 4.1.2
       fast-safe-stringify: 2.1.1
       help-me: 5.0.0
       joycon: 3.1.1
@@ -14411,7 +14419,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-selector-parser@6.0.10:
+  postcss-selector-parser@7.1.6:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
@@ -14422,7 +14430,7 @@ snapshots:
     dependencies:
       nanoid: 3.3.18
       picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   postgres-array@2.0.0: {}
 
@@ -14479,7 +14487,7 @@ snapshots:
       object-assign: 4.1.1
       react-is: 16.13.1
 
-  proxy-addr@2.0.7:
+  proxy-addr@2.0.8:
     dependencies:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
@@ -14506,7 +14514,7 @@ snapshots:
 
   query-string@7.1.3:
     dependencies:
-      decode-uri-component: 0.2.2
+      decode-uri-component: 0.5.0
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0
@@ -15137,7 +15145,7 @@ snapshots:
       react: 19.1.4
       react-dom: 19.1.4(react@19.1.4)
 
-  source-map-js@1.2.1: {}
+  source-map-js@1.2.2: {}
 
   source-map-support@0.5.21:
     dependencies:
@@ -15464,21 +15472,21 @@ snapshots:
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
 
-  typedoc-plugin-coverage@4.0.2(typedoc@0.28.20(typescript@5.9.3)):
+  typedoc-plugin-coverage@4.0.2(typedoc@0.28.20(typescript@6.0.3)):
     dependencies:
-      typedoc: 0.28.20(typescript@5.9.3)
+      typedoc: 0.28.20(typescript@6.0.3)
 
-  typedoc-plugin-markdown@4.10.0(typedoc@0.28.20(typescript@5.9.3)):
+  typedoc-plugin-markdown@4.10.0(typedoc@0.28.20(typescript@6.0.3)):
     dependencies:
-      typedoc: 0.28.20(typescript@5.9.3)
+      typedoc: 0.28.20(typescript@6.0.3)
 
-  typedoc@0.28.20(typescript@5.9.3):
+  typedoc@0.28.20(typescript@6.0.3):
     dependencies:
       '@gerrit0/mini-shiki': 3.23.0
       lunr: 2.3.9
       markdown-it: 14.3.1
       minimatch: 10.2.5
-      typescript: 5.9.3
+      typescript: 6.0.3
       yaml: 2.9.0
 
   typescript@5.9.3: {}
@@ -15576,9 +15584,7 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uuid@7.0.3: {}
-
-  uuid@9.0.1: {}
+  uuid@11.1.1: {}
 
   validate-npm-package-name@5.0.1: {}
 
@@ -15930,7 +15936,7 @@ snapshots:
   xcode@3.0.1:
     dependencies:
       simple-plist: 1.3.1
-      uuid: 7.0.3
+      uuid: 11.1.1
 
   xml-naming@0.3.0: {}
 
