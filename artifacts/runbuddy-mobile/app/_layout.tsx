@@ -4,7 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ClerkLoaded, ClerkProvider, useAuth } from '@clerk/expo';
+import { ClerkLoaded, ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import {
   Manrope_400Regular,
@@ -16,7 +16,8 @@ import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { setAuthTokenGetter, setBaseUrl } from '@workspace/api-client-react';
+import { setBaseUrl } from '@workspace/api-client-react';
+import { AuthSessionBridge } from '../hooks/AuthSessionBridge';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,16 +28,6 @@ if (domain) setBaseUrl(`https://${domain}`);
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
-
-function AuthTokenBridge() {
-  const { getToken } = useAuth();
-
-  useEffect(() => {
-    setAuthTokenGetter(() => getToken());
-  }, [getToken]);
-
-  return null;
-}
 
 function RootLayoutNav() {
   return (
@@ -78,7 +69,7 @@ export default function RootLayout() {
             proxyUrl={proxyUrl}
           >
             <ClerkLoaded>
-              <AuthTokenBridge />
+              <AuthSessionBridge />
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <RootLayoutNav />

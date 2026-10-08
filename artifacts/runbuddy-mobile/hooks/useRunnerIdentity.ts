@@ -5,11 +5,11 @@ import {
 } from '@workspace/api-client-react';
 
 export function useRunnerIdentity() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const query = useGetCurrentRunner({
     query: {
-      queryKey: getGetCurrentRunnerQueryKey(),
-      enabled: Boolean(isLoaded && isSignedIn),
+      queryKey: [...getGetCurrentRunnerQueryKey(), userId ?? null],
+      enabled: Boolean(isLoaded && isSignedIn && userId),
     },
   });
 
@@ -17,6 +17,7 @@ export function useRunnerIdentity() {
     ...query,
     authLoaded: Boolean(isLoaded),
     signedIn: Boolean(isSignedIn),
+    userId: userId ?? null,
     runnerId: query.data?.runnerId ?? null,
   };
 }

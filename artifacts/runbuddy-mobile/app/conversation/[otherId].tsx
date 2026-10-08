@@ -59,7 +59,9 @@ export default function ConversationScreen() {
   const otherId = Number(params.otherId);
   const validId = Number.isInteger(otherId) && otherId > 0;
   const identity = useRunnerIdentity();
-  const enabled = Boolean(identity.signedIn && identity.runnerId && validId);
+  const enabled = Boolean(
+    identity.signedIn && identity.userId && identity.runnerId && validId,
+  );
   const runnerId = validId ? otherId : 0;
   const runnerQuery = useGetRunner(runnerId, {
     query: { queryKey: getGetRunnerQueryKey(runnerId), enabled },
@@ -69,7 +71,10 @@ export default function ConversationScreen() {
     conversationParams,
     {
       query: {
-        queryKey: getGetConversationQueryKey(conversationParams),
+        queryKey: [
+          ...getGetConversationQueryKey(conversationParams),
+          identity.userId,
+        ],
         enabled,
       },
     },
