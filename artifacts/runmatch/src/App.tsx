@@ -114,6 +114,8 @@ const clerkAppearance = {
 };
 
 const queryClient = new QueryClient();
+const clerkUserIdSessionKey = "runbuddy.clerk-user-id";
+const crossTabAuthReloadSessionKey = "runbuddy.cross-tab-auth-reload";
 
 function PublicRouteMetadata() {
   const [location] = useLocation();
@@ -205,17 +207,57 @@ function ClerkQueryClientCacheInvalidator() {
   const previousUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
+    const authStateChannel =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel("runbuddy-auth-state");
+    const isReloadingFromCrossTabAuthChange =
+      sessionStorage.getItem(crossTabAuthReloadSessionKey) === "true";
+    sessionStorage.removeItem(crossTabAuthReloadSessionKey);
+    const handleCrossTabAuthChange = (event: MessageEvent) => {
+      if (event.data !== "user-changed") {
+        return;
+      }
+
+      queryClient.clear();
+      sessionStorage.setItem(crossTabAuthReloadSessionKey, "true");
+      window.location.reload();
+    };
+    authStateChannel?.addEventListener("message", handleCrossTabAuthChange);
+
     const unsubscribe = addListener(({ user }) => {
+      if (user === undefined) {
+        return;
+      }
+
       const userId = user?.id ?? null;
+      const sessionUserId = sessionStorage.getItem(clerkUserIdSessionKey);
+      const previousAccountChanged =
+        previousUserId.current === undefined
+          ? sessionUserId !== null && sessionUserId !== (userId ?? "")
+          : previousUserId.current !== userId;
+      const shouldSuppressInitialBroadcast =
+        previousUserId.current === undefined &&
+        isReloadingFromCrossTabAuthChange;
+
       if (
-        previousUserId.current !== undefined &&
-        previousUserId.current !== userId
+        previousAccountChanged &&
+        userId !== null &&
+        !shouldSuppressInitialBroadcast
       ) {
         queryClient.clear();
+        authStateChannel?.postMessage("user-changed");
       }
+
       previousUserId.current = userId;
+      sessionStorage.setItem(clerkUserIdSessionKey, userId ?? "");
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribe();
+      authStateChannel?.removeEventListener("message", handleCrossTabAuthChange);
+      authStateChannel?.close();
+    };
   }, [addListener, queryClient]);
 
   return null;

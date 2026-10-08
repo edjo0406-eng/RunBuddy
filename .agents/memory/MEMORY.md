@@ -6,6 +6,7 @@
 - [Express auth-state caching](express-auth-state-caching.md) — no-store headers alone may still allow Express to turn conditional JSON responses into 304.
 - [Clerk identity bridge](clerk-identity-bridge.md) — use `sessionClaims.userId` for migrated local users; reserve `auth.userId` for Clerk API calls.
 - [Clerk browser testing](clerk-browser-testing.md) — Clerk’s development test email and OTP do not bypass its bot challenge; browser tests also need a testing token.
+- [Clerk cross-tab account changes](clerk-cross-tab-account-switching.md) — persist identity transitions per tab and explicitly refresh peers after a new sign-in.
 - [Workspace override installs](pnpm-override-installs.md) — run a full pnpm install after changing workspace overrides so every package's installed tree matches the lockfile.
 - [Public runner discovery](public-runner-discovery.md) — discovery is opt-in; crawlable profile previews must use live consent checks, not personal-data snapshots.
 - [Expo Go auth testing](expo-go-auth-testing.md) — Expo Go cannot verify OAuth callbacks that require an app-specific URL scheme; use a native development build.

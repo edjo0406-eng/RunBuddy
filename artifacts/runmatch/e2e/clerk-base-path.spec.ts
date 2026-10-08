@@ -379,20 +379,26 @@ test("inbox badges show only the active account unread count during account swit
     `runbuddy+clerk_test_${randomUUID()}@example.com`,
     `runbuddy+clerk_test_${randomUUID()}@example.com`,
   ];
+  const secondTab = await page.context().newPage();
   const password = `RunBuddy-${randomUUID()}!7a`;
   let activeUnreadCount = 7;
   let holdUnreadResponse = false;
+  let heldUnreadRequestCount = 0;
   let resolveUnreadRequestStarted!: () => void;
   let releaseUnreadResponse!: () => void;
+  let resolveBothUnreadRequestsStarted!: () => void;
   const unreadRequestStarted = new Promise<void>((resolve) => {
     resolveUnreadRequestStarted = resolve;
+  });
+  const bothUnreadRequestsStarted = new Promise<void>((resolve) => {
+    resolveBothUnreadRequestsStarted = resolve;
   });
   const unreadResponseGate = new Promise<void>((resolve) => {
     releaseUnreadResponse = resolve;
   });
 
   try {
-    await page.route("**/api/runners/me", async (route) => {
+    await page.context().route("**/api/runners/me", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -400,9 +406,13 @@ test("inbox badges show only the active account unread count during account swit
         body: JSON.stringify({ runnerId: 14 }),
       });
     });
-    await page.route("**/api/messages/unread-count", async (route) => {
+    await page.context().route("**/api/messages/unread-count", async (route) => {
       if (holdUnreadResponse) {
+        heldUnreadRequestCount += 1;
         resolveUnreadRequestStarted();
+        if (heldUnreadRequestCount >= 2) {
+          resolveBothUnreadRequestsStarted();
+        }
         await unreadResponseGate;
       }
       await route.fulfill({
@@ -415,27 +425,37 @@ test("inbox badges show only the active account unread count during account swit
 
     await signUpTemporaryUser(page, accountEmails[0], password);
     await expect(page.getByTestId("badge-unread-count")).toHaveText("7");
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveText("7");
 
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await setupClerkTestingToken({ page: secondTab });
+    await secondTab.setViewportSize({ width: 390, height: 844 });
+    await secondTab.goto(`${basePath}/run-buddy`);
+    await expect(secondTab.getByTestId("badge-mobile-unread-count")).toHaveText(
+      "7",
+    );
+
     await logOutTemporaryUser(page);
+    await expect(secondTab.getByRole("link", { name: "Sign in" })).toBeVisible();
     activeUnreadCount = 2;
     holdUnreadResponse = true;
     await signUpTemporaryUser(page, accountEmails[1], password);
     await unreadRequestStarted;
+    await expect(secondTab.getByTestId("button-mobile-logout")).toBeVisible();
+    await bothUnreadRequestsStarted;
 
     await expect(page.getByTestId("badge-unread-count")).toHaveCount(0);
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveCount(0);
+    await expect(secondTab.getByTestId("badge-mobile-unread-count")).toHaveCount(
+      0,
+    );
 
     holdUnreadResponse = false;
     releaseUnreadResponse();
     await expect(page.getByTestId("badge-unread-count")).toHaveText("2");
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByTestId("badge-mobile-unread-count")).toHaveText("2");
+    await expect(secondTab.getByTestId("badge-mobile-unread-count")).toHaveText(
+      "2",
+    );
   } finally {
     releaseUnreadResponse();
+    await secondTab.close();
     for (const email of accountEmails) {
       await deleteTemporaryClerkUsers(email);
     }
