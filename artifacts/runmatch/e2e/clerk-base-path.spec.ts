@@ -10,6 +10,7 @@ const profileSwitchEmails = [
   `runbuddy+clerk_test_${randomUUID()}@example.com`,
   `runbuddy+clerk_test_${randomUUID()}@example.com`,
   `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
 ] as const;
 const profileSwitchPassword = `RunBuddy-${randomUUID()}!7a`;
 
@@ -216,17 +217,40 @@ test("website profile navigation follows real Clerk account switches", async ({
 }) => {
   let activeRunnerId: number | null = 14;
   let holdNoProfileResponse = false;
+  let failRunnerLookupOnce = false;
+  let failedRunnerLookupCount = 0;
   let resolveNoProfileRequestStarted!: () => void;
   let releaseNoProfileResponse!: () => void;
+  let resolveRunnerRecoveryRequestStarted!: () => void;
+  let releaseRunnerRecoveryResponse!: () => void;
   const noProfileRequestStarted = new Promise<void>((resolve) => {
     resolveNoProfileRequestStarted = resolve;
   });
   const noProfileResponseGate = new Promise<void>((resolve) => {
     releaseNoProfileResponse = resolve;
   });
+  const runnerRecoveryRequestStarted = new Promise<void>((resolve) => {
+    resolveRunnerRecoveryRequestStarted = resolve;
+  });
+  const runnerRecoveryResponseGate = new Promise<void>((resolve) => {
+    releaseRunnerRecoveryResponse = resolve;
+  });
 
   try {
     await page.route("**/api/runners/me", async (route) => {
+      if (failRunnerLookupOnce) {
+        failedRunnerLookupCount += 1;
+        if (failedRunnerLookupCount === 1) {
+          await route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ message: "Temporary lookup failure" }),
+          });
+          return;
+        }
+        resolveRunnerRecoveryRequestStarted();
+        await runnerRecoveryResponseGate;
+      }
       if (activeRunnerId === null && holdNoProfileResponse) {
         resolveNoProfileRequestStarted();
         await noProfileResponseGate;
@@ -309,8 +333,39 @@ test("website profile navigation follows real Clerk account switches", async ({
     await expect(page.getByTestId("link-nav-my-profile")).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByTestId("link-mobile-my-profile")).toHaveCount(0);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await logOutTemporaryUser(page);
+    activeRunnerId = 42;
+    failRunnerLookupOnce = true;
+    failedRunnerLookupCount = 0;
+    await signUpTemporaryUser(
+      page,
+      profileSwitchEmails[3],
+      profileSwitchPassword,
+    );
+    await runnerRecoveryRequestStarted;
+    expect(failedRunnerLookupCount).toBe(2);
+
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveCount(0);
+    await expect(page.getByTestId("link-nav-create-profile")).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveCount(0);
+    await expect(page.getByTestId("link-mobile-create-profile")).toHaveCount(0);
+
+    releaseRunnerRecoveryResponse();
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/42`,
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/42`,
+    );
   } finally {
     releaseNoProfileResponse();
+    releaseRunnerRecoveryResponse();
     for (const email of profileSwitchEmails) {
       await deleteTemporaryClerkUsers(email);
     }

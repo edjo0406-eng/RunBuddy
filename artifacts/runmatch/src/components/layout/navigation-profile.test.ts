@@ -12,6 +12,7 @@ import { MobileNav } from "./MobileNav";
 const navigationMocks = vi.hoisted(() => ({
   userId: "clerk-user-1",
   currentRunnerQueryKeys: [] as unknown[][],
+  failedRunnerLookups: new Set<string>(),
 }));
 
 vi.mock("@clerk/react", () => ({
@@ -29,7 +30,12 @@ vi.mock("@workspace/api-client-react", () => ({
   useGetCurrentRunner: (options: { query: { queryKey: unknown[] } }) => {
     navigationMocks.currentRunnerQueryKeys.push(options.query.queryKey);
     const queryClient = useQueryClient();
-    return { data: queryClient.getQueryData(options.query.queryKey) };
+    return {
+      data: queryClient.getQueryData(options.query.queryKey),
+      isError: navigationMocks.failedRunnerLookups.has(
+        String(options.query.queryKey.at(-1)),
+      ),
+    };
   },
   useGetUnreadCount: () => ({ data: { count: 0 } }),
 }));
@@ -79,6 +85,7 @@ describe("signed-in profile navigation", () => {
   beforeEach(() => {
     navigationMocks.userId = "clerk-user-1";
     navigationMocks.currentRunnerQueryKeys = [];
+    navigationMocks.failedRunnerLookups.clear();
   });
 
   it("links desktop navigation to the server-authenticated runner, not a cached profile ID", () => {
@@ -173,5 +180,61 @@ describe("signed-in profile navigation", () => {
     expect(markup).not.toContain('href="/runner/14"');
     expect(markup).not.toContain('data-testid="link-nav-my-profile"');
     expect(markup).not.toContain('data-testid="link-mobile-my-profile"');
+  });
+
+  it("hides profile and setup links when the switched account lookup fails, then recovers", () => {
+    const queryClient = createNavigationQueryClient();
+    cacheRunner(queryClient, "clerk-user-1", 14);
+    cacheRunner(queryClient, "clerk-user-2", null);
+
+    navigationMocks.userId = "clerk-user-1";
+    renderNavigation(
+      createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+      queryClient,
+    );
+
+    navigationMocks.userId = "clerk-user-2";
+    navigationMocks.failedRunnerLookups.add("clerk-user-2");
+    const failedLookupMarkup = renderNavigation(
+      createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+      queryClient,
+    );
+
+    expect(failedLookupMarkup).not.toContain('href="/runner/14"');
+    expect(failedLookupMarkup).not.toContain('data-testid="link-nav-my-profile"');
+    expect(failedLookupMarkup).not.toContain('data-testid="link-mobile-my-profile"');
+    expect(failedLookupMarkup).not.toContain('data-testid="link-nav-create-profile"');
+    expect(failedLookupMarkup).not.toContain('data-testid="link-mobile-create-profile"');
+
+    navigationMocks.failedRunnerLookups.delete("clerk-user-2");
+    const recoveredMarkup = renderNavigation(
+      createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+      queryClient,
+    );
+
+    expect(recoveredMarkup).toContain('data-testid="link-nav-create-profile"');
+    expect(recoveredMarkup).toContain('data-testid="link-mobile-create-profile"');
+
+    cacheRunner(queryClient, "clerk-user-2", 28);
+    navigationMocks.failedRunnerLookups.add("clerk-user-2");
+    const failedRefreshMarkup = renderNavigation(
+      createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+      queryClient,
+    );
+
+    expect(failedRefreshMarkup).not.toContain('href="/runner/14"');
+    expect(failedRefreshMarkup).not.toContain('href="/runner/28"');
+    expect(failedRefreshMarkup).not.toContain('data-testid="link-nav-my-profile"');
+    expect(failedRefreshMarkup).not.toContain('data-testid="link-mobile-my-profile"');
+    expect(failedRefreshMarkup).not.toContain('data-testid="link-nav-create-profile"');
+    expect(failedRefreshMarkup).not.toContain('data-testid="link-mobile-create-profile"');
+
+    navigationMocks.failedRunnerLookups.delete("clerk-user-2");
+    const recoveredProfileMarkup = renderNavigation(
+      createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+      queryClient,
+    );
+
+    expect(recoveredProfileMarkup).toContain('href="/runner/28"');
   });
 });

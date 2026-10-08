@@ -19,13 +19,18 @@ export function Navbar() {
   });
   const { signOut } = useClerk();
   const isAuthResolved = isLoaded && isSignedIn !== null;
-  const { data: authenticatedRunner } = useGetCurrentRunner({
+  const {
+    data: authenticatedRunner,
+    isError: isRunnerLookupError,
+  } = useGetCurrentRunner({
     query: {
       enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
       queryKey: [...getGetCurrentRunnerQueryKey(), userId],
     },
   });
-  const ownRunnerId = authenticatedRunner?.runnerId ?? null;
+  const ownRunnerId = isRunnerLookupError
+    ? null
+    : authenticatedRunner?.runnerId ?? null;
 
   const { data: unread } = useGetUnreadCount(
     {
@@ -109,7 +114,9 @@ export function Navbar() {
             )}
           </Link>
           {isAuthResolved &&
-            (isSignedIn === false || ownRunnerId !== null || authenticatedRunner?.runnerId === null) && (
+            (isSignedIn === false ||
+              ownRunnerId !== null ||
+              (!isRunnerLookupError && authenticatedRunner?.runnerId === null)) && (
               <Link
                 href={
                   isSignedIn === false

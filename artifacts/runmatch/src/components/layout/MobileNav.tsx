@@ -18,7 +18,10 @@ export function MobileNav() {
   });
   const { signOut } = useClerk();
   const isAuthResolved = isLoaded && isSignedIn !== null;
-  const { data: authenticatedRunner } = useGetCurrentRunner({
+  const {
+    data: authenticatedRunner,
+    isError: isRunnerLookupError,
+  } = useGetCurrentRunner({
     query: {
       enabled: isAuthResolved && isSignedIn === true && Boolean(userId),
       queryKey: [...getGetCurrentRunnerQueryKey(), userId],
@@ -46,7 +49,7 @@ export function MobileNav() {
     { href: "/run-buddy", icon: Users, label: "RunBuddy", testId: "link-mobile-runbuddy", active: location.startsWith("/run-buddy"), primary: true },
     { href: "/inbox", icon: MessageSquare, label: "Inbox", testId: "link-mobile-inbox", active: location.startsWith("/inbox") || location.startsWith("/messages"), badge: unreadCount },
     ...(isAuthResolved && isSignedIn === true
-      ? authenticatedRunner
+      ? !isRunnerLookupError && authenticatedRunner
         ? [{
             href: ownRunnerId !== null ? `/runner/${ownRunnerId}` : "/create-profile",
             icon: ownRunnerId !== null ? UserRound : UserPlus,
