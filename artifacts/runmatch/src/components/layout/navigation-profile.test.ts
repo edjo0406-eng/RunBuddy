@@ -161,6 +161,51 @@ describe("signed-in profile navigation", () => {
     ]);
   });
 
+  it.each([
+    { description: "profile", lateRunnerId: 14 },
+    { description: "no-profile", lateRunnerId: null },
+  ])(
+    "ignores account A's late $description response after switching to account B",
+    ({ lateRunnerId }) => {
+      const queryClient = createNavigationQueryClient();
+      navigationMocks.userId = "clerk-user-1";
+      renderNavigation(
+        createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+        queryClient,
+      );
+
+      navigationMocks.userId = "clerk-user-2";
+      cacheRunner(queryClient, "clerk-user-2", 28);
+      const accountBMarkup = renderNavigation(
+        createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+        queryClient,
+      );
+      expect(accountBMarkup).toContain('href="/runner/28"');
+
+      // Simulate account A's pending request completing after account B is active.
+      cacheRunner(queryClient, "clerk-user-1", lateRunnerId);
+      const markupAfterLateResponse = renderNavigation(
+        createElement("div", null, createElement(Navbar), createElement(MobileNav)),
+        queryClient,
+      );
+
+      expect(markupAfterLateResponse).toContain(
+        'data-testid="link-nav-my-profile"',
+      );
+      expect(markupAfterLateResponse).toContain(
+        'data-testid="link-mobile-my-profile"',
+      );
+      expect(markupAfterLateResponse).toContain('href="/runner/28"');
+      expect(markupAfterLateResponse).not.toContain('href="/runner/14"');
+      expect(markupAfterLateResponse).not.toContain(
+        'data-testid="link-nav-create-profile"',
+      );
+      expect(markupAfterLateResponse).not.toContain(
+        'data-testid="link-mobile-create-profile"',
+      );
+    },
+  );
+
   it("does not show the previous profile while the switched account has no profile result yet", () => {
     const queryClient = createNavigationQueryClient();
     cacheRunner(queryClient, "clerk-user-1", 14);

@@ -13,6 +13,10 @@ const profileSwitchEmails = [
   `runbuddy+clerk_test_${randomUUID()}@example.com`,
 ] as const;
 const profileSwitchPassword = `RunBuddy-${randomUUID()}!7a`;
+const lateProfileSwitchEmails = [
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  `runbuddy+clerk_test_${randomUUID()}@example.com`,
+] as const;
 
 type ClerkApiUser = {
   id: string;
@@ -107,6 +111,31 @@ async function signUpTemporaryUser(page: Page, email: string, password: string) 
 async function logOutTemporaryUser(page: Page) {
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+}
+
+async function signInTemporaryUser(page: Page, email: string, password: string) {
+  await setupClerkTestingToken({ page });
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/runmatch\/sign-in\/?$/);
+
+  const signInEmail = page
+    .locator(
+      'input[name="identifier"], input[name="emailAddress"], input[type="email"]',
+    )
+    .first();
+  await signInEmail.fill(email);
+  await page.getByRole("button", { name: /continue/i }).last().click();
+
+  const signInPassword = page.locator('input[name="password"]');
+  await signInPassword.waitFor({ state: "visible" });
+  await signInPassword.fill(password);
+  await page
+    .getByRole("button", { name: /continue|sign in/i })
+    .last()
+    .click();
+
+  await expect(page).toHaveURL(/\/runmatch\/run-buddy\/?$/);
+  await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
 }
 
 async function fillOptionalField(page: Page, selector: string, value: string) {
@@ -367,6 +396,112 @@ test("website profile navigation follows real Clerk account switches", async ({
     releaseNoProfileResponse();
     releaseRunnerRecoveryResponse();
     for (const email of profileSwitchEmails) {
+      await deleteTemporaryClerkUsers(email);
+    }
+  }
+});
+
+test("late current-runner responses cannot restore a previous account's profile links", async ({
+  page,
+}) => {
+  let activeRunnerId: number | null = 14;
+  let holdAccountARunnerResponse = false;
+  let resolveLateRunnerRequestStarted!: () => void;
+  let releaseLateRunnerResponse!: () => void;
+  let resolveLateRunnerResponseCompleted!: () => void;
+  const lateRunnerRequestStarted = new Promise<void>((resolve) => {
+    resolveLateRunnerRequestStarted = resolve;
+  });
+  const lateRunnerResponseGate = new Promise<void>((resolve) => {
+    releaseLateRunnerResponse = resolve;
+  });
+  const lateRunnerResponseCompleted = new Promise<void>((resolve) => {
+    resolveLateRunnerResponseCompleted = resolve;
+  });
+
+  try {
+    await page.route("**/api/runners/me", async (route) => {
+      if (holdAccountARunnerResponse) {
+        holdAccountARunnerResponse = false;
+        const accountARunnerId = activeRunnerId;
+        resolveLateRunnerRequestStarted();
+        await lateRunnerResponseGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Cache-Control": "no-store" },
+          body: JSON.stringify({ runnerId: accountARunnerId }),
+        });
+        resolveLateRunnerResponseCompleted();
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: activeRunnerId }),
+      });
+    });
+
+    activeRunnerId = 28;
+    await signUpTemporaryUser(
+      page,
+      lateProfileSwitchEmails[1],
+      profileSwitchPassword,
+    );
+    await logOutTemporaryUser(page);
+
+    activeRunnerId = 14;
+    holdAccountARunnerResponse = true;
+    await signUpTemporaryUser(
+      page,
+      lateProfileSwitchEmails[0],
+      profileSwitchPassword,
+    );
+    await lateRunnerRequestStarted;
+    await logOutTemporaryUser(page);
+
+    activeRunnerId = 28;
+    await signInTemporaryUser(
+      page,
+      lateProfileSwitchEmails[1],
+      profileSwitchPassword,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+
+    releaseLateRunnerResponse();
+    await lateRunnerResponseCompleted;
+
+    await expect(page.getByTestId("link-mobile-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+    await expect(
+      page.getByTestId("link-mobile-my-profile"),
+    ).not.toHaveAttribute("href", `${basePath}/runner/14`);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(page.getByTestId("link-nav-my-profile")).toHaveAttribute(
+      "href",
+      `${basePath}/runner/28`,
+    );
+    await expect(page.getByTestId("link-nav-my-profile")).not.toHaveAttribute(
+      "href",
+      `${basePath}/runner/14`,
+    );
+  } finally {
+    releaseLateRunnerResponse();
+    for (const email of lateProfileSwitchEmails) {
       await deleteTemporaryClerkUsers(email);
     }
   }
