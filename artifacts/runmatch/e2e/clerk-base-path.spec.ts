@@ -461,3 +461,67 @@ test("inbox badges show only the active account unread count during account swit
     }
   }
 });
+
+test("desktop and mobile inbox badges update when a new unread message arrives", async ({
+  page,
+}) => {
+  const email = `runbuddy+clerk_test_${randomUUID()}@example.com`;
+  const password = `RunBuddy-${randomUUID()}!7a`;
+  let unreadCount = 1;
+  let unreadCountTwoResponseCount = 0;
+
+  try {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.context().route("**/api/runners/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: 14 }),
+      });
+    });
+    await page
+      .context()
+      .route("**/api/messages/unread-count", async (route) => {
+        if (unreadCount === 2) {
+          unreadCountTwoResponseCount += 1;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Cache-Control": "no-store" },
+          body: JSON.stringify({ count: unreadCount }),
+        });
+      });
+
+    await signUpTemporaryUser(page, email, password);
+    const desktopBadge = page.getByTestId("badge-unread-count");
+    const mobileBadge = page.getByTestId("badge-mobile-unread-count");
+    await expect(desktopBadge).toBeVisible();
+    await expect(desktopBadge).toHaveText("1");
+    const documentTimeOrigin = await page.evaluate(
+      () => performance.timeOrigin,
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(mobileBadge).toBeVisible();
+    await expect(mobileBadge).toHaveText("1");
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    unreadCount = 2;
+    await expect
+      .poll(() => unreadCountTwoResponseCount, { timeout: 20_000 })
+      .toBeGreaterThan(0);
+    await expect(desktopBadge).toBeVisible();
+    await expect(desktopBadge).toHaveText("2");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(mobileBadge).toBeVisible();
+    await expect(mobileBadge).toHaveText("2");
+    await expect
+      .poll(() => page.evaluate(() => performance.timeOrigin))
+      .toBe(documentTimeOrigin);
+  } finally {
+    await deleteTemporaryClerkUsers(email);
+  }
+});
