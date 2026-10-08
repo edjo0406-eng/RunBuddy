@@ -507,6 +507,97 @@ test("late current-runner responses cannot restore a previous account's profile 
   }
 });
 
+test("open conversations hide previous account messages after a cross-tab account switch", async ({
+  page,
+}) => {
+  const accountEmails = [
+    `runbuddy+clerk_test_${randomUUID()}@example.com`,
+    `runbuddy+clerk_test_${randomUUID()}@example.com`,
+  ];
+  const secondTab = await page.context().newPage();
+  const password = `RunBuddy-${randomUUID()}!7a`;
+  let activeRunnerId = 14;
+  let holdSecondAccountConversation = false;
+  let resolveSecondAccountConversationStarted!: () => void;
+  let releaseSecondAccountConversation!: () => void;
+  const secondAccountConversationStarted = new Promise<void>((resolve) => {
+    resolveSecondAccountConversationStarted = resolve;
+  });
+  const secondAccountConversationGate = new Promise<void>((resolve) => {
+    releaseSecondAccountConversation = resolve;
+  });
+  const firstAccountMessage = "Private message for the first account";
+  const secondAccountMessage = "Conversation for the second account";
+
+  try {
+    await page.context().route("**/api/runners/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify({ runnerId: activeRunnerId }),
+      });
+    });
+    await page.context().route("**/api/messages/conversation**", async (route) => {
+      const url = new URL(route.request().url());
+      if (url.searchParams.get("otherId") !== "15") {
+        await route.continue();
+        return;
+      }
+
+      if (activeRunnerId === 28 && holdSecondAccountConversation) {
+        resolveSecondAccountConversationStarted();
+        await secondAccountConversationGate;
+      }
+
+      const message =
+        activeRunnerId === 14
+          ? firstAccountMessage
+          : secondAccountMessage;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "Cache-Control": "no-store" },
+        body: JSON.stringify([
+          {
+            id: activeRunnerId,
+            fromRunnerId: activeRunnerId,
+            toRunnerId: 15,
+            content: message,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+          },
+        ]),
+      });
+    });
+
+    await signUpTemporaryUser(page, accountEmails[0], password);
+    await setupClerkTestingToken({ page: secondTab });
+    await secondTab.goto(`${basePath}/messages/15`);
+    await expect(secondTab.getByText(firstAccountMessage)).toBeVisible();
+
+    await logOutTemporaryUser(page);
+    await expect(secondTab.getByRole("link", { name: "Sign in" })).toBeVisible();
+    activeRunnerId = 28;
+    holdSecondAccountConversation = true;
+    await signUpTemporaryUser(page, accountEmails[1], password);
+
+    await secondAccountConversationStarted;
+    await expect(secondTab.getByText(firstAccountMessage)).toHaveCount(0);
+
+    holdSecondAccountConversation = false;
+    releaseSecondAccountConversation();
+    await expect(secondTab.getByText(secondAccountMessage)).toBeVisible();
+    await expect(secondTab.getByText(firstAccountMessage)).toHaveCount(0);
+  } finally {
+    releaseSecondAccountConversation();
+    await secondTab.close();
+    for (const email of accountEmails) {
+      await deleteTemporaryClerkUsers(email);
+    }
+  }
+});
+
 test("inbox badges show only the active account unread count during account switches", async ({
   page,
 }) => {
