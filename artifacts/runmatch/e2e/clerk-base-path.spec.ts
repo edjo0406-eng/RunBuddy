@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
+import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -178,6 +178,13 @@ async function signInTemporaryUser(page: Page, email: string, password: string) 
   await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
 }
 
+async function signInTemporaryUserWithClerk(page: Page, email: string) {
+  await page.goto(`${basePath}/`);
+  await clerk.signIn({ page, emailAddress: email });
+  await page.goto(`${basePath}/run-buddy`);
+  await expect(page).toHaveURL(/\/runmatch\/run-buddy\/?$/);
+  await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+}
 async function fillOptionalField(page: Page, selector: string, value: string) {
   const field = page.locator(selector);
   if (await field.isVisible().catch(() => false)) {
@@ -746,8 +753,7 @@ test("inbox badges show only the active account unread count during account swit
       await createTemporaryClerkUser(email, password);
     }
 
-    await page.goto(`${basePath}/`);
-    await signInTemporaryUser(page, accountEmails[0], password);
+    await signInTemporaryUserWithClerk(page, accountEmails[0]);
     await expect(page.getByTestId("badge-unread-count")).toHaveText("7");
 
     await setupClerkTestingToken({ page: secondTab });
@@ -761,7 +767,7 @@ test("inbox badges show only the active account unread count during account swit
     await expect(secondTab.getByRole("link", { name: "Sign in" })).toBeVisible();
     activeUnreadCount = 2;
     holdUnreadResponse = true;
-    await signInTemporaryUser(page, accountEmails[1], password);
+    await signInTemporaryUserWithClerk(page, accountEmails[1]);
     await unreadRequestStarted;
     await expect(secondTab.getByTestId("button-mobile-logout")).toBeVisible();
     await bothUnreadRequestsStarted;
