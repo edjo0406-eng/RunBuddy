@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 const port = Number(process.env.RUNMATCH_AUTH_TEST_PORT ?? 20895);
 const basePath = "/runmatch";
-const baseURL = `http://127.0.0.1:${port}${basePath}`;
+const baseURL = `http://localhost:${port}${basePath}`;
 
 export default defineConfig({
   testDir: "./e2e",
