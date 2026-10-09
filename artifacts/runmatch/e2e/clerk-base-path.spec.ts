@@ -96,11 +96,26 @@ async function signUpTemporaryUser(page: Page, email: string, password: string) 
   const verificationCode = page.getByRole("textbox", {
     name: /enter verification code/i,
   });
+  let verificationCodeVisible = false;
   try {
     await verificationCode.waitFor({ state: "visible", timeout: 15_000 });
-    await verificationCode.pressSequentially("424242");
+    verificationCodeVisible = true;
   } catch {
     // Some development instances complete sign-up without email verification.
+  }
+
+  if (verificationCodeVisible) {
+    const verificationResponse = page.waitForResponse(
+      (response) => response.url().includes("/attempt_verification"),
+      { timeout: 15_000 },
+    );
+    await verificationCode.pressSequentially("424242");
+    const response = await verificationResponse;
+    if (!response.ok()) {
+      throw new Error(
+        `Clerk email verification failed (HTTP ${response.status()}).`,
+      );
+    }
   }
 
   await page.goto(`${basePath}/`);
