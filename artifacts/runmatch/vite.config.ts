@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { readFileSync } from "node:fs";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { VitePWA } from "vite-plugin-pwa";
@@ -33,6 +34,23 @@ if (!basePath) {
     "BASE_PATH environment variable is required but was not provided.",
   );
 }
+
+const testHttpsKeyPath = process.env.RUNMATCH_TEST_HTTPS_KEY;
+const testHttpsCertPath = process.env.RUNMATCH_TEST_HTTPS_CERT;
+
+if (Boolean(testHttpsKeyPath) !== Boolean(testHttpsCertPath)) {
+  throw new Error(
+    "RUNMATCH_TEST_HTTPS_KEY and RUNMATCH_TEST_HTTPS_CERT must be provided together.",
+  );
+}
+
+const testHttps =
+  testHttpsKeyPath && testHttpsCertPath
+    ? {
+        key: readFileSync(testHttpsKeyPath),
+        cert: readFileSync(testHttpsCertPath),
+      }
+    : undefined;
 
 const outputDirectory = path.resolve(import.meta.dirname, "dist/public");
 
@@ -196,6 +214,7 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    ...(testHttps ? { https: testHttps } : {}),
     fs: {
       strict: true,
     },

@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 const port = Number(process.env.RUNMATCH_AUTH_TEST_PORT ?? 20895);
 const basePath = "/runmatch";
-const baseURL = `http://localhost:${port}${basePath}`;
+const baseURL = `https://localhost:${port}${basePath}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -16,6 +16,7 @@ export default defineConfig({
   },
   use: {
     baseURL,
+    ignoreHTTPSErrors: true,
     viewport: { width: 1280, height: 900 },
     trace: "retain-on-failure",
   },
@@ -57,8 +58,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `PORT=${port} BASE_PATH=${basePath}/ pnpm --filter @workspace/runmatch run dev`,
+    command: [
+      "TLS_DIR=$(mktemp -d)",
+      `openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout "$TLS_DIR/key.pem" -out "$TLS_DIR/cert.pem" -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost"`,
+      `PORT=${port} BASE_PATH=${basePath}/ RUNMATCH_TEST_HTTPS_KEY="$TLS_DIR/key.pem" RUNMATCH_TEST_HTTPS_CERT="$TLS_DIR/cert.pem" pnpm --filter @workspace/runmatch run dev`,
+    ].join(" && "),
     url: `${baseURL}/`,
+    ignoreHTTPSErrors: true,
     reuseExistingServer: false,
     timeout: 120_000,
   },
