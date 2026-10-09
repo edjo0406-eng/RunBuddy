@@ -64,3 +64,12 @@ jobs:
           --project=webkit
           --project=firefox
           --grep "inbox badges show only the active account unread count during account switches"
+
+      - name: Upload Playwright diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runmatch-playwright-diagnostics
+          path: .cache/playwright/runmatch-auth/
+          if-no-files-found: ignore
+          retention-days: 5
