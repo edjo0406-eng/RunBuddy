@@ -179,9 +179,42 @@ async function signInTemporaryUser(page: Page, email: string, password: string) 
 }
 
 async function signInTemporaryUserWithClerk(page: Page, email: string) {
+  const logAuthState = async (stage: string) => {
+    const state = await page.evaluate(() => {
+      const currentClerk = (
+        window as Window & {
+          Clerk?: {
+            loaded?: boolean;
+            user?: unknown;
+            session?: { status?: string } | null;
+          };
+        }
+      ).Clerk;
+      return {
+        loaded: currentClerk?.loaded === true,
+        hasUser: Boolean(currentClerk?.user),
+        hasSession: Boolean(currentClerk?.session),
+        sessionStatus: currentClerk?.session?.status ?? null,
+      };
+    });
+    const clerkCookies = (await page.context().cookies())
+      .filter((cookie) => /^(?:__session|__client|__client_uat)$/.test(cookie.name))
+      .map(({ name, domain, sameSite, secure }) => ({
+        name,
+        domain,
+        sameSite,
+        secure,
+      }));
+    console.log(
+      `[cross-browser-auth] ${stage} ${JSON.stringify({ state, clerkCookies })}`,
+    );
+  };
+
   await page.goto(`${basePath}/`);
   await clerk.signIn({ page, emailAddress: email });
+  await logAuthState("after Clerk sign-in");
   await page.goto(`${basePath}/run-buddy`);
+  await logAuthState("after app navigation");
   await expect(page).toHaveURL(/\/runmatch\/run-buddy\/?$/);
   await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
 }
