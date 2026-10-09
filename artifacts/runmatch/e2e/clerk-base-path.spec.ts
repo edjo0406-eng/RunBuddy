@@ -63,6 +63,31 @@ async function deleteTemporaryClerkUsers(email = testEmail) {
   }
 }
 
+async function createTemporaryClerkUser(email: string, password: string) {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("CLERK_SECRET_KEY must be available for E2E user creation.");
+  }
+
+  const response = await fetch("https://api.clerk.com/v1/users", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email_address: [email],
+      password,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Could not create a temporary Clerk test user (HTTP ${response.status}).`,
+    );
+  }
+}
+
 async function signUpTemporaryUser(page: Page, email: string, password: string) {
   await setupClerkTestingToken({ page });
   await page.goto(`${basePath}/sign-up`);
@@ -717,7 +742,12 @@ test("inbox badges show only the active account unread count during account swit
       });
     });
 
-    await signUpTemporaryUser(page, accountEmails[0], password);
+    for (const email of accountEmails) {
+      await createTemporaryClerkUser(email, password);
+    }
+
+    await page.goto(`${basePath}/`);
+    await signInTemporaryUser(page, accountEmails[0], password);
     await expect(page.getByTestId("badge-unread-count")).toHaveText("7");
 
     await setupClerkTestingToken({ page: secondTab });
@@ -731,7 +761,7 @@ test("inbox badges show only the active account unread count during account swit
     await expect(secondTab.getByRole("link", { name: "Sign in" })).toBeVisible();
     activeUnreadCount = 2;
     holdUnreadResponse = true;
-    await signUpTemporaryUser(page, accountEmails[1], password);
+    await signInTemporaryUser(page, accountEmails[1], password);
     await unreadRequestStarted;
     await expect(secondTab.getByTestId("button-mobile-logout")).toBeVisible();
     await bothUnreadRequestsStarted;
